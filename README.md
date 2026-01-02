@@ -2,12 +2,24 @@
 
 **IOE Student Utils** is an open-source web portal designed to help students from the Institute of Engineering (IOE), Tribhuvan University, bridge the gap between local academic systems and international standards.
 
-## Features
+## Objective
 
-- **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours into standard credit hours used by US/European universities.
+The primary goal of this project is to create an open source, community driven ecosystem that will assist the current students and the graduates in their corresponding academic journey, especially in the process of applying to universities abroad by providing essential tools, guidelines, and resources.
+
+## Planned Features
+
+- **University Finder**: A comprehensive list of universities that accept TU credits, including their specific requirements and application processes.
+- **Scholarship Database**: A list of scholarships available for international students, including eligibility criteria and application deadlines.
+- **GPA Calculator**: Converts TU percentage scores to US 4.0 GPA equivalents using WES/Scholaro logic.
+- **Resume Builder**: A tool to create professional resumes tailored for international applications.
+- **Letter of Recommendation**: A tool to create professional letters of recommendation tailored for international applications.
+- **Course Equivalency**: A tool to find equivalent courses for TU subjects in international universities.
+- **Alumni Network**: A platform to connect with alumni and get insights into their experiences and advice.
+- **Career Guidance**: Resources and advice on career paths, job markets, and industry trends.
+- **Subject Selector**: Helps students select subjects for their 7th and 8th semesters based on their interests and career goals.
+- **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours into standard credit hours used by International US/European universities.
 - **Syllabus Explorer**: Detailed breakdown of chapters, sub-topics, and marks distribution (Internal vs. Final) for BCT (Bachelor of Computer Engineering).
-- **GPA Estimator**: Estimates a US 4.0 GPA equivalent based on TU percentage scores using WES/Scholaro logic.
-- **Report Generation**: Export your selected subject list and credit summary as a professional PDF for applications.
+- **Study Planner**: A tool to plan and track study/application schedules, including exam dates and study goals.
 
 ## Tech Stack
 
