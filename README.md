@@ -20,6 +20,7 @@ The primary goal of this project is to create an open source, community driven e
 - **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours into standard credit hours used by International US/European universities.
 - **Syllabus Explorer**: Detailed breakdown of chapters, sub-topics, and marks distribution (Internal vs. Final) for BCT (Bachelor of Computer Engineering).
 - **Study Planner**: A tool to plan and track study/application schedules, including exam dates and study goals.
+- **Resources Library**: A collection of study materials, past papers, and other resources to help students prepare for exams and applications.
 
 ## Tech Stack
 
