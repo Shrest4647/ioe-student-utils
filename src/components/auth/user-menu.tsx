@@ -1,6 +1,8 @@
 "use client";
 
+import { InfoIcon, LogOut, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,10 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
-import { User, Settings, LogOut, InfoIcon } from "lucide-react";
 
 export function UserMenu() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -22,7 +22,7 @@ export function UserMenu() {
   if (!isAuthenticated || !user) {
     return (
       <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={() => router.push("/auth/signin")}>
+        <Button onClick={() => router.push("/auth/signin")} variant="outline">
           Sign In
         </Button>
         <Button onClick={() => router.push("/auth/signup")}>Sign Up</Button>
@@ -56,18 +56,18 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button className="relative h-8 w-8 rounded-full" variant="ghost">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image || ""} alt={user.name || ""} />
+            <AvatarImage alt={user.name || ""} src={user.image || ""} />
             <AvatarFallback>{getInitials(user.name || "U")}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent align="end" className="w-56" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="font-medium text-sm leading-none">{user.name}</p>
+            <p className="text-muted-foreground text-xs leading-none">
               {user.email}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function UserMenu() {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} disabled={isLoading}>
+        <DropdownMenuItem disabled={isLoading} onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>{isLoading ? "Signing out..." : "Sign out"}</span>
         </DropdownMenuItem>

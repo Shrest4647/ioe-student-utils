@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
-import { corsPlugin } from "./plugins/cors";
 import { betterAuthPlugin } from "./plugins/better-auth";
+import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
 
 export const elysiaApi = new Elysia({ prefix: "/api" })

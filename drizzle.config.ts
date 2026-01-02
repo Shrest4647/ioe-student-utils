@@ -1,4 +1,4 @@
-import { type Config } from "drizzle-kit";
+import type { Config } from "drizzle-kit";
 
 import { appEnv } from "@/env";
 
@@ -8,5 +8,5 @@ export default {
   dbCredentials: {
     url: appEnv.DATABASE_URL,
   },
-  tablesFilter: ["nothing_*"],
+  tablesFilter: ["ioesu_*"],
 } satisfies Config;

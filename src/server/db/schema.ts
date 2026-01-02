@@ -28,13 +28,14 @@ export const posts = createTable(
   (t) => [
     index("created_by_idx").on(t.createdById),
     index("name_idx").on(t.name),
-  ]
+  ],
 );
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  role: text("role").notNull().default("user"),
   emailVerified: boolean("email_verified")
     .$defaultFn(() => false)
     .notNull(),
@@ -84,10 +85,10 @@ export const verification = pgTable("verification", {
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").$defaultFn(
-    () => /* @__PURE__ */ new Date()
+    () => /* @__PURE__ */ new Date(),
   ),
   updatedAt: timestamp("updated_at").$defaultFn(
-    () => /* @__PURE__ */ new Date()
+    () => /* @__PURE__ */ new Date(),
   ),
 });
 

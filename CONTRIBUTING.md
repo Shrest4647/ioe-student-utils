@@ -92,7 +92,7 @@ bun run check
 ```
 
 ```bash
-bun run typescript
+bun run typecheck
 ```
 
 Also, manually test the application to ensure everything works as expected.

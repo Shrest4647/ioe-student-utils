@@ -1,16 +1,44 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-
+import {
+  anonymous,
+  emailOTP,
+  genericOAuth,
+  magicLink,
+  openAPI,
+  twoFactor,
+  username,
+} from "better-auth/plugins";
 import { appEnv } from "@/env";
 import { db } from "@/server/db";
-import { openAPI } from "better-auth/plugins";
+import {
+  sendEmailVerification,
+  sendMagicLink,
+  sendOTPVerification,
+  sendResetPassword,
+} from "@/server/emails/email";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg", // or "pg" or "mysql"
   }),
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmailVerification({
+        to: user.email,
+        url,
+      });
+    },
+  },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendResetPassword({
+        to: user.email,
+        url,
+      });
+    },
   },
   socialProviders: {
     github: {
@@ -19,11 +47,56 @@ export const auth = betterAuth({
       redirectURI: "http://localhost:3000/api/auth/callback/github",
     },
   },
-  plugins: [openAPI()],
+  plugins: [
+    openAPI(),
+    anonymous(),
+    username(),
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        await sendMagicLink({
+          to: email,
+          url,
+        });
+      },
+    }),
+    emailOTP({
+      async sendVerificationOTP({ email, otp }) {
+        await sendOTPVerification({
+          to: email,
+          code: otp,
+        });
+      },
+    }),
+    twoFactor(),
+    genericOAuth({
+      config: [
+        {
+          providerId: "slack",
+          clientId: process.env.SLACK_CLIENT_ID as string,
+          clientSecret: process.env.SLACK_CLIENT_SECRET as string,
+          discoveryUrl: "https://slack.com/.well-known/openid-configuration",
+          scopes: ["openid", "email", "profile"],
+        },
+      ],
+    }),
+  ],
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        default: "user",
+      },
+    },
+  },
 });
 
 let _schema: ReturnType<typeof auth.api.generateOpenAPISchema>;
-const getSchema = async () => (_schema ??= auth.api.generateOpenAPISchema());
+const getSchema = async () => {
+  if (!_schema) {
+    _schema = auth.api.generateOpenAPISchema();
+  }
+  return _schema;
+};
 
 export const BetterAuthOpenAPI = {
   getPaths: (prefix = "/api/auth") =>
@@ -35,7 +108,7 @@ export const BetterAuthOpenAPI = {
         reference[key] = paths[path];
 
         for (const method of Object.keys(paths[path])) {
-          const operation = (reference[key] as any)[method];
+          const operation = (reference[key] as Record<string, any>)[method];
 
           operation.tags = ["Better Auth"];
         }

@@ -1,6 +1,6 @@
 {
-  "id": "ae529a53-e2b6-44e5-86a2-2eb5272ab225",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "8ce23dba-f812-468f-9be6-f0b9bab1f043",
+  "prevId": "ae529a53-e2b6-44e5-86a2-2eb5272ab225",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -298,6 +298,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
         },
         "email_verified": {
           "name": "email_verified",

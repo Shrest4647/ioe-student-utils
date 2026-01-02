@@ -1,10 +1,9 @@
 "use client";
 
-import type React from "react";
-
-import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import type React from "react";
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface RoleGuardProps {
   children: React.ReactNode;
