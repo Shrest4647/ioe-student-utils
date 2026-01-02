@@ -11,22 +11,32 @@
 
 ## Tech Stack
 
-- **Framework**: React 19
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 16 (App Router) + React 19
+- **Runtime & Package Manager**: [Bun](https://bun.sh)
+- **Styling**: Tailwind CSS 4 + Shadcn UI + Radix UI
+- **Authentication**: Better Auth
 - **Icons**: Lucide React
 - **Charts**: Recharts
 - **Language**: TypeScript
+
+## AI Agent Guidelines
+
+This project includes specific instructions for AI agents (Gemini, Claude, Copilot, etc.) to ensure consistency in coding style and architecture.
+
+- **[.cursorrules](.cursorrules)**: Global rules for AI editors.
+- **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)**: Detailed project-wide standards.
 
 ## Getting Started
 
 1.  **Clone the repository**
 
     ```bash
-    git clone https://github.com/your-username/ioe-student-Utils.git
-    cd ioe-student-Utils
+    git clone https://github.com/your-username/ioe-student-utils.git
+    cd ioe-student-utils
     ```
 
 2.  **Install dependencies**
+    This project strictly uses **Bun**.
 
     ```bash
     bun install
@@ -34,7 +44,7 @@
 
 3.  **Run the development server**
     ```bash
-    bun run dev
+    bun dev
     ```
 
 ## Roadmap
