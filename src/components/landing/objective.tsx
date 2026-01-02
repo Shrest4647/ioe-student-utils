@@ -4,7 +4,11 @@ import { Separator } from "@/components/ui/separator";
 
 export function Objective() {
   return (
-    <section aria-labelledby="mission-heading" className="px-4 py-16">
+    <section
+      aria-labelledby="mission-heading"
+      id="mission"
+      className="px-4 py-16"
+    >
       <div className="mx-auto max-w-4xl">
         <Card>
           <CardHeader>

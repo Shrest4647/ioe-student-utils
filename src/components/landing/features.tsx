@@ -101,7 +101,7 @@ const features = [
 
 export function Features() {
   return (
-    <section className="px-4 py-16">
+    <section className="px-4 py-16" id="features">
       <div className="mx-auto max-w-6xl">
         <h2 className="mb-12 text-center font-bold text-3xl">Features</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

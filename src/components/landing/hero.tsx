@@ -1,6 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import landingImage from "@/assets/images/pulchowk-landing-image.jpg";
 import { Button } from "@/components/ui/button";
+import { DISCORD_INVITE_URL } from "@/data";
 
 export function Hero() {
   return (
@@ -20,7 +22,9 @@ export function Hero() {
             className="px-8 text-lg"
             size="lg"
           >
-            Get Started
+            <Link href={DISCORD_INVITE_URL} target="_blank">
+              Join Discord Community
+            </Link>
           </Button>
           <Button
             aria-label="View project on GitHub"
@@ -28,7 +32,7 @@ export function Hero() {
             size="lg"
             variant="outline"
           >
-            View on GitHub
+            <Link href="#features">Explore Features </Link>
           </Button>
         </div>
 

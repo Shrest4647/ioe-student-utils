@@ -12,18 +12,13 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-muted-foreground text-sm">
               <li>
-                <Link className="hover:text-foreground" href="/about">
-                  About
+                <Link className="hover:text-foreground" href="/#mission">
+                  Mission
                 </Link>
               </li>
               <li>
-                <Link className="hover:text-foreground" href="/roadmap">
-                  Roadmap
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-foreground" href="/license">
-                  License
+                <Link className="hover:text-foreground" href="/#features">
+                  Features
                 </Link>
               </li>
             </ul>
@@ -38,11 +33,6 @@ export function Footer() {
                   Documentation
                 </Link>
               </li>
-              <li>
-                <Link className="hover:text-foreground" href="/api-docs">
-                  API Docs
-                </Link>
-              </li>
             </ul>
           </nav>
           <nav aria-labelledby="social-nav">
@@ -54,7 +44,7 @@ export function Footer() {
                 <Link
                   aria-label="Visit GitHub repository"
                   className="hover:text-foreground"
-                  href="https://github.com"
+                  href="https://github.com/Shrest4647/ioe-student-utils"
                 >
                   GitHub
                 </Link>
@@ -63,18 +53,9 @@ export function Footer() {
                 <Link
                   aria-label="Join Discord community"
                   className="hover:text-foreground"
-                  href="https://discord.com"
+                  href="https://discord.gg/XGMwzVv9"
                 >
                   Discord
-                </Link>
-              </li>
-              <li>
-                <Link
-                  aria-label="Join Telegram group"
-                  className="hover:text-foreground"
-                  href="https://telegram.org"
-                >
-                  Telegram
                 </Link>
               </li>
             </ul>

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { DISCORD_INVITE_URL, GITHUB_REPO_URL } from "@/data";
 
 export function CTA() {
   return (
@@ -16,7 +18,9 @@ export function CTA() {
             className="px-8 text-lg"
             size="lg"
           >
-            Join Community
+            <Link href={DISCORD_INVITE_URL} target="_blank">
+              Join Community
+            </Link>
           </Button>
           <Button
             aria-label="Contribute to the project on GitHub"
@@ -24,7 +28,9 @@ export function CTA() {
             size="lg"
             variant="outline"
           >
-            Contribute on GitHub
+            <Link href={GITHUB_REPO_URL} target="_blank">
+              Contribute on GitHub
+            </Link>
           </Button>
         </div>
       </div>
