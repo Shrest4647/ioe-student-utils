@@ -1,5 +1,6 @@
-import { edenTreaty } from "@elysiajs/eden";
+import { treaty } from "@elysiajs/eden";
 
 import type { App } from "@/app/api/[[...slugs]]/route";
+import { appEnv } from "@/env";
 
-export const api = edenTreaty<App>("http://localhost:3000/api");
+export const api = treaty<App>(appEnv.NEXT_PUBLIC_BASE_URL);

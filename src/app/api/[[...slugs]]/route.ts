@@ -1,6 +1,16 @@
 import { Elysia } from "elysia";
-
+import { openapi } from "@elysiajs/openapi";
 import { auth } from "@/server/better-auth";
+import { cors } from "@elysiajs/cors";
+import { appEnv } from "@/env";
+import { BetterAuthOpenAPI } from "@/server/better-auth/config";
+
+const corsPlugin = cors({
+  origin: appEnv.NEXT_PUBLIC_BASE_URL,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+});
 
 // Better Auth plugin for Elysia
 const betterAuthPlugin = new Elysia({ name: "better-auth" })
@@ -20,12 +30,42 @@ const betterAuthPlugin = new Elysia({ name: "better-auth" })
     },
   });
 
+const openApiPlugin = openapi({
+  documentation: {
+    components: await BetterAuthOpenAPI.components,
+    paths: await BetterAuthOpenAPI.getPaths(),
+    tags: [
+      { name: "App", description: "General endpoints" },
+      { name: "Auth", description: "Authentication endpoints" },
+    ],
+    info: {
+      title: "IOESU Documentation",
+      version: "1.0.0",
+    },
+  },
+  path: "/docs",
+});
+
 // Main API Elysia instance
 const api = new Elysia({ prefix: "/api" })
+  .use(corsPlugin)
   .use(betterAuthPlugin)
-  .get("/", () => "👋 Hello from Elysia+Next.js + Better Auth")
+  .use(openApiPlugin)
+  .get("/", () => "👋 Hello from Elysia+Next.js + Better Auth", {
+    detail: {
+      tags: ["App"],
+    },
+  })
+  .get("/health", () => ({ status: "ok" }), {
+    detail: {
+      tags: ["App"],
+    },
+  })
   .get("/protected", ({ user }) => `Hello ${user.name}!`, {
     auth: true,
+    detail: {
+      tags: ["Auth"],
+    },
   });
 
 // Export handlers for Next.js
