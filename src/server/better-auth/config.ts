@@ -22,7 +22,12 @@ export const auth = betterAuth({
 });
 
 let _schema: ReturnType<typeof auth.api.generateOpenAPISchema>;
-const getSchema = async () => (_schema ??= auth.api.generateOpenAPISchema());
+const getSchema = async () => {
+	if (!_schema) {
+		_schema = auth.api.generateOpenAPISchema();
+	}
+	return _schema;
+};
 
 export const BetterAuthOpenAPI = {
 	getPaths: (prefix = "/api/auth") =>
@@ -34,7 +39,7 @@ export const BetterAuthOpenAPI = {
 				reference[key] = paths[path];
 
 				for (const method of Object.keys(paths[path])) {
-					const operation = (reference[key] as any)[method];
+					const operation = (reference[key] as Record<string, any>)[method];
 
 					operation.tags = ["Better Auth"];
 				}

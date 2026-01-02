@@ -1,12 +1,10 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useSession } from "@/lib/auth-client";
 
 export const useAuth = () => {
 	const session = useSession();
-	const user = useQuery(api.auth.getCurrentUser);
+	const user = session.data?.user;
 
 	return {
 		user: user || null,

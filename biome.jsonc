@@ -32,9 +32,32 @@
 						"functions": ["clsx", "cva", "cn"]
 					}
 				}
+			},
+			"suspicious": {
+				"noExplicitAny": "off"
 			}
 		}
 	},
+	"overrides": [
+		{
+			"includes": ["src/components/ui/**"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"useSemanticElements": "off",
+						"useAriaPropsSupportedByRole": "off",
+						"useKeyWithClickEvents": "off"
+					},
+					"suspicious": {
+						"noArrayIndexKey": "off"
+					},
+					"security": {
+						"noDangerouslySetInnerHtml": "off"
+					}
+				}
+			}
+		}
+	],
 	"html": {
 		"formatter": {
 			"enabled": true
