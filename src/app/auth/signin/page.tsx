@@ -115,11 +115,11 @@ export default function SignIn() {
                 {(field) => (
                   <Field>
                     <FieldLabel>
-                      <div className="flex items-center">
+                      <div className="flex w-full items-center">
                         <Label htmlFor={field.name}>Password</Label>
                         <Link
                           href="/auth/forgot-password"
-                          className="ml-auto inline-block text-sm underline"
+                          className="ml-auto inline-block underline"
                         >
                           Forgot your password?
                         </Link>
@@ -191,7 +191,7 @@ export default function SignIn() {
                 await signIn.social(
                   {
                     provider: "github",
-                    callbackURL: "/dashboard",
+                    callbackURL: "/",
                   },
                   {
                     onRequest: (_ctx) => {
@@ -199,7 +199,6 @@ export default function SignIn() {
                     },
                     onSuccess: (_ctx) => {
                       setLoading(false);
-                      router.push("/");
                     },
                     onError: (ctx) => {
                       setLoading(false);
@@ -221,7 +220,7 @@ export default function SignIn() {
                 await signIn.social(
                   {
                     provider: "slack",
-                    callbackURL: "/dashboard",
+                    callbackURL: "/",
                   },
                   {
                     onRequest: (_ctx) => {
@@ -229,7 +228,6 @@ export default function SignIn() {
                     },
                     onSuccess: (_ctx) => {
                       setLoading(false);
-                      router.push("/");
                     },
                     onError: (ctx) => {
                       setLoading(false);
