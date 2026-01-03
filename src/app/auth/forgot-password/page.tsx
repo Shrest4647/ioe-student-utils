@@ -48,10 +48,10 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-emerald-50 to-teal-50 p-4">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
               <CheckCircle className="h-6 w-6 text-emerald-600" />
             </div>
             <CardTitle className="font-bold text-2xl">
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-emerald-50 to-teal-50 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-center font-bold text-2xl">

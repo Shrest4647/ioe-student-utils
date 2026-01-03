@@ -25,7 +25,7 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-emerald-50 to-teal-50 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
@@ -94,7 +94,7 @@ export default function SignIn() {
                       setLoading(false);
                       setError(ctx.error.message);
                     },
-                  }
+                  },
                 );
               }}
             >
@@ -108,7 +108,7 @@ export default function SignIn() {
             <div
               className={cn(
                 "flex w-full items-center gap-2",
-                "flex-col justify-between"
+                "flex-col justify-between",
               )}
             >
               <Button
@@ -132,7 +132,7 @@ export default function SignIn() {
                         setLoading(false);
                         setError(ctx.error.message);
                       },
-                    }
+                    },
                   );
                 }}
               >
@@ -160,7 +160,7 @@ export default function SignIn() {
                         setLoading(false);
                         setError(ctx.error.message);
                       },
-                    }
+                    },
                   );
                 }}
               >
