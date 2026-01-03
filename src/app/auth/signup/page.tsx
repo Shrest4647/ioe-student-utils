@@ -4,7 +4,6 @@ import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +28,6 @@ import { signUpSchema } from "@/lib/auth-schemas";
 
 export default function SignUp() {
   const router = useRouter();
-  const [_loading, setLoading] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -44,7 +42,6 @@ export default function SignUp() {
       onSubmit: signUpSchema,
     },
     onSubmit: async ({ value }) => {
-      setLoading(true);
       try {
         await signUp.email(
           {
@@ -55,21 +52,15 @@ export default function SignUp() {
             role: "user",
           },
           {
-            onRequest: () => {
-              setLoading(true);
-            },
             onSuccess: async () => {
-              setLoading(false);
               router.push("/dashboard");
             },
             onError: (ctx) => {
-              setLoading(false);
               toast.error(ctx.error.message);
             },
           },
         );
       } catch (_error) {
-        setLoading(false);
         toast.error("Failed to create account");
       }
     },
@@ -112,7 +103,11 @@ export default function SignUp() {
                         {field.state.meta.isTouched &&
                         field.state.meta.errors.length ? (
                           <FieldError>
-                            {field.state.meta.errors.join(", ")}
+                            {field.state.meta.errors.map((error) => (
+                              <p key={`idx-${error?.message.slice(0, 10)}`}>
+                                {error?.message}
+                              </p>
+                            ))}
                           </FieldError>
                         ) : null}
                       </FieldContent>
@@ -137,7 +132,11 @@ export default function SignUp() {
                         {field.state.meta.isTouched &&
                         field.state.meta.errors.length ? (
                           <FieldError>
-                            {field.state.meta.errors.join(", ")}
+                            {field.state.meta.errors.map((error) => (
+                              <p key={`idx-${error?.message.slice(0, 10)}`}>
+                                {error?.message}
+                              </p>
+                            ))}
                           </FieldError>
                         ) : null}
                       </FieldContent>
@@ -165,7 +164,11 @@ export default function SignUp() {
                       {field.state.meta.isTouched &&
                       field.state.meta.errors.length ? (
                         <FieldError>
-                          {field.state.meta.errors.join(", ")}
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
                         </FieldError>
                       ) : null}
                     </FieldContent>
@@ -192,7 +195,11 @@ export default function SignUp() {
                       {field.state.meta.isTouched &&
                       field.state.meta.errors.length ? (
                         <FieldError>
-                          {field.state.meta.errors.join(", ")}
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
                         </FieldError>
                       ) : null}
                     </FieldContent>
@@ -219,7 +226,11 @@ export default function SignUp() {
                       {field.state.meta.isTouched &&
                       field.state.meta.errors.length ? (
                         <FieldError>
-                          {field.state.meta.errors.join(", ")}
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
                         </FieldError>
                       ) : null}
                     </FieldContent>
@@ -259,7 +270,11 @@ export default function SignUp() {
                       {field.state.meta.isTouched &&
                       field.state.meta.errors.length ? (
                         <FieldError>
-                          {field.state.meta.errors.join(", ")}
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
                         </FieldError>
                       ) : null}
                     </FieldContent>

@@ -73,8 +73,12 @@ Fields use a **Render Prop** pattern. The direct child is a function receiving a
         onChange={(e) => field.handleChange(e.target.value)}
       />
       {/* Field Metadata Access */}
-      {field.state.meta.isTouched && field.state.meta.errors.length ? (
-        <em className="error">{field.state.meta.errors.join(', ')}</em>
+      {field.state.meta.isBlurred && field.state.meta.errors.length ? (
+        {field.state.meta.errors.map((error) => (
+          <p key={`idx-${error?.message.slice(0, 10)}`}>
+            {error?.message}
+          </p>
+        ))}
       ) : null}
     </div>
   )}

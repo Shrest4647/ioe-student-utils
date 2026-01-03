@@ -193,10 +193,14 @@ export function TwoFactorVerification() {
                       </InputOTPGroup>
                     </InputOTP>
                   )}
-                  {field.state.meta.isTouched &&
+                  {field.state.meta.isBlurred &&
                   field.state.meta.errors.length ? (
                     <FieldError>
-                      {field.state.meta.errors.join(", ")}
+                      {field.state.meta.errors.map((error) => (
+                        <p key={`idx-${error?.message.slice(0, 10)}`}>
+                          {error?.message}
+                        </p>
+                      ))}
                     </FieldError>
                   ) : null}
                 </FieldContent>

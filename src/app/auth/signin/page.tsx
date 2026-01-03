@@ -3,7 +3,9 @@
 import { useForm } from "@tanstack/react-form";
 import { GithubIcon, Loader2, SlackIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
@@ -21,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 export default function SignIn() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const form = useForm({
     defaultValues: {
@@ -43,10 +51,11 @@ export default function SignIn() {
           },
           onSuccess: () => {
             setLoading(false);
+            router.push("/");
           },
           onError: (ctx) => {
             setLoading(false);
-            setError(ctx.error.message);
+            toast.error(ctx.error.message);
           },
         },
       );
@@ -73,61 +82,73 @@ export default function SignIn() {
             <div className="grid gap-4">
               <form.Field name="email">
                 {(field) => (
-                  <div className="grid gap-2">
-                    <Label htmlFor={field.name}>Email</Label>
-                    <Input
-                      id={field.name}
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
-                    {field.state.meta.isTouched &&
-                    field.state.meta.errors.length ? (
-                      <em className="error text-red-600 text-sm">
-                        {field.state.meta.errors.join(", ")}
-                      </em>
-                    ) : null}
-                  </div>
+                  <Field>
+                    <FieldLabel>
+                      <Label htmlFor={field.name}>Email</Label>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        type="email"
+                        placeholder="m@example.com"
+                        required
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
                 )}
               </form.Field>
 
               <form.Field name="password">
                 {(field) => (
-                  <div className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor={field.name}>Password</Label>
-                      <Link
-                        href="/auth/forgot-password"
-                        className="ml-auto inline-block text-sm underline"
-                      >
-                        Forgot your password?
-                      </Link>
-                    </div>
-                    <Input
-                      id={field.name}
-                      type="password"
-                      placeholder="password"
-                      autoComplete="password"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
-                    {field.state.meta.isTouched &&
-                    field.state.meta.errors.length ? (
-                      <em className="error text-red-600 text-sm">
-                        {field.state.meta.errors.join(", ")}
-                      </em>
-                    ) : null}
-                  </div>
+                  <Field>
+                    <FieldLabel>
+                      <div className="flex items-center">
+                        <Label htmlFor={field.name}>Password</Label>
+                        <Link
+                          href="/auth/forgot-password"
+                          className="ml-auto inline-block text-sm underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        type="password"
+                        placeholder="password"
+                        autoComplete="password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.map((error) => (
+                            <p key={`idx-${error?.message.slice(0, 10)}`}>
+                              {error?.message}
+                            </p>
+                          ))}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
                 )}
               </form.Field>
-
-              {error && (
-                <p className="text-center text-red-600 text-sm">{error}</p>
-              )}
 
               <form.Subscribe
                 selector={(state) => [state.canSubmit, state.isSubmitting]}
@@ -178,10 +199,11 @@ export default function SignIn() {
                     },
                     onSuccess: (_ctx) => {
                       setLoading(false);
+                      router.push("/");
                     },
                     onError: (ctx) => {
                       setLoading(false);
-                      setError(ctx.error.message);
+                      toast.error(ctx.error.message);
                     },
                   },
                 );
@@ -194,6 +216,7 @@ export default function SignIn() {
             <Button
               variant="outline"
               className="w-full"
+              disabled={loading}
               onClick={async () => {
                 await signIn.social(
                   {
@@ -206,10 +229,11 @@ export default function SignIn() {
                     },
                     onSuccess: (_ctx) => {
                       setLoading(false);
+                      router.push("/");
                     },
                     onError: (ctx) => {
                       setLoading(false);
-                      setError(ctx.error.message);
+                      toast.error(ctx.error.message);
                     },
                   },
                 );
