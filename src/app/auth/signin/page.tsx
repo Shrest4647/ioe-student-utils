@@ -1,7 +1,7 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { GithubIcon, Loader2, SlackIcon } from "lucide-react";
-
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,42 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { signInSchema } from "@/lib/auth-schemas";
 import { cn } from "@/lib/utils";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    validators: {
+      onSubmit: signInSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await signIn.email(
+        {
+          email: value.email,
+          password: value.password,
+        },
+        {
+          onRequest: () => {
+            setLoading(true);
+          },
+          onSuccess: () => {
+            setLoading(false);
+          },
+          onError: (ctx) => {
+            setLoading(false);
+            setError(ctx.error.message);
+          },
+        },
+      );
+    },
+  });
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -34,54 +63,114 @@ export default function SignIn() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }}
-                value={email}
-              />
-            </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
+          >
+            <div className="grid gap-4">
+              <form.Field name="email">
+                {(field) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor={field.name}>Email</Label>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="m@example.com"
+                      required
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    {field.state.meta.isTouched &&
+                    field.state.meta.errors.length ? (
+                      <em className="error text-red-600 text-sm">
+                        {field.state.meta.errors.join(", ")}
+                      </em>
+                    ) : null}
+                  </div>
+                )}
+              </form.Field>
 
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/auth/forgot-password"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
+              <form.Field name="password">
+                {(field) => (
+                  <div className="grid gap-2">
+                    <div className="flex items-center">
+                      <Label htmlFor={field.name}>Password</Label>
+                      <Link
+                        href="/auth/forgot-password"
+                        className="ml-auto inline-block text-sm underline"
+                      >
+                        Forgot your password?
+                      </Link>
+                    </div>
+                    <Input
+                      id={field.name}
+                      type="password"
+                      placeholder="password"
+                      autoComplete="password"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    {field.state.meta.isTouched &&
+                    field.state.meta.errors.length ? (
+                      <em className="error text-red-600 text-sm">
+                        {field.state.meta.errors.join(", ")}
+                      </em>
+                    ) : null}
+                  </div>
+                )}
+              </form.Field>
 
-              <Input
-                id="password"
-                type="password"
-                placeholder="password"
-                autoComplete="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              {error && (
+                <p className="text-center text-red-600 text-sm">{error}</p>
+              )}
+
+              <form.Subscribe
+                selector={(state) => [state.canSubmit, state.isSubmitting]}
+              >
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!canSubmit || isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <p>Sign In</p>
+                    )}
+                  </Button>
+                )}
+              </form.Subscribe>
             </div>
-            {error && (
-              <p className="text-center text-red-600 text-sm">{error}</p>
+          </form>
+
+          <div className="mt-6">
+            <div className="h-px w-full bg-border" />
+            <div className="mt-4 text-center text-muted-foreground text-sm">
+              Or continue with
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "flex w-full items-center gap-2",
+              "mt-4 flex-col justify-between",
             )}
-
+          >
             <Button
-              type="submit"
-              className="w-full"
+              variant="outline"
+              className={cn("w-full gap-2")}
               disabled={loading}
               onClick={async () => {
-                await signIn.email(
+                await signIn.social(
                   {
-                    email,
-                    password,
+                    provider: "github",
+                    callbackURL: "/dashboard",
                   },
                   {
                     onRequest: (_ctx) => {
@@ -98,86 +187,47 @@ export default function SignIn() {
                 );
               }}
             >
-              {loading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <p>Sign In</p>
-              )}
+              <GithubIcon className="mr-2 h-4 w-4" />
+              Sign in with Github
             </Button>
-
-            <div
-              className={cn(
-                "flex w-full items-center gap-2",
-                "flex-col justify-between",
-              )}
+            {/* Slack */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={async () => {
+                await signIn.social(
+                  {
+                    provider: "slack",
+                    callbackURL: "/dashboard",
+                  },
+                  {
+                    onRequest: (_ctx) => {
+                      setLoading(true);
+                    },
+                    onSuccess: (_ctx) => {
+                      setLoading(false);
+                    },
+                    onError: (ctx) => {
+                      setLoading(false);
+                      setError(ctx.error.message);
+                    },
+                  },
+                );
+              }}
             >
-              <Button
-                variant="outline"
-                className={cn("w-full gap-2")}
-                disabled={loading}
-                onClick={async () => {
-                  await signIn.social(
-                    {
-                      provider: "github",
-                      callbackURL: "/dashboard",
-                    },
-                    {
-                      onRequest: (_ctx) => {
-                        setLoading(true);
-                      },
-                      onSuccess: (_ctx) => {
-                        setLoading(false);
-                      },
-                      onError: (ctx) => {
-                        setLoading(false);
-                        setError(ctx.error.message);
-                      },
-                    },
-                  );
-                }}
-              >
-                <GithubIcon className="mr-2 h-4 w-4" />
-                Sign in with Github
-              </Button>
-              {/* Slack */}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={async () => {
-                  await signIn.social(
-                    {
-                      provider: "slack",
-                      callbackURL: "/dashboard",
-                    },
-                    {
-                      onRequest: (_ctx) => {
-                        setLoading(true);
-                      },
-                      onSuccess: (_ctx) => {
-                        setLoading(false);
-                      },
-                      onError: (ctx) => {
-                        setLoading(false);
-                        setError(ctx.error.message);
-                      },
-                    },
-                  );
-                }}
-              >
-                <SlackIcon className="mr-2 h-4 w-4" />
-                Sign in with Slack
-              </Button>
-            </div>
-            <div className="h-px w-full bg-border" />
-            <div className="text-center text-muted-foreground text-sm">
-              Don't have an account?{" "}
-              <Link
-                href="/auth/signup"
-                className="underline hover:text-foreground"
-              >
-                Sign Up
-              </Link>
-            </div>
+              <SlackIcon className="mr-2 h-4 w-4" />
+              Sign in with Slack
+            </Button>
+          </div>
+          <div className="mt-4 h-px w-full bg-border" />
+          <div className="mt-4 text-center text-muted-foreground text-sm">
+            Don't have an account?{" "}
+            <Link
+              href="/auth/signup"
+              className="underline hover:text-foreground"
+            >
+              Sign Up
+            </Link>
           </div>
         </CardContent>
         <CardFooter>

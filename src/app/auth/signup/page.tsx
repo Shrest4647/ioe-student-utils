@@ -1,5 +1,6 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,61 +16,64 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "@/lib/auth-client";
+import { signUpSchema } from "@/lib/auth-schemas";
 
 export default function SignUp() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [_error, setError] = useState("");
-
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== passwordConfirmation) {
-      setError("Passwords do not match");
-      return;
-    }
-    if (!acceptTerms) {
-      setError("Please accept the terms and conditions");
-      return;
-    }
-    if (!firstName || !lastName) {
-      setError("Please enter your first and last name");
-      return;
-    }
-    setError("");
-    await signUp.email(
-      {
-        email,
-        password,
-        name: `${firstName} ${lastName}`,
-        callbackURL: "/dashboard",
-        role: "user",
-      },
-      {
-        onRequest: () => {
-          setLoading(true);
-        },
-        onSuccess: async () => {
-          setLoading(false);
-          router.push("/dashboard");
-        },
-        onError: (ctx) => {
-          setLoading(false);
-          toast.error(ctx.error.message);
-          setError(ctx.error.message || "Failed to create account");
-        },
-      },
-    );
-  };
+  const form = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      passwordConfirmation: "",
+      acceptTerms: false,
+    },
+    validators: {
+      onSubmit: signUpSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setLoading(true);
+      try {
+        await signUp.email(
+          {
+            email: value.email,
+            password: value.password,
+            name: `${value.firstName} ${value.lastName}`,
+            callbackURL: "/dashboard",
+            role: "user",
+          },
+          {
+            onRequest: () => {
+              setLoading(true);
+            },
+            onSuccess: async () => {
+              setLoading(false);
+              router.push("/dashboard");
+            },
+            onError: (ctx) => {
+              setLoading(false);
+              toast.error(ctx.error.message);
+            },
+          },
+        );
+      } catch (_error) {
+        setLoading(false);
+        toast.error("Failed to create account");
+      }
+    },
+  });
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -81,109 +85,207 @@ export default function SignUp() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="first-name">First name</Label>
-                <Input
-                  id="first-name"
-                  placeholder="Max"
-                  required
-                  onChange={(e) => {
-                    setFirstName(e.target.value);
-                  }}
-                  value={firstName}
-                />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
+          >
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="firstName">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>
+                        <Label htmlFor={field.name}>First name</Label>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          id={field.name}
+                          placeholder="Max"
+                          required
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                        {field.state.meta.isTouched &&
+                        field.state.meta.errors.length ? (
+                          <FieldError>
+                            {field.state.meta.errors.join(", ")}
+                          </FieldError>
+                        ) : null}
+                      </FieldContent>
+                    </Field>
+                  )}
+                </form.Field>
+                <form.Field name="lastName">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>
+                        <Label htmlFor={field.name}>Last name</Label>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Input
+                          id={field.name}
+                          placeholder="Robinson"
+                          required
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                        {field.state.meta.isTouched &&
+                        field.state.meta.errors.length ? (
+                          <FieldError>
+                            {field.state.meta.errors.join(", ")}
+                          </FieldError>
+                        ) : null}
+                      </FieldContent>
+                    </Field>
+                  )}
+                </form.Field>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last-name">Last name</Label>
-                <Input
-                  id="last-name"
-                  placeholder="Robinson"
-                  required
-                  onChange={(e) => {
-                    setLastName(e.target.value);
-                  }}
-                  value={lastName}
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }}
-                value={email}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                placeholder="Password"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Confirm Password</Label>
-              <Input
-                id="password_confirmation"
-                type="password"
-                value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                autoComplete="new-password"
-                placeholder="Confirm Password"
-              />
-            </div>
 
-            <div className="grid gap-2">
-              <div className="flex items-center space-x-4">
-                <Checkbox
-                  id="terms"
-                  checked={acceptTerms}
-                  onCheckedChange={(checked) =>
-                    setAcceptTerms(checked as boolean)
-                  }
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
-                  <Link
-                    href="#terms"
-                    className="text-emerald-600 hover:underline"
+              <form.Field name="email">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>
+                      <Label htmlFor={field.name}>Email</Label>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        type="email"
+                        placeholder="m@example.com"
+                        required
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.join(", ")}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="password">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>
+                      <Label htmlFor={field.name}>Password</Label>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        type="password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Password"
+                      />
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.join(", ")}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="passwordConfirmation">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>
+                      <Label htmlFor={field.name}>Confirm Password</Label>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        type="password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Confirm Password"
+                      />
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.join(", ")}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="acceptTerms">
+                {(field) => (
+                  <Field>
+                    <FieldContent>
+                      <div className="flex items-center space-x-4">
+                        <Checkbox
+                          id={field.name}
+                          checked={field.state.value}
+                          onCheckedChange={(checked) =>
+                            field.handleChange(checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={field.name} className="text-sm">
+                          I agree to the{" "}
+                          <Link
+                            href="#terms"
+                            className="text-emerald-600 hover:underline"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="#privacy"
+                            className="text-emerald-600 hover:underline"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </Label>
+                      </div>
+                      {field.state.meta.isTouched &&
+                      field.state.meta.errors.length ? (
+                        <FieldError>
+                          {field.state.meta.errors.join(", ")}
+                        </FieldError>
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Subscribe
+                selector={(state) => [state.canSubmit, state.isSubmitting]}
+              >
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!canSubmit || isSubmitting}
                   >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="#privacy"
-                    className="text-emerald-600 hover:underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                </Label>
-              </div>
+                    {isSubmitting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      "Create an account"
+                    )}
+                  </Button>
+                )}
+              </form.Subscribe>
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-              onClick={handleEmailSignUp}
-            >
-              {loading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                "Create an account"
-              )}
-            </Button>
-          </div>
+          </form>
         </CardContent>
         <CardFooter>
           <div className="flex w-full justify-center border-t py-4">

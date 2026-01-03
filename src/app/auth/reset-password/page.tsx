@@ -1,9 +1,9 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import type React from "react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -15,53 +15,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { resetPasswordSchema } from "@/lib/auth-schemas";
 
 export default function ResetPasswordPage() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState("");
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
+  const form = useForm({
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    validators: {
+      onSubmit: resetPasswordSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!token) {
+        setError("Invalid reset token");
+        return;
+      }
 
-    if (!token) {
-      setError("Invalid reset token");
-      setIsLoading(false);
-      return;
-    }
+      setIsLoading(true);
+      setError("");
 
-    await authClient.resetPassword(
-      { newPassword: password, token },
-      {
-        onSuccess: () => {
-          setIsSuccess(true);
-        },
-        onError: (ctx: any) => {
-          setError(
-            ctx.error.message || "Failed to reset password. Please try again.",
-          );
-        },
-      },
-    );
-    setIsLoading(false);
-  };
+      try {
+        await authClient.resetPassword(
+          { newPassword: value.password, token },
+          {
+            onSuccess: () => {
+              setIsSuccess(true);
+            },
+            onError: (ctx: any) => {
+              setError(
+                ctx.error.message ||
+                  "Failed to reset password. Please try again.",
+              );
+            },
+          },
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+  });
 
   if (isSuccess) {
     return (
@@ -109,34 +118,75 @@ export default function ResetPasswordPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your new password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm your new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Resetting..." : "Reset password"}
-            </Button>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <form.Field name="password">
+              {(field) => (
+                <Field orientation="vertical">
+                  <FieldLabel>New Password</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      type="password"
+                      placeholder="Enter your new password"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      disabled={isLoading}
+                    />
+                    {field.state.meta.isTouched &&
+                    field.state.meta.errors.length ? (
+                      <FieldError>
+                        {field.state.meta.errors.join(", ")}
+                      </FieldError>
+                    ) : null}
+                  </FieldContent>
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="confirmPassword">
+              {(field) => (
+                <Field orientation="vertical">
+                  <FieldLabel>Confirm Password</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      type="password"
+                      placeholder="Confirm your new password"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      disabled={isLoading}
+                    />
+                    {field.state.meta.isTouched &&
+                    field.state.meta.errors.length ? (
+                      <FieldError>
+                        {field.state.meta.errors.join(", ")}
+                      </FieldError>
+                    ) : null}
+                  </FieldContent>
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+            >
+              {([canSubmit, isSubmitting]) => (
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!canSubmit || isSubmitting}
+                >
+                  {isSubmitting ? "Resetting..." : "Reset password"}
+                </Button>
+              )}
+            </form.Subscribe>
           </form>
         </CardContent>
         <CardFooter>

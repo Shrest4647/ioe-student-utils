@@ -1,9 +1,9 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import type React from "react";
-import { useState } from "react";
+import React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,37 +14,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { forgotPasswordSchema } from "@/lib/auth-schemas";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const [error, setError] = React.useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  const form = useForm({
+    defaultValues: {
+      email: "",
+    },
+    validators: {
+      onSubmit: forgotPasswordSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setIsLoading(true);
+      setError("");
 
-    await authClient.requestPasswordReset(
-      { email },
-      {
-        onSuccess: () => {
-          setIsSubmitted(true);
+      await authClient.requestPasswordReset(
+        { email: value.email },
+        {
+          onSuccess: () => {
+            setIsSubmitted(true);
+          },
+          onError: (ctx: any) => {
+            setError(
+              ctx.error.message ||
+                "Failed to send reset email. Please try again.",
+            );
+          },
         },
-        onError: (ctx: any) => {
-          setError(
-            ctx.error.message ||
-              "Failed to send reset email. Please try again.",
-          );
-        },
-      },
-    );
-    setIsLoading(false);
-  };
+      );
+      setIsLoading(false);
+    },
+  });
 
   if (isSubmitted) {
     return (
@@ -58,7 +70,7 @@ export default function ForgotPasswordPage() {
               Check your email
             </CardTitle>
             <CardDescription>
-              We've sent a password reset link to {email}
+              We've sent a password reset link to {form.getFieldValue("email")}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-muted-foreground text-sm">
@@ -105,22 +117,51 @@ export default function ForgotPasswordPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send reset link"}
-            </Button>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <form.Field name="email">
+              {(field) => (
+                <Field orientation="vertical">
+                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="Enter your email"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      disabled={isLoading}
+                    />
+                    {field.state.meta.isTouched &&
+                    field.state.meta.errors.length ? (
+                      <FieldError>
+                        {field.state.meta.errors.join(", ")}
+                      </FieldError>
+                    ) : null}
+                  </FieldContent>
+                </Field>
+              )}
+            </form.Field>
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+            >
+              {([canSubmit, isSubmitting]) => (
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!canSubmit || isSubmitting}
+                >
+                  {isSubmitting ? "Sending..." : "Send reset link"}
+                </Button>
+              )}
+            </form.Subscribe>
           </form>
         </CardContent>
         <CardFooter>
