@@ -23,7 +23,7 @@ export function Hero() {
             size="lg"
           >
             <Link href={DISCORD_INVITE_URL} target="_blank">
-              Join Discord Community
+              Join Community
             </Link>
           </Button>
           <Button
