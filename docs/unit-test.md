@@ -55,11 +55,11 @@ We may use Eden Treaty to create an end-to-end type safety test for Elysia serve
 // test/index.test.ts
 import { describe, expect, it } from 'bun:test'
 import { Elysia } from 'elysia'
-import { treaty } from '@elysiajs/eden'
+import { edenTreaty } from '@elysiajs/eden'
 
 const app = new Elysia().get('/hello', 'hi')
 
-const api = treaty(app)
+const { api } = edenTreaty(app)
 
 describe('Elysia', () => {
     it('returns a response', async () => {
