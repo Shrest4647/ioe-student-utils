@@ -58,7 +58,7 @@ export default function SignIn() {
               setLoading(false);
               toast.error(ctx.error.message || "Something went wrong");
             },
-          }
+          },
         );
       } catch (error: any) {
         setLoading(false);
@@ -185,7 +185,7 @@ export default function SignIn() {
           <div
             className={cn(
               "flex w-full items-center gap-2",
-              "mt-4 flex-col justify-between"
+              "mt-4 flex-col justify-between",
             )}
           >
             <Button
@@ -209,7 +209,7 @@ export default function SignIn() {
                       setLoading(false);
                       toast.error(ctx.error.message);
                     },
-                  }
+                  },
                 );
               }}
             >
@@ -238,7 +238,7 @@ export default function SignIn() {
                       setLoading(false);
                       toast.error(ctx.error.message);
                     },
-                  }
+                  },
                 );
               }}
             >

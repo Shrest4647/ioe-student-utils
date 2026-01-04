@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ export default function VerifyEmailPage() {
         callbackURL: "/dashboard/settings",
       });
       toast.success("Verification email resent!");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to resend verification email");
     } finally {
       setIsResending(false);
@@ -49,9 +49,9 @@ export default function VerifyEmailPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="z-50 w-full max-w-md rounded-md rounded-t-none">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-emerald-100 rounded-full">
-              <Mail className="w-6 h-6 text-emerald-600" />
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-emerald-100 p-3">
+              <Mail className="h-6 w-6 text-emerald-600" />
             </div>
           </div>
           <CardTitle className="text-xl md:text-2xl">
@@ -66,7 +66,7 @@ export default function VerifyEmailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-center text-muted-foreground">
+          <p className="text-center text-muted-foreground text-sm">
             Please check your inbox and click the link to verify your account.
             If you don't see it, check your spam folder.
           </p>
@@ -98,7 +98,7 @@ export default function VerifyEmailPage() {
         <CardFooter className="flex flex-col space-y-4">
           <Link
             href="/auth/signin"
-            className="flex items-center text-sm text-emerald-600 hover:underline"
+            className="flex items-center text-emerald-600 text-sm hover:underline"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Sign In

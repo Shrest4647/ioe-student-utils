@@ -37,7 +37,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["User"],
         summary: "Get user profile",
       },
-    }
+    },
   )
   // Update user profile
   .put(
@@ -94,7 +94,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["User"],
         summary: "Update user profile",
       },
-    }
+    },
   )
   // List all users (Admin only)
   .get(
@@ -118,7 +118,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["Admin"],
         summary: "List all users (Admin Only)",
       },
-    }
+    },
   )
   // Update any user's profile (Admin or the user themselves)
   .put(
@@ -164,7 +164,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["User"],
         summary: "Update specific user profile (Owner Only)",
       },
-    }
+    },
   )
   // Delete user account
   .post(
@@ -230,5 +230,5 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         tags: ["User"],
         summary: "Delete user account",
       },
-    }
+    },
   );

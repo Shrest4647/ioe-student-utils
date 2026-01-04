@@ -61,7 +61,7 @@ export function DangerZoneSection() {
               typeof error.value === "object" &&
               "error" in error.value
               ? (error.value as { error: string }).error
-              : "Failed to delete account"
+              : "Failed to delete account",
           );
         }
 
@@ -70,7 +70,7 @@ export function DangerZoneSection() {
         router.push("/");
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Failed to delete account"
+          error instanceof Error ? error.message : "Failed to delete account",
         );
       } finally {
         setIsDeleting(false);

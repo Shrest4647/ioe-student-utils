@@ -58,7 +58,7 @@ export default function SignUp() {
             onError: (ctx) => {
               toast.error(ctx.error.message);
             },
-          }
+          },
         );
       } catch (_error) {
         toast.error("Failed to create account");
