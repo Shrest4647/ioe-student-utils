@@ -94,9 +94,10 @@ export const verification = pgTable("verification", {
   ),
 });
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
   account: many(account),
   session: many(session),
+  profile: one(userProfile),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -105,4 +106,24 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, { fields: [session.userId], references: [user.id] }),
+}));
+
+export const userProfile = pgTable("user_profile", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  bio: text("bio"),
+  location: text("location"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const userProfileRelations = relations(userProfile, ({ one }) => ({
+  user: one(user, { fields: [userProfile.userId], references: [user.id] }),
 }));
