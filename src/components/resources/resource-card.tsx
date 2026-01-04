@@ -127,7 +127,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
           </h3>
         </CardHeader>
 
-        <CardContent className="flex-grow p-4 pt-0">
+        <CardContent className="grow p-4 pt-0">
           <p className="line-clamp-3 text-muted-foreground text-sm">
             {resource.description || "No description provided."}
           </p>

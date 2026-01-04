@@ -154,7 +154,7 @@ export function UploadResourceModal({
                     <div className="flex items-center gap-3">
                       <FileIcon className="h-8 w-8 text-primary" />
                       <div className="overflow-hidden">
-                        <p className="max-w-[180px] truncate font-medium text-sm">
+                        <p className="max-w-45 truncate font-medium text-sm">
                           {file.name}
                         </p>
                         <p className="text-muted-foreground text-xs">

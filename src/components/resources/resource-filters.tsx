@@ -35,7 +35,7 @@ export function ResourceFilters({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end">
-        <div className="flex-grow space-y-2">
+        <div className="grow space-y-2">
           <Label
             htmlFor="search-input"
             className="font-semibold text-muted-foreground text-sm uppercase tracking-wider"
