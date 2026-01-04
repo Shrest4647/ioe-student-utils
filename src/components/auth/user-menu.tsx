@@ -1,6 +1,7 @@
 "use client";
 
 import { InfoIcon, LogOut, Settings, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
 
 export function UserMenu() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, isEmailVerified } = useAuth();
   const router = useRouter();
 
   if (!isAuthenticated || !user) {
@@ -73,18 +74,33 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-          <User className="mr-2 h-4 w-4" />
-          <span>Dashboard</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/")}>
-          <InfoIcon className="mr-2 h-4 w-4" />
-          <span>About</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
-        </DropdownMenuItem>
+        {!isEmailVerified && (
+          <Link href="/auth/verify-email">
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4 text-red-500" />
+              <span className="text-red-400">Verify Email</span>
+            </DropdownMenuItem>
+          </Link>
+        )}
+        <Link href="/dashboard">
+          <DropdownMenuItem>
+            <User className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </DropdownMenuItem>
+        </Link>
+
+        <Link href="/">
+          <DropdownMenuItem>
+            <InfoIcon className="mr-2 h-4 w-4" />
+            <span>About</span>
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/dashboard/settings">
+          <DropdownMenuItem>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+        </Link>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={isLoading} onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

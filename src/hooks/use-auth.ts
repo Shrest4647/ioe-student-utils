@@ -10,6 +10,7 @@ export const useAuth = () => {
     user: user || null,
     isLoading: session.isPending || user === undefined,
     isAuthenticated: !!user,
+    isEmailVerified: !!user?.emailVerified,
     session,
   };
 };
