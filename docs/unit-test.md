@@ -1,8 +1,8 @@
 ---
-url: 'https://elysiajs.com/patterns/unit-test.md'
+url: "https://elysiajs.com/patterns/unit-test.md"
 ---
 
-# Unit Test;
+# Unit Test
 
 Being WinterCG compliant, we can use Request / Response classes to test an Elysia server.
 
@@ -14,20 +14,20 @@ Create **test/index.test.ts** in the root of project directory with the followin
 
 ```typescript
 // test/index.test.ts
-import { describe, expect, it } from 'bun:test'
-import { Elysia } from 'elysia'
+import { describe, expect, it } from "bun:test";
+import { Elysia } from "elysia";
 
-describe('Elysia', () => {
-    it('returns a response', async () => {
-        const app = new Elysia().get('/', () => 'hi')
+describe("Elysia", () => {
+  it("returns a response", async () => {
+    const app = new Elysia().get("/", () => "hi");
 
-        const response = await app
-            .handle(new Request('http://localhost/'))
-            .then((res) => res.text())
+    const response = await app
+      .handle(new Request("http://localhost/"))
+      .then((res) => res.text());
 
-        expect(response).toBe('hi')
-    })
-})
+    expect(response).toBe("hi");
+  });
+});
 ```
 
 Then we can perform tests by running **bun test**
@@ -53,23 +53,22 @@ We may use Eden Treaty to create an end-to-end type safety test for Elysia serve
 
 ```typescript twoslash
 // test/index.test.ts
-import { describe, expect, it } from 'bun:test'
-import { Elysia } from 'elysia'
-import { edenTreaty } from '@elysiajs/eden'
+import { describe, expect, it } from "bun:test";
+import { Elysia } from "elysia";
+import { edenTreaty } from "@elysiajs/eden";
 
-const app = new Elysia().get('/hello', 'hi')
+const app = new Elysia().get("/hello", "hi");
 
-const { api } = edenTreaty(app)
+const { api } = edenTreaty(app);
 
-describe('Elysia', () => {
-    it('returns a response', async () => {
-        const { data, error } = await api.hello.get()
+describe("Elysia", () => {
+  it("returns a response", async () => {
+    const { data, error } = await api.hello.get();
 
-        expect(data).toBe('hi')
-              // ^?
-    })
-})
+    expect(data).toBe("hi");
+    // ^?
+  });
+});
 ```
 
 See [Eden Treaty Unit Test](/eden/treaty/unit-test) for setup and more information.
-

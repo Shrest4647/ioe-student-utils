@@ -42,14 +42,14 @@ export const userRoutes = new Elysia({ prefix: "/user" })
   // Update user profile
   .put(
     "/profile",
-    async ({ user: currentUser, body }) => {
+    async ({ user: currentUser, body, request }) => {
       const { name, bio, location } = body;
 
       // Update user name if provided
       if (name !== undefined) {
         await auth.api.updateUser({
           body: { name },
-          headers: new Headers(),
+          headers: request.headers,
         });
       }
 
@@ -155,14 +155,14 @@ export const userRoutes = new Elysia({ prefix: "/user" })
     },
     {
       auth: true,
-      ownerOnly: true,
+      adminOrOwner: true,
       body: t.Object({
         bio: t.Optional(t.String()),
         location: t.Optional(t.String()),
       }),
       detail: {
         tags: ["User"],
-        summary: "Update specific user profile (Owner Only)",
+        summary: "Update specific user profile (Admin or Owner)",
       },
     },
   )
@@ -202,19 +202,22 @@ export const userRoutes = new Elysia({ prefix: "/user" })
         };
       }
 
-      // Delete user profile first (cascade should handle this, but be explicit)
-      await db
-        .delete(userProfile)
-        .where(eq(userProfile.userId, currentUser.id));
+      // Delete user account and related data in a single transaction
+      await db.transaction(async (trx) => {
+        // Delete user profile first (cascade should handle this, but be explicit)
+        await trx
+          .delete(userProfile)
+          .where(eq(userProfile.userId, currentUser.id));
 
-      // Delete user sessions
-      await db.delete(session).where(eq(session.userId, currentUser.id));
+        // Delete user sessions
+        await trx.delete(session).where(eq(session.userId, currentUser.id));
 
-      // Delete user accounts
-      await db.delete(account).where(eq(account.userId, currentUser.id));
+        // Delete user accounts
+        await trx.delete(account).where(eq(account.userId, currentUser.id));
 
-      // Delete user
-      await db.delete(user).where(eq(user.id, currentUser.id));
+        // Delete user
+        await trx.delete(user).where(eq(user.id, currentUser.id));
+      });
 
       return {
         success: true,

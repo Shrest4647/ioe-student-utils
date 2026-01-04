@@ -82,25 +82,25 @@ export function UserMenu() {
             </DropdownMenuItem>
           </Link>
         )}
-        <Link href="/dashboard">
-          <DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard">
             <User className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
-          </DropdownMenuItem>
-        </Link>
+          </Link>
+        </DropdownMenuItem>
 
-        <Link href="/">
-          <DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/">
             <InfoIcon className="mr-2 h-4 w-4" />
             <span>About</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/settings">
-          <DropdownMenuItem>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
-          </DropdownMenuItem>
-        </Link>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={isLoading} onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

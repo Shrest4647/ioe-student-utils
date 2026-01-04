@@ -18,6 +18,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 
 // Social providers configuration
@@ -45,6 +51,8 @@ export function SocialAccountsSection() {
     }
   };
 
+  // TODO: implement unlink via better-auth.unlink
+  // Currently only shows info toast - unlinking functionality not yet implemented
   const handleUnlink = async (provider: string) => {
     setLoading(provider);
     try {
@@ -84,30 +92,48 @@ export function SocialAccountsSection() {
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{provider.name}</span>
                 </div>
-                <Button
-                  variant={isLinked ? "outline" : "default"}
-                  size="sm"
-                  disabled={isLoading}
-                  onClick={() =>
-                    isLinked
-                      ? handleUnlink(provider.id)
-                      : handleLink(provider.id)
-                  }
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isLinked ? (
-                    <>
-                      <Unlink className="mr-2 h-4 w-4" />
-                      Disconnect
-                    </>
-                  ) : (
-                    <>
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Connect
-                    </>
-                  )}
-                </Button>
+                {isLinked ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isLoading}
+                          onClick={() => handleUnlink(provider.id)}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Unlink className="mr-2 h-4 w-4" />
+                              Disconnect
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Unlinking is not yet implemented
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={isLoading}
+                    onClick={() => handleLink(provider.id)}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Connect
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             );
           })}
