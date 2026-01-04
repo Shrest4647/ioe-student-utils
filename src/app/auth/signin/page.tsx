@@ -40,25 +40,30 @@ export default function SignIn() {
       onSubmit: signInSchema,
     },
     onSubmit: async ({ value }) => {
-      await signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onRequest: () => {
-            setLoading(true);
+      try {
+        await signIn.email(
+          {
+            email: value.email,
+            password: value.password,
           },
-          onSuccess: () => {
-            setLoading(false);
-            router.push("/");
-          },
-          onError: (ctx) => {
-            setLoading(false);
-            toast.error(ctx.error.message);
-          },
-        },
-      );
+          {
+            onRequest: () => {
+              setLoading(true);
+            },
+            onSuccess: () => {
+              setLoading(false);
+              router.push("/");
+            },
+            onError: (ctx) => {
+              setLoading(false);
+              toast.error(ctx.error.message || "Something went wrong");
+            },
+          }
+        );
+      } catch (error: any) {
+        setLoading(false);
+        toast.error(error.message);
+      }
     },
   });
 
@@ -180,7 +185,7 @@ export default function SignIn() {
           <div
             className={cn(
               "flex w-full items-center gap-2",
-              "mt-4 flex-col justify-between",
+              "mt-4 flex-col justify-between"
             )}
           >
             <Button
@@ -204,7 +209,7 @@ export default function SignIn() {
                       setLoading(false);
                       toast.error(ctx.error.message);
                     },
-                  },
+                  }
                 );
               }}
             >
@@ -233,7 +238,7 @@ export default function SignIn() {
                       setLoading(false);
                       toast.error(ctx.error.message);
                     },
-                  },
+                  }
                 );
               }}
             >
