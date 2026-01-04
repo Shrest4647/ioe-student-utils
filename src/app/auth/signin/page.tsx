@@ -40,25 +40,30 @@ export default function SignIn() {
       onSubmit: signInSchema,
     },
     onSubmit: async ({ value }) => {
-      await signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onRequest: () => {
-            setLoading(true);
+      try {
+        await signIn.email(
+          {
+            email: value.email,
+            password: value.password,
           },
-          onSuccess: () => {
-            setLoading(false);
-            router.push("/");
+          {
+            onRequest: () => {
+              setLoading(true);
+            },
+            onSuccess: () => {
+              setLoading(false);
+              router.push("/");
+            },
+            onError: (ctx) => {
+              setLoading(false);
+              toast.error(ctx.error.message || "Something went wrong");
+            },
           },
-          onError: (ctx) => {
-            setLoading(false);
-            toast.error(ctx.error.message);
-          },
-        },
-      );
+        );
+      } catch (error: any) {
+        setLoading(false);
+        toast.error(error.message);
+      }
     },
   });
 

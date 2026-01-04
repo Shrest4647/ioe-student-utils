@@ -48,12 +48,12 @@ export default function SignUp() {
             email: value.email,
             password: value.password,
             name: `${value.firstName} ${value.lastName}`,
-            callbackURL: "/dashboard",
+            callbackURL: "/dashboard/settings",
             role: "user",
           },
           {
             onSuccess: async () => {
-              router.push("/dashboard");
+              router.push("/auth/verify-email");
             },
             onError: (ctx) => {
               toast.error(ctx.error.message);

@@ -39,7 +39,7 @@ export function Hero() {
         {/* Hero Image */}
         <div className="mt-12 mb-8">
           <Image
-            src={landingImage.src}
+            src={landingImage}
             alt="Landing image showcasing IOE Student Utils features"
             height={400}
             className="mx-auto h-auto max-w-full rounded-lg shadow-lg"
