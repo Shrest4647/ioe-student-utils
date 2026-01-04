@@ -127,3 +127,109 @@ export const userProfile = pgTable("user_profile", {
 export const userProfileRelations = relations(userProfile, ({ one }) => ({
   user: one(user, { fields: [userProfile.userId], references: [user.id] }),
 }));
+
+// --- Resource Library Tables ---
+
+export const resourceCategories = pgTable("resource_category", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const resourceContentTypes = pgTable("resource_content_type", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(), // e.g., 'Tool', 'Ebook', 'Guide'
+  description: text("description"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const resources = pgTable("resource", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  s3Url: text("s3_url").notNull(),
+  fileFormat: text("file_format").notNull(), // e.g., 'pdf', 'docx'
+  contentTypeId: text("content_type_id")
+    .notNull()
+    .references(() => resourceContentTypes.id),
+  uploaderId: text("uploader_id")
+    .notNull()
+    .references(() => user.id),
+  isFeatured: boolean("is_featured").default(false).notNull(),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const resourcesToCategories = pgTable(
+  "resource_to_category",
+  {
+    resourceId: text("resource_id")
+      .notNull()
+      .references(() => resources.id, { onDelete: "cascade" }),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => resourceCategories.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      pk: [t.resourceId, t.categoryId],
+    },
+  ],
+);
+
+// --- Resource Library Relations ---
+
+export const resourceRelations = relations(resources, ({ one, many }) => ({
+  uploader: one(user, {
+    fields: [resources.uploaderId],
+    references: [user.id],
+  }),
+  contentType: one(resourceContentTypes, {
+    fields: [resources.contentTypeId],
+    references: [resourceContentTypes.id],
+  }),
+  categories: many(resourcesToCategories),
+}));
+
+export const resourceCategoryRelations = relations(
+  resourceCategories,
+  ({ many }) => ({
+    resources: many(resourcesToCategories),
+  }),
+);
+
+export const resourcesToCategoriesRelations = relations(
+  resourcesToCategories,
+  ({ one }) => ({
+    resource: one(resources, {
+      fields: [resourcesToCategories.resourceId],
+      references: [resources.id],
+    }),
+    category: one(resourceCategories, {
+      fields: [resourcesToCategories.categoryId],
+      references: [resourceCategories.id],
+    }),
+  }),
+);
+
+export const resourceContentTypeRelations = relations(
+  resourceContentTypes,
+  ({ many }) => ({
+    resources: many(resources),
+  }),
+);
