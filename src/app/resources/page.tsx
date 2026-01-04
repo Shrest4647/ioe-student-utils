@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ResourceFilters } from "@/components/resources/ResourceFilters";
-import { ResourceGrid } from "@/components/resources/ResourceGrid";
-import { ResourceHero } from "@/components/resources/ResourceHero";
 import {
   type Resource,
   ResourceCard,
 } from "@/components/resources/resource-card";
+import { ResourceFilters } from "@/components/resources/resource-filters";
+import { ResourceGrid } from "@/components/resources/resource-grid";
+import { ResourceHero } from "@/components/resources/resource-hero";
 import { apiClient } from "@/lib/eden";
 
 export default function ResourceLibraryPage() {

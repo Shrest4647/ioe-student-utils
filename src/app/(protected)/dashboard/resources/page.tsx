@@ -4,7 +4,7 @@ import { Clock, Edit2, Eye, FileIcon, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Resource } from "@/components/resources/resource-card";
-import { UploadResourceModal } from "@/components/resources/UploadResourceModal";
+import { UploadResourceModal } from "@/components/resources/upload-resource-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
