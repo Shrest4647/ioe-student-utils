@@ -1,5 +1,6 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { FileIcon, Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -38,78 +39,46 @@ export function UploadResourceModal({
   onSuccess,
 }: UploadResourceModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    contentTypeId: "",
-    categoryIds: [] as string[],
-  });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      if (!formData.title) {
-        setFormData((prev) => ({
-          ...prev,
-          title: selectedFile.name.split(".")[0],
-        }));
-      }
-    }
-  };
-
-  const toggleCategory = (categoryId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categoryIds: prev.categoryIds.includes(categoryId)
-        ? prev.categoryIds.filter((id) => id !== categoryId)
-        : [...prev.categoryIds, categoryId],
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !formData.title || !formData.contentTypeId) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const { data, error } = await apiClient.api.resources.post({
-        title: formData.title,
-        description: formData.description,
-        file: file,
-        contentTypeId: formData.contentTypeId,
-        categoryIds: formData.categoryIds,
-      });
-
-      if (error) {
-        toast.error("Failed to upload resource.");
-      } else if (data?.success) {
-        toast.success("Resource uploaded successfully!");
-        setIsOpen(false);
-        resetForm();
-        onSuccess?.();
-      }
-    } catch (_err) {
-      toast.error("An unexpected error occurred.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFile(null);
-    setFormData({
+  const form = useForm({
+    defaultValues: {
       title: "",
       description: "",
       contentTypeId: "",
-      categoryIds: [],
-    });
-  };
+      categoryIds: [] as string[],
+      file: null as File | null,
+    },
+    onSubmit: async ({ value }) => {
+      if (!value.file || !value.title || !value.contentTypeId) {
+        toast.error("Please fill in all required fields.");
+        return;
+      }
+
+      try {
+        const { data, error } = await apiClient.api.resources.post({
+          title: value.title,
+          description: value.description ?? "",
+          file: value.file,
+          contentTypeId: value.contentTypeId,
+          categoryIds:
+            value.categoryIds.length > 0 ? value.categoryIds : undefined,
+        });
+
+        if (error) {
+          console.error("Upload Error:", error);
+          toast.error("Failed to upload resource.");
+        } else if (data?.success) {
+          toast.success("Resource uploaded successfully!");
+          setIsOpen(false);
+          form.reset();
+          onSuccess?.();
+        }
+      } catch (err) {
+        console.error("Submission Error:", err);
+        toast.error("An unexpected error occurred.");
+      }
+    },
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -119,7 +88,7 @@ export function UploadResourceModal({
           New Resource
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-[80vh]">
         <DialogHeader>
           <DialogTitle>Upload New Resource</DialogTitle>
           <DialogDescription>
@@ -127,145 +96,200 @@ export function UploadResourceModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className="min-w-[80wh] space-y-6 py-4"
+        >
+          <div className="grid grid-cols-1 gap-6">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="file">Resource File *</Label>
-                {!file ? (
-                  <div className="relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50">
-                    <input
-                      type="file"
-                      id="file"
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                      onChange={handleFileChange}
-                      required
-                    />
-                    <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="text-center text-muted-foreground text-sm">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="mt-1 text-muted-foreground text-xs">
-                      PDF, DOCX, XLSX, MD, etc.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-                    <div className="flex items-center gap-3">
-                      <FileIcon className="h-8 w-8 text-primary" />
-                      <div className="overflow-hidden">
-                        <p className="max-w-45 truncate font-medium text-sm">
-                          {file.name}
+              <form.Field name="file">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="file">Resource File *</Label>
+                    {!field.state.value ? (
+                      <div className="relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50">
+                        <input
+                          type="file"
+                          id="file"
+                          className="absolute inset-0 cursor-pointer opacity-0"
+                          onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            if (selectedFile) {
+                              field.handleChange(selectedFile);
+                              if (!form.getFieldValue("title")) {
+                                form.setFieldValue(
+                                  "title",
+                                  selectedFile.name.split(".")[0],
+                                );
+                              }
+                            }
+                          }}
+                          required
+                        />
+                        <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                        <p className="text-center text-muted-foreground text-sm">
+                          Click to upload or drag and drop
                         </p>
-                        <p className="text-muted-foreground text-xs">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        <p className="mt-1 text-muted-foreground text-xs">
+                          PDF, DOCX, XLSX, MD, etc.
                         </p>
                       </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setFile(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    ) : (
+                      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+                        <div className="flex items-center gap-3">
+                          <FileIcon className="h-8 w-8 text-primary" />
+                          <div className="overflow-hidden">
+                            <p className="max-w-45 truncate font-medium text-sm">
+                              {field.state.value.name}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(field.state.value.size / 1024 / 1024).toFixed(
+                                2,
+                              )}{" "}
+                              MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => field.handleChange(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </form.Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g. My Pulchowk Entrance Prep Guide"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
+              <form.Field name="title">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="e.g. My Pulchowk Entrance Prep Guide"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      required
+                    />
+                  </div>
+                )}
+              </form.Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="contentType">Content Type *</Label>
-                <Select
-                  value={formData.contentTypeId}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, contentTypeId: val })
-                  }
-                  required
-                >
-                  <SelectTrigger id="contentType">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contentTypes.map((ct) => (
-                      <SelectItem key={ct.id} value={ct.id}>
-                        {ct.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <form.Field name="contentTypeId">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="contentType">Content Type *</Label>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={field.handleChange}
+                      required
+                    >
+                      <SelectTrigger id="contentType" className="w-[240px]">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contentTypes.map((ct) => (
+                          <SelectItem key={ct.id} value={ct.id}>
+                            {ct.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </form.Field>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Briefly describe what this resource is about..."
-                  className="h-32 resize-none"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
+              <form.Field name="description">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Briefly describe what this resource is about..."
+                      className="h-32 resize-none"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                  </div>
+                )}
+              </form.Field>
 
-              <div className="space-y-3">
-                <Label>Categories (Select all that apply)</Label>
-                <div className="grid h-40 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3">
-                  {categories.map((cat) => (
-                    <div key={cat.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`cat-${cat.id}`}
-                        checked={formData.categoryIds.includes(cat.id)}
-                        onCheckedChange={() => toggleCategory(cat.id)}
-                      />
-                      <Label
-                        htmlFor={`cat-${cat.id}`}
-                        className="cursor-pointer font-normal text-sm leading-none"
-                      >
-                        {cat.name}
-                      </Label>
+              <form.Field name="categoryIds">
+                {(field) => (
+                  <div className="space-y-3">
+                    <Label>Categories (Select all that apply)</Label>
+                    <div className="grid h-40 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3">
+                      {categories.map((cat) => (
+                        <div
+                          key={cat.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`cat-${cat.id}`}
+                            checked={field.state.value.includes(cat.id)}
+                            onCheckedChange={() => {
+                              const current = field.state.value;
+                              const updated = current.includes(cat.id)
+                                ? current.filter((id) => id !== cat.id)
+                                : [...current, cat.id];
+                              field.handleChange(updated);
+                            }}
+                          />
+                          <Label
+                            htmlFor={`cat-${cat.id}`}
+                            className="cursor-pointer font-normal text-sm leading-none"
+                          >
+                            {cat.name}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )}
+              </form.Field>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? (
+            <form.Subscribe selector={(state) => [state.isSubmitting]}>
+              {([isSubmitting]) => (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsOpen(false);
+                      form.reset();
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload Resource"
+                    )}
+                  </Button>
                 </>
-              ) : (
-                "Upload Resource"
               )}
-            </Button>
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>
