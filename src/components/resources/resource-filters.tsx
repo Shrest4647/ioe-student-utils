@@ -1,9 +1,8 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -34,28 +33,7 @@ export function ResourceFilters({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end">
-        <div className="grow space-y-2">
-          <Label
-            htmlFor="search-input"
-            className="font-semibold text-muted-foreground text-sm uppercase tracking-wider"
-          >
-            Search
-          </Label>
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="search-input"
-              placeholder="Search resources..."
-              className="h-11 rounded-lg pl-9"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
-            />
-          </div>
-        </div>
-
+      <div className="flex flex-col justify-between gap-16 md:flex-row md:items-end">
         <div className="w-full space-y-2 md:w-56">
           <Label
             htmlFor="topic-filter"
@@ -69,7 +47,7 @@ export function ResourceFilters({
               setFilters({ ...filters, category: val === "all" ? "" : val })
             }
           >
-            <SelectTrigger id="topic-filter" className="h-11 rounded-lg">
+            <SelectTrigger id="topic-filter" className="h-12 w-full rounded-lg">
               <SelectValue placeholder="All Topics" />
             </SelectTrigger>
             <SelectContent>
@@ -96,7 +74,7 @@ export function ResourceFilters({
               setFilters({ ...filters, contentType: val === "all" ? "" : val })
             }
           >
-            <SelectTrigger id="type-filter" className="h-11 rounded-lg">
+            <SelectTrigger id="type-filter" className="h-12 w-full rounded-lg">
               <SelectValue placeholder="All Content Types" />
             </SelectTrigger>
             <SelectContent>

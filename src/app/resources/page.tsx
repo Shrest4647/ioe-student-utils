@@ -5,7 +5,6 @@ import {
   type Resource,
   ResourceCard,
 } from "@/components/resources/resource-card";
-import { ResourceFilters } from "@/components/resources/resource-filters";
 import { ResourceGrid } from "@/components/resources/resource-grid";
 import { ResourceHero } from "@/components/resources/resource-hero";
 import { apiClient } from "@/lib/eden";
@@ -68,7 +67,12 @@ export default function ResourceLibraryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ResourceHero />
+      <ResourceHero
+        categories={categories}
+        contentTypes={contentTypes}
+        filters={filters}
+        setFilters={setFilters}
+      />
 
       <main className="container mx-auto px-4 py-12">
         {featuredResources.length > 0 && (
@@ -91,15 +95,6 @@ export default function ResourceLibraryPage() {
             </div>
           </div>
         )}
-
-        <div className="mb-12">
-          <ResourceFilters
-            categories={categories}
-            contentTypes={contentTypes}
-            filters={filters}
-            setFilters={setFilters}
-          />
-        </div>
 
         <div className="mb-8 flex items-center justify-between">
           <h2 className="font-bold text-2xl">

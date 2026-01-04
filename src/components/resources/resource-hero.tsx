@@ -4,8 +4,25 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ResourceFilters } from "./resource-filters";
 
-export function ResourceHero() {
+interface ResourceFiltersProps {
+  categories: { id: string; name: string }[];
+  contentTypes: { id: string; name: string }[];
+  filters: {
+    category: string;
+    contentType: string;
+    search: string;
+  };
+  setFilters: (filters: any) => void;
+}
+
+export function ResourceHero({
+  categories,
+  contentTypes,
+  filters,
+  setFilters,
+}: ResourceFiltersProps) {
   return (
     <section className="relative overflow-hidden bg-[#002b2d] py-20 text-white lg:py-32">
       {/* Background decoration */}
@@ -66,8 +83,25 @@ export function ResourceHero() {
               type="text"
               placeholder="Search all resources..."
               className="h-14 w-full rounded-full border-white/20 bg-white/10 pr-6 pl-12 text-white placeholder:text-gray-400 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={filters.search || ""}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
             />
             <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mx-auto mt-12 max-w-xl"
+          >
+            <ResourceFilters
+              categories={categories}
+              contentTypes={contentTypes}
+              filters={filters}
+              setFilters={setFilters}
+            />
           </motion.div>
         </div>
       </div>
