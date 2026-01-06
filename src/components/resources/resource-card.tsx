@@ -42,6 +42,7 @@ export type Resource = {
     name: string;
   };
   createdAt: string;
+  isFeatured: boolean;
 };
 
 interface ResourceCardProps {
@@ -92,21 +93,21 @@ export function ResourceCard({ resource }: ResourceCardProps) {
       transition={{ duration: 0.2 }}
       className="h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-none shadow-md transition-shadow hover:shadow-xl">
+      <Card className="flex h-full flex-col overflow-hidden border-none p-0 shadow-md transition-shadow hover:shadow-xl">
         {/* Top Visual Section */}
         <div
-          className={`relative h-40 ${bgColor} flex items-center justify-center`}
+          className={`relative h-24 ${bgColor} flex items-center justify-center pt-2`}
         >
-          <div className="rounded-lg bg-white/20 p-4 backdrop-blur-sm">
-            <ContentIcon className="h-12 w-12 text-white" />
+          <div className="rounded-lg bg-white/20 p-2 backdrop-blur-sm">
+            <ContentIcon className="h-8 w-8 text-white" />
           </div>
-          <Badge className="absolute top-4 right-4 bg-white/90 text-black hover:bg-white">
+          <Badge className="absolute top-3 right-2 bg-white/90 text-[10px] text-black hover:bg-white">
             {resource.contentType.name}
           </Badge>
         </div>
 
-        <CardHeader className="p-4 pb-2">
-          <div className="mb-2 flex flex-wrap gap-1">
+        <CardHeader className="p-2 pb-0">
+          <div className="mb-1 flex flex-wrap gap-1">
             {resource.categories.slice(0, 2).map((c) => (
               <Badge
                 key={c.category.id}
@@ -122,26 +123,26 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               </Badge>
             )}
           </div>
-          <h3 className="line-clamp-2 font-bold text-lg leading-tight">
+          <h3 className="line-clamp-2 font-semibold text-sm leading-tight">
             {resource.title}
           </h3>
         </CardHeader>
 
-        <CardContent className="grow p-4 pt-0">
-          <p className="line-clamp-3 text-muted-foreground text-sm">
+        <CardContent className="grow p-2 pt-0">
+          <p className="line-clamp-2 text-muted-foreground text-xs">
             {resource.description || "No description provided."}
           </p>
         </CardContent>
 
-        <CardFooter className="mt-auto flex items-center justify-between border-t p-4 pt-0">
-          <div className="flex items-center gap-2 font-medium text-muted-foreground text-xs">
-            <FormatIcon className="h-3.5 w-3.5" />
+        <CardFooter className="mt-auto flex items-center justify-between border-t p-2 pt-0">
+          <div className="flex items-center gap-1.5 font-medium text-[10px] text-muted-foreground">
+            <FormatIcon className="h-3 w-3" />
             <span>{resource.fileFormat.toUpperCase()}</span>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 px-2 font-semibold text-primary hover:bg-primary hover:text-primary-foreground"
+            className="h-6 px-1.5 font-semibold text-[10px] text-primary hover:bg-primary hover:text-primary-foreground"
             asChild
           >
             <a

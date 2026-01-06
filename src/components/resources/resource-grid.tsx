@@ -12,11 +12,11 @@ const SKELETON_KEYS = ["header", "content", "sidebar", "footer", "nav", "main"];
 export function ResourceGrid({ resources, isLoading }: ResourceGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {SKELETON_KEYS.map((key) => (
           <div
             key={`skeleton-${key}`}
-            className="h-80 animate-pulse rounded-xl bg-muted"
+            className="h-48 animate-pulse rounded-lg bg-muted"
           />
         ))}
       </div>
@@ -25,7 +25,7 @@ export function ResourceGrid({ resources, isLoading }: ResourceGridProps) {
 
   if (resources.length === 0) {
     return (
-      <div className="py-20">
+      <div className="py-8">
         <Empty>
           <EmptyTitle>No resources found</EmptyTitle>
           <EmptyDescription>
@@ -37,7 +37,7 @@ export function ResourceGrid({ resources, isLoading }: ResourceGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {resources.map((resource) => (
         <ResourceCard key={resource.id} resource={resource} />
       ))}

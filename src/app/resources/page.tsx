@@ -1,69 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  type Resource,
-  ResourceCard,
-} from "@/components/resources/resource-card";
+import { useState } from "react";
 import { ResourceGrid } from "@/components/resources/resource-grid";
 import { ResourceHero } from "@/components/resources/resource-hero";
-import { apiClient } from "@/lib/eden";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useDebouncedSearch } from "@/hooks/use-debounced-search";
+import { useResourceMetadata } from "@/hooks/use-resource-metadata";
+import { useResources } from "@/hooks/use-resources";
 
 export default function ResourceLibraryPage() {
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    [],
-  );
-  const [contentTypes, setContentTypes] = useState<
-    { id: string; name: string }[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: "",
     contentType: "",
     search: "",
+    limit: "12",
   });
 
-  // Fetch initial data (Categories and Content Types)
-  useEffect(() => {
-    async function fetchMetadata() {
-      const [catRes, ctRes] = await Promise.all([
-        apiClient.api.resources.categories.get(),
-        apiClient.api.resources["content-types"].get(),
-      ]);
+  // Debounce the search input
+  const debouncedSearch = useDebouncedSearch(filters.search, 300);
 
-      if (catRes.data?.success) setCategories(catRes.data.data as any);
-      if (ctRes.data?.success) setContentTypes(ctRes.data.data as any);
+  // Fetch metadata (categories and content types)
+  const {
+    categories,
+    contentTypes,
+    isLoading: isLoadingMetadata,
+  } = useResourceMetadata();
+
+  // Fetch resources with infinite query
+  const {
+    data: resourcesData,
+    isLoading: isLoadingResources,
+    isError,
+    error,
+    fetchNextPage,
+    fetchPreviousPage,
+    hasNextPage,
+    hasPreviousPage,
+  } = useResources({
+    category: filters.category || undefined,
+    contentType: filters.contentType || undefined,
+    search: debouncedSearch || undefined,
+    limit: filters.limit || "12",
+  });
+
+  // Flatten the infinite query data
+  const allResources = resourcesData?.pages.flatMap((page) => page.data) || [];
+  const pagination = resourcesData?.pages[0]?.metadata;
+
+  const featuredResources = allResources.filter((r) => r.isFeatured);
+  const nonFeaturedResources = allResources.filter((r) => !r.isFeatured);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage > (pagination?.currentPage || 1)) {
+      fetchNextPage();
+    } else if (newPage < (pagination?.currentPage || 1)) {
+      fetchPreviousPage();
     }
-    fetchMetadata();
-  }, []);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  // Fetch resources when filters change
-  useEffect(() => {
-    async function fetchResources() {
-      setIsLoading(true);
-      const { data } = await apiClient.api.resources.get({
-        query: {
-          category: filters.category || undefined,
-          contentType: filters.contentType || undefined,
-          search: filters.search || undefined,
-        },
-      });
+  const isLoading = isLoadingMetadata || isLoadingResources;
 
-      if (data?.success) {
-        setResources(data.data as any);
-      }
-      setIsLoading(false);
-    }
-
-    const timer = setTimeout(() => {
-      fetchResources();
-    }, 300); // Debounce search
-
-    return () => clearTimeout(timer);
-  }, [filters]);
-
-  const featuredResources = resources.filter((r: any) => r.isFeatured);
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="rounded-lg bg-red-50 p-4">
+          <h2 className="text-red-800">Error loading resources</h2>
+          <p className="text-red-600">{error?.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,37 +87,60 @@ export default function ResourceLibraryPage() {
         setFilters={setFilters}
       />
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8" id="resources-main">
+        <div className="mb-4 flex w-full items-center justify-end">
+          <h2 className="flex-1 font-bold text-xl">
+            {isLoading
+              ? "Finding resources..."
+              : `${pagination?.totalCount || 0} resources found`}
+          </h2>
+          {pagination && pagination.totalPages > 1 && (
+            <Pagination className="w-full flex-2 justify-end">
+              <PaginationContent className="items-center">
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      handlePageChange((pagination.currentPage || 1) - 1)
+                    }
+                    disabled={
+                      !hasPreviousPage || (pagination.currentPage || 1) === 1
+                    }
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="px-2 text-muted-foreground text-sm">
+                    Page {pagination.currentPage} of {pagination.totalPages}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      handlePageChange((pagination.currentPage || 1) + 1)
+                    }
+                    disabled={!hasNextPage}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+        <div className="mb-4 flex w-full items-center justify-between"></div>
         {featuredResources.length > 0 && (
-          <div className="mb-20">
-            <div className="mb-8 flex items-center gap-3">
+          <div className="mb-8">
+            <div className="mb-4 flex items-center gap-3">
               <div className="h-8 w-1 rounded-full bg-orange-500" />
-              <h2 className="font-bold text-3xl tracking-tight">
+              <h2 className="font-bold text-xl tracking-tight">
                 Featured Resources
               </h2>
             </div>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {featuredResources.slice(0, 3).map((resource) => (
-                <div
-                  key={`featured-${resource.id}`}
-                  className="transform transition-transform hover:scale-[1.02]"
-                >
-                  <ResourceCard resource={resource} />
-                </div>
-              ))}
-            </div>
+            <ResourceGrid resources={featuredResources} isLoading={isLoading} />
           </div>
         )}
-
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="font-bold text-2xl">
-            {isLoading
-              ? "Finding resources..."
-              : `${resources.length} resources found`}
-          </h2>
+        <div className="mb-4 flex items-center gap-3">
+          <div className="h-8 w-1 rounded-full bg-orange-500" />
+          <h2 className="font-bold text-xl tracking-tight">All Resources</h2>
         </div>
-
-        <ResourceGrid resources={resources} isLoading={isLoading} />
+        <ResourceGrid resources={nonFeaturedResources} isLoading={isLoading} />
       </main>
     </div>
   );
