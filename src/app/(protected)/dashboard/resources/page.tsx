@@ -3,6 +3,7 @@
 import { Clock, Edit2, Eye, FileIcon, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EditResourceModal } from "@/components/resources/edit-resource-modal";
 import type { Resource } from "@/components/resources/resource-card";
 import { UploadResourceModal } from "@/components/resources/upload-resource-modal";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +31,16 @@ const DASHBOARD_SKELETON_KEYS = ["row-1", "row-2", "row-3", "row-4", "row-5"];
 export default function ResourceDashboardPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    [],
+    []
   );
   const [contentTypes, setContentTypes] = useState<
     { id: string; name: string }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(
+    null
+  );
 
   const fetchMyResources = useCallback(async () => {
     setIsLoading(true);
@@ -73,6 +78,11 @@ export default function ResourceDashboardPage() {
     }
   };
 
+  function handleEdit(resource: Resource): void {
+    setSelectedResource(resource);
+    setIsEditModalOpen(true);
+  }
+
   return (
     <div className="fade-in container mx-auto max-w-7xl animate-in p-4 duration-500 md:p-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -90,6 +100,18 @@ export default function ResourceDashboardPage() {
           onSuccess={fetchMyResources}
         />
       </div>
+
+      <EditResourceModal
+        resource={selectedResource}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedResource(null);
+        }}
+        categories={categories}
+        contentTypes={contentTypes}
+        onSuccess={fetchMyResources}
+      />
 
       <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
         <CardHeader>
@@ -148,7 +170,7 @@ export default function ResourceDashboardPage() {
                               <Clock className="h-3 w-3" />
                               <span>
                                 {new Date(
-                                  resource.createdAt,
+                                  resource.createdAt
                                 ).toLocaleDateString()}
                               </span>
                               <span className="md:hidden">
@@ -178,7 +200,12 @@ export default function ResourceDashboardPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground"
+                            asChild
+                          >
                             <a
                               href={resource.s3Url}
                               target="_blank"
@@ -189,16 +216,17 @@ export default function ResourceDashboardPage() {
                           </Button>
                           {/* Edit Modal (Story 2 refinement) */}
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
-                            className="text-muted-foreground hover:text-primary"
+                            className="border-blue-500/20 bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white"
+                            onClick={() => handleEdit(resource)}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
-                            className="text-muted-foreground hover:text-destructive"
+                            className="border-red-500/20 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white"
                             onClick={() => handleDelete(resource.id)}
                           >
                             <Trash2 className="h-4 w-4" />
