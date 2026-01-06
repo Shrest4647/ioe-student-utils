@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import { appEnv } from "@/env";
+import { relations } from "./relations";
 import * as schema from "./schema";
 
 /**
@@ -15,4 +16,4 @@ const globalForDb = globalThis as unknown as {
 const conn = globalForDb.conn ?? postgres(appEnv.DATABASE_URL);
 if (appEnv.NODE_ENV !== "production") globalForDb.conn = conn;
 
-export const db = drizzle(conn, { schema });
+export const db = drizzle({ client: conn, schema, relations });

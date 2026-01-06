@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -94,20 +93,6 @@ export const verification = pgTable("verification", {
   ),
 });
 
-export const userRelations = relations(user, ({ many, one }) => ({
-  account: many(account),
-  session: many(session),
-  profile: one(userProfile),
-}));
-
-export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user, { fields: [account.userId], references: [user.id] }),
-}));
-
-export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user, { fields: [session.userId], references: [user.id] }),
-}));
-
 export const userProfile = pgTable("user_profile", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -123,10 +108,6 @@ export const userProfile = pgTable("user_profile", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
-
-export const userProfileRelations = relations(userProfile, ({ one }) => ({
-  user: one(user, { fields: [userProfile.userId], references: [user.id] }),
-}));
 
 // --- Resource Library Tables ---
 
@@ -209,26 +190,3 @@ export const resourceAttachments = pgTable("resource_attachment", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
-
-export const resourceAttachmentsRelations = relations(
-  resourceAttachments,
-  ({ one }) => ({
-    resource: one(resources, {
-      fields: [resourceAttachments.resourceId],
-      references: [resources.id],
-    }),
-  }),
-);
-
-export const resourceRelations = relations(resources, ({ one, many }) => ({
-  uploader: one(user, {
-    fields: [resources.uploaderId],
-    references: [user.id],
-  }),
-  contentType: one(resourceContentTypes, {
-    fields: [resources.contentTypeId],
-    references: [resourceContentTypes.id],
-  }),
-  categories: many(resourcesToCategories),
-  attachments: many(resourceAttachments),
-}));

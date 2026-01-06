@@ -137,11 +137,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       const allResources = await db.query.resources.findMany({
         with: {
           contentType: true,
-          categories: {
-            with: {
-              category: true,
-            },
-          },
+          categories: true,
           uploader: {
             columns: {
               id: true,
@@ -151,34 +147,16 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
           },
           attachments: true,
         },
-        where: (res, { and, eq, ilike, exists }) => {
-          const conditions = [];
-
-          if (contentType) {
-            conditions.push(eq(res.contentTypeId, contentType));
-          }
-
-          if (search) {
-            conditions.push(ilike(res.title, `%${search}%`));
-          }
-
-          if (category) {
-            conditions.push(
-              exists(
-                db
-                  .select()
-                  .from(resourcesToCategories)
-                  .where(
-                    and(
-                      eq(resourcesToCategories.resourceId, res.id),
-                      eq(resourcesToCategories.categoryId, category),
-                    ),
-                  ),
-              ),
-            );
-          }
-
-          return and(...conditions);
+        where: {
+          ...(contentType && { contentTypeId: contentType }),
+          ...(search && { title: { ilike: `%${search}%` } }),
+          ...(category && {
+            categories: {
+              id: {
+                arrayContained: [category],
+              },
+            },
+          }),
         },
       });
 
@@ -189,11 +167,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       const resourcesList = await db.query.resources.findMany({
         with: {
           contentType: true,
-          categories: {
-            with: {
-              category: true,
-            },
-          },
+          categories: true,
           uploader: {
             columns: {
               id: true,
@@ -203,36 +177,18 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
           },
           attachments: true,
         },
-        where: (res, { and, eq, ilike, exists }) => {
-          const conditions = [];
-
-          if (contentType) {
-            conditions.push(eq(res.contentTypeId, contentType));
-          }
-
-          if (search) {
-            conditions.push(ilike(res.title, `%${search}%`));
-          }
-
-          if (category) {
-            conditions.push(
-              exists(
-                db
-                  .select()
-                  .from(resourcesToCategories)
-                  .where(
-                    and(
-                      eq(resourcesToCategories.resourceId, res.id),
-                      eq(resourcesToCategories.categoryId, category),
-                    ),
-                  ),
-              ),
-            );
-          }
-
-          return and(...conditions);
+        where: {
+          ...(contentType && { contentTypeId: contentType }),
+          ...(search && { title: { ilike: `%${search}%` } }),
+          ...(category && {
+            categories: {
+              id: {
+                arrayContained: [category],
+              },
+            },
+          }),
         },
-        orderBy: (res, { desc }) => [desc(res.createdAt)],
+        orderBy: { createdAt: "desc" },
         limit: limitNum,
         offset: offset,
       });
@@ -267,17 +223,15 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
     "/mine",
     async ({ user }) => {
       const myResources = await db.query.resources.findMany({
-        where: eq(resources.uploaderId, user.id),
+        where: {
+          uploaderId: user.id,
+        },
         with: {
           contentType: true,
-          categories: {
-            with: {
-              category: true,
-            },
-          },
+          categories: true,
           attachments: true,
         },
-        orderBy: (resources, { desc }) => [desc(resources.createdAt)],
+        orderBy: { createdAt: "desc" },
       });
 
       return {
@@ -297,14 +251,10 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
     "/:id",
     async ({ params: { id }, set }) => {
       const resource = await db.query.resources.findFirst({
-        where: eq(resources.id, id),
+        where: { id },
         with: {
           contentType: true,
-          categories: {
-            with: {
-              category: true,
-            },
-          },
+          categories: true,
           uploader: {
             columns: {
               id: true,
@@ -466,7 +416,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       } = body;
 
       const existing = await db.query.resources.findFirst({
-        where: eq(resources.id, id),
+        where: { id },
       });
 
       if (!existing) {
@@ -594,7 +544,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
     "/:id",
     async ({ params: { id }, user, set }) => {
       const existing = await db.query.resources.findFirst({
-        where: eq(resources.id, id),
+        where: { id },
       });
 
       if (!existing) {
@@ -631,7 +581,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
     "/:id/attachments",
     async ({ params: { id } }) => {
       const attachments = await db.query.resourceAttachments.findMany({
-        where: eq(resourceAttachments.resourceId, id),
+        where: { resourceId: id },
       });
 
       return {
@@ -653,7 +603,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
 
       // Verify resource exists and user has permission
       const existing = await db.query.resources.findFirst({
-        where: eq(resources.id, id),
+        where: { id },
       });
 
       if (!existing) {
@@ -715,7 +665,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
     async ({ params: { id, attachmentId }, user, set }) => {
       // Verify resource exists and user has permission
       const existing = await db.query.resources.findFirst({
-        where: eq(resources.id, id),
+        where: { id },
       });
 
       if (!existing) {
