@@ -1,8 +1,15 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { Loader2, Pencil } from "lucide-react";
-import { useState } from "react";
+import {
+  ExternalLink,
+  FileIcon,
+  Loader2,
+  Plus,
+  SaveIcon,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Resource } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +43,12 @@ interface EditResourceModalProps {
   onSuccess?: () => void;
 }
 
+interface NewUrlAttachment {
+  id: string;
+  name: string;
+  url: string;
+}
+
 export function EditResourceModal({
   resource,
   isOpen,
@@ -45,6 +58,46 @@ export function EditResourceModal({
   onSuccess,
 }: EditResourceModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newUrlName, setNewUrlName] = useState("");
+  const [newUrlValue, setNewUrlValue] = useState("");
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    [],
+  );
+  const [newUrlAttachments, setNewUrlAttachments] = useState<
+    NewUrlAttachment[]
+  >([]);
+
+  const addNewUrlAttachment = () => {
+    if (!newUrlName || !newUrlValue) {
+      toast.error("Please fill in both name and URL fields.");
+      return;
+    }
+    if (
+      !newUrlValue.startsWith("http://") &&
+      !newUrlValue.startsWith("https://")
+    ) {
+      toast.error("URL must start with http:// or https://");
+      return;
+    }
+    setNewUrlAttachments([
+      ...newUrlAttachments,
+      { id: crypto.randomUUID(), name: newUrlName, url: newUrlValue },
+    ]);
+    setNewUrlName("");
+    setNewUrlValue("");
+  };
+
+  const removeNewUrlAttachment = (id: string) => {
+    setNewUrlAttachments(newUrlAttachments.filter((a) => a.id !== id));
+  };
+
+  const removeExistingAttachment = (id: string) => {
+    setRemovedAttachmentIds([...removedAttachmentIds, id]);
+  };
+
+  const restoreRemovedAttachment = (id: string) => {
+    setRemovedAttachmentIds(removedAttachmentIds.filter((a) => a !== id));
+  };
 
   const form = useForm({
     defaultValues: {
@@ -63,6 +116,26 @@ export function EditResourceModal({
 
       setIsSubmitting(true);
       try {
+        // Build attachments payload
+        const attachments: {
+          add?: Array<{ type: "url"; name: string; url: string }>;
+          remove?: string[];
+        } = {};
+
+        // Add new URL attachments
+        if (newUrlAttachments.length > 0) {
+          attachments.add = newUrlAttachments.map((a) => ({
+            type: "url" as const,
+            name: a.name,
+            url: a.url,
+          }));
+        }
+
+        // Mark removed attachments
+        if (removedAttachmentIds.length > 0) {
+          attachments.remove = removedAttachmentIds;
+        }
+
         const { data, error } = await apiClient.api
           .resources({
             id: resource.id,
@@ -73,6 +146,8 @@ export function EditResourceModal({
             contentTypeId: value.contentTypeId,
             categoryIds:
               value.categoryIds.length > 0 ? value.categoryIds : undefined,
+            attachments:
+              Object.keys(attachments).length > 0 ? attachments : undefined,
           });
 
         if (error) {
@@ -93,8 +168,8 @@ export function EditResourceModal({
   });
 
   // Reset form when resource changes
-  const handleOpenChange = (open: boolean) => {
-    if (open && resource) {
+  useEffect(() => {
+    if (isOpen && resource) {
       form.setFieldValue("title", resource.title);
       form.setFieldValue("description", resource.description ?? "");
       form.setFieldValue("contentTypeId", resource.contentType.id);
@@ -102,10 +177,25 @@ export function EditResourceModal({
         "categoryIds",
         resource.categories.map((c) => c.category.id),
       );
-    } else if (!open) {
+      // Reset attachment state
+      setRemovedAttachmentIds([]);
+      setNewUrlAttachments([]);
+      setNewUrlName("");
+      setNewUrlValue("");
+    }
+  }, [isOpen, resource, form]);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
       onClose();
     }
   };
+
+  // Get existing attachments that haven't been removed
+  const existingAttachments =
+    resource?.attachments?.filter(
+      (a) => !removedAttachmentIds.includes(a.id),
+    ) || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -166,6 +256,135 @@ export function EditResourceModal({
                   </div>
                 )}
               </form.Field>
+
+              {/* Existing Attachments Section */}
+              <div className="space-y-2">
+                <Label>Existing Attachments</Label>
+                <div className="space-y-2 rounded-lg border p-3">
+                  {existingAttachments.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      No attachments remaining
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {existingAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className={`flex items-center justify-between rounded-md p-2 ${
+                            removedAttachmentIds.includes(attachment.id)
+                              ? "bg-muted/30 opacity-50"
+                              : "bg-muted/30"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            {attachment.type === "url" ? (
+                              <ExternalLink className="h-4 w-4 flex-shrink-0 text-primary" />
+                            ) : (
+                              <FileIcon className="h-4 w-4 flex-shrink-0 text-primary" />
+                            )}
+                            <div className="overflow-hidden">
+                              <p className="truncate font-medium text-sm">
+                                {attachment.name}
+                              </p>
+                              <p className="truncate text-muted-foreground text-xs">
+                                {attachment.type === "url"
+                                  ? attachment.url
+                                  : attachment.url.split("/").pop() ||
+                                    attachment.name}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              removedAttachmentIds.includes(attachment.id)
+                                ? restoreRemovedAttachment(attachment.id)
+                                : removeExistingAttachment(attachment.id)
+                            }
+                            className={
+                              removedAttachmentIds.includes(attachment.id)
+                                ? "text-green-600 hover:text-green-700"
+                                : "text-destructive hover:text-destructive"
+                            }
+                          >
+                            {removedAttachmentIds.includes(attachment.id) ? (
+                              <Plus className="h-4 w-4" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* New URL Attachments Section */}
+              <div className="space-y-2">
+                <Label>Add New URL Attachments</Label>
+                <div className="space-y-3 rounded-lg border p-3">
+                  {newUrlAttachments.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      No new URLs to add
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {newUrlAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center justify-between rounded-md bg-muted/30 p-2"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <ExternalLink className="h-4 w-4 flex-shrink-0 text-primary" />
+                            <div className="overflow-hidden">
+                              <p className="truncate font-medium text-sm">
+                                {attachment.name}
+                              </p>
+                              <p className="truncate text-muted-foreground text-xs">
+                                {attachment.url}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              removeNewUrlAttachment(attachment.id)
+                            }
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Name (e.g., Reference Link)"
+                      value={newUrlName}
+                      onChange={(e) => setNewUrlName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      placeholder="https://example.com"
+                      value={newUrlValue}
+                      onChange={(e) => setNewUrlValue(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addNewUrlAttachment}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -238,7 +457,7 @@ export function EditResourceModal({
                 </>
               ) : (
                 <>
-                  <Pencil className="mr-2 h-4 w-4" />
+                  <SaveIcon className="mr-2 h-4 w-4" />
                   Save Changes
                 </>
               )}

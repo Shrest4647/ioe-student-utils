@@ -31,7 +31,7 @@ const DASHBOARD_SKELETON_KEYS = ["row-1", "row-2", "row-3", "row-4", "row-5"];
 export default function ResourceDashboardPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
+    [],
   );
   const [contentTypes, setContentTypes] = useState<
     { id: string; name: string }[]
@@ -39,7 +39,7 @@ export default function ResourceDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(
-    null
+    null,
   );
 
   const fetchMyResources = useCallback(async () => {
@@ -170,7 +170,7 @@ export default function ResourceDashboardPage() {
                               <Clock className="h-3 w-3" />
                               <span>
                                 {new Date(
-                                  resource.createdAt
+                                  resource.createdAt,
                                 ).toLocaleDateString()}
                               </span>
                               <span className="md:hidden">

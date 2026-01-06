@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   FileText,
   Layout,
+  Paperclip,
   Wrench,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,15 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+
+export interface ResourceAttachment {
+  id: string;
+  type: "file" | "url";
+  url: string;
+  name: string;
+  fileFormat: string | null;
+  createdAt: string;
+}
 
 export type Resource = {
   id: string;
@@ -43,6 +53,7 @@ export type Resource = {
   };
   createdAt: string;
   isFeatured: boolean;
+  attachments?: ResourceAttachment[];
 };
 
 interface ResourceCardProps {
@@ -79,9 +90,14 @@ const contentTypeIcons: Record<string, any> = {
 };
 
 export function ResourceCard({ resource }: ResourceCardProps) {
-  const FormatIcon = formatIcons[resource.fileFormat.toLowerCase()] || FileText;
   const ContentIcon = contentTypeIcons[resource.contentType.name] || BookOpen;
   const bgColor = contentTypeColors[resource.contentType.name] || "bg-gray-500";
+
+  // Get the primary attachment for the card display
+  const primaryAttachment = resource.attachments?.[0];
+  const fileFormat = primaryAttachment?.fileFormat || resource.fileFormat;
+  const primaryUrl = primaryAttachment?.url || resource.s3Url;
+  const FormatIcon = formatIcons[fileFormat?.toLowerCase()] || FileText;
 
   return (
     <motion.div
@@ -132,12 +148,19 @@ export function ResourceCard({ resource }: ResourceCardProps) {
           <p className="line-clamp-2 text-muted-foreground text-xs">
             {resource.description || "No description provided."}
           </p>
+          {/* Show attachment count if multiple */}
+          {resource.attachments && resource.attachments.length > 1 && (
+            <div className="mt-2 flex items-center gap-1 text-muted-foreground text-xs">
+              <Paperclip className="h-3 w-3" />
+              <span>{resource.attachments.length} attachments</span>
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="mt-auto flex items-center justify-between border-t p-2 pt-0">
           <div className="flex items-center gap-1.5 font-medium text-[10px] text-muted-foreground">
             <FormatIcon className="h-3 w-3" />
-            <span>{resource.fileFormat.toUpperCase()}</span>
+            <span>{fileFormat?.toUpperCase() || "FILE"}</span>
           </div>
           <Button
             size="sm"
@@ -146,7 +169,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
             asChild
           >
             <a
-              href={resource.s3Url}
+              href={primaryUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"

@@ -1,7 +1,15 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { FileIcon, Loader2, Upload, X } from "lucide-react";
+import {
+  ExternalLink,
+  FileIcon,
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,12 +41,45 @@ interface UploadResourceModalProps {
   onSuccess?: () => void;
 }
 
+interface UrlAttachment {
+  id: string;
+  name: string;
+  url: string;
+}
+
 export function UploadResourceModal({
   categories,
   contentTypes,
   onSuccess,
 }: UploadResourceModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [urlAttachments, setUrlAttachments] = useState<UrlAttachment[]>([]);
+  const [newUrlName, setNewUrlName] = useState("");
+  const [newUrlValue, setNewUrlValue] = useState("");
+
+  const addUrlAttachment = () => {
+    if (!newUrlName || !newUrlValue) {
+      toast.error("Please fill in both name and URL fields.");
+      return;
+    }
+    if (
+      !newUrlValue.startsWith("http://") &&
+      !newUrlValue.startsWith("https://")
+    ) {
+      toast.error("URL must start with http:// or https://");
+      return;
+    }
+    setUrlAttachments([
+      ...urlAttachments,
+      { id: crypto.randomUUID(), name: newUrlName, url: newUrlValue },
+    ]);
+    setNewUrlName("");
+    setNewUrlValue("");
+  };
+
+  const removeUrlAttachment = (id: string) => {
+    setUrlAttachments(urlAttachments.filter((a) => a.id !== id));
+  };
 
   const form = useForm({
     defaultValues: {
@@ -46,22 +87,44 @@ export function UploadResourceModal({
       description: "",
       contentTypeId: "",
       categoryIds: [] as string[],
-      file: null as File | null,
+      files: [] as File[],
     },
     onSubmit: async ({ value }) => {
-      if (!value.file || !value.title || !value.contentTypeId) {
-        toast.error("Please fill in all required fields.");
+      if (
+        (value.files.length === 0 && urlAttachments.length === 0) ||
+        !value.title ||
+        !value.contentTypeId
+      ) {
+        toast.error(
+          "Please add at least one attachment and fill in all required fields.",
+        );
         return;
       }
 
       try {
+        // Build attachments array for API
+        const fileAttachments = value.files.map((file) => ({
+          type: "file" as const,
+          name: file.name,
+        }));
+
+        // Add URL attachments
+        const urlAttachmentsData = urlAttachments.map((attachment) => ({
+          type: "url" as const,
+          name: attachment.name,
+          url: attachment.url,
+        }));
+
+        const attachments = [...fileAttachments, ...urlAttachmentsData];
+
         const { data, error } = await apiClient.api.resources.post({
           title: value.title,
           description: value.description ?? "",
-          file: value.file,
+          files: value.files,
           contentTypeId: value.contentTypeId,
           categoryIds:
             value.categoryIds.length > 0 ? value.categoryIds : undefined,
+          attachments,
         });
 
         if (error) {
@@ -71,6 +134,7 @@ export function UploadResourceModal({
           toast.success("Resource uploaded successfully!");
           setIsOpen(false);
           form.reset();
+          setUrlAttachments([]);
           onSuccess?.();
         }
       } catch (err) {
@@ -106,67 +170,161 @@ export function UploadResourceModal({
         >
           <div className="grid grid-cols-1 gap-6">
             <div className="space-y-4">
-              <form.Field name="file">
+              <form.Field name="files">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor="file">Resource File *</Label>
-                    {!field.state.value ? (
+                    <Label htmlFor="files">Resource Files *</Label>
+                    {field.state.value.length === 0 ? (
                       <div className="relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50">
                         <input
                           type="file"
-                          id="file"
+                          id="files"
+                          multiple
                           className="absolute inset-0 cursor-pointer opacity-0"
                           onChange={(e) => {
-                            const selectedFile = e.target.files?.[0];
-                            if (selectedFile) {
-                              field.handleChange(selectedFile);
-                              if (!form.getFieldValue("title")) {
+                            const selectedFiles = Array.from(
+                              e.target.files || [],
+                            );
+                            if (selectedFiles.length > 0) {
+                              field.handleChange([
+                                ...field.state.value,
+                                ...selectedFiles,
+                              ]);
+                              if (
+                                !form.getFieldValue("title") &&
+                                selectedFiles[0]
+                              ) {
                                 form.setFieldValue(
                                   "title",
-                                  selectedFile.name.split(".")[0],
+                                  selectedFiles[0].name.split(".")[0],
                                 );
                               }
                             }
                           }}
-                          required
                         />
                         <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                         <p className="text-center text-muted-foreground text-sm">
-                          Click to upload or drag and drop
+                          Click to upload or drag and drop (multiple files
+                          allowed)
                         </p>
                         <p className="mt-1 text-muted-foreground text-xs">
                           PDF, DOCX, XLSX, MD, etc.
                         </p>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-                        <div className="flex items-center gap-3">
-                          <FileIcon className="h-8 w-8 text-primary" />
-                          <div className="overflow-hidden">
-                            <p className="max-w-45 truncate font-medium text-sm">
-                              {field.state.value.name}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {(field.state.value.size / 1024 / 1024).toFixed(
-                                2,
-                              )}{" "}
-                              MB
-                            </p>
+                      <div className="space-y-2">
+                        {field.state.value.map((file, index) => (
+                          <div
+                            key={`${file.name}-${index}`}
+                            className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileIcon className="h-6 w-6 text-primary" />
+                              <div className="overflow-hidden">
+                                <p className="max-w-45 truncate font-medium text-sm">
+                                  {file.name}
+                                </p>
+                                <p className="text-muted-foreground text-xs">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const newFiles = field.state.value.filter(
+                                  (_, i) => i !== index,
+                                );
+                                field.handleChange(newFiles);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </div>
+                        ))}
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => field.handleChange(null)}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const input = document.getElementById(
+                              "files",
+                            ) as HTMLInputElement;
+                            input?.click();
+                          }}
                         >
-                          <X className="h-4 w-4" />
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add More Files
                         </Button>
                       </div>
                     )}
                   </div>
                 )}
               </form.Field>
+
+              {/* URL Attachments Section */}
+              <div className="space-y-2">
+                <Label>URL Attachments (Optional)</Label>
+                <div className="space-y-3 rounded-lg border p-3">
+                  {urlAttachments.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      No URL attachments added
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {urlAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center justify-between rounded-md bg-muted/30 p-2"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <ExternalLink className="h-4 w-4 flex-shrink-0 text-primary" />
+                            <div className="overflow-hidden">
+                              <p className="truncate font-medium text-sm">
+                                {attachment.name}
+                              </p>
+                              <p className="truncate text-muted-foreground text-xs">
+                                {attachment.url}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeUrlAttachment(attachment.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Name (e.g., Reference Link)"
+                      value={newUrlName}
+                      onChange={(e) => setNewUrlName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      placeholder="https://example.com"
+                      value={newUrlValue}
+                      onChange={(e) => setNewUrlValue(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addUrlAttachment}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
               <form.Field name="title">
                 {(field) => (
@@ -272,6 +430,7 @@ export function UploadResourceModal({
                     onClick={() => {
                       setIsOpen(false);
                       form.reset();
+                      setUrlAttachments([]);
                     }}
                     disabled={isSubmitting}
                   >

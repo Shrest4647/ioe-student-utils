@@ -1,5 +1,6 @@
 import { db } from "./index";
 import {
+  resourceAttachments,
   resourceCategories,
   resourceContentTypes,
   resources,
@@ -318,6 +319,23 @@ async function seed() {
       await db.insert(resourcesToCategories).values(resourceCategoryMappings);
       console.log(
         `✅ Inserted ${resourceCategoryMappings.length} resource-category mappings.`,
+      );
+
+      // Create resource attachments
+      const resourceAttachmentData = sampleResources.map((resource) => ({
+        id: crypto.randomUUID(),
+        resourceId: resource.id,
+        type: "file" as const,
+        url: resource.s3Url,
+        name: `${resource.title.replace(/[^a-zA-Z0-9]/g, "_")}.${resource.fileFormat}`,
+        fileFormat: resource.fileFormat,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
+      await db.insert(resourceAttachments).values(resourceAttachmentData);
+      console.log(
+        `✅ Inserted ${resourceAttachmentData.length} resource attachments.`,
       );
     } else {
       console.log("⏭️ Resources already seeded.");
