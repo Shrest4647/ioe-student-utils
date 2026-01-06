@@ -207,7 +207,9 @@ export default function ResourceDashboardPage() {
                             asChild
                           >
                             <a
-                              href={resource.s3Url}
+                              href={
+                                resource.attachments?.[0]?.url || resource.s3Url
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                             >

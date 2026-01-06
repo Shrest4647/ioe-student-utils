@@ -1,6 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { Elysia, t } from "elysia";
-import { uploadToS3 } from "@/lib/s3";
+import {
+  extractKeyFromUrl,
+  generatePresignedPreviewUrl,
+  generatePresignedUploadUrl,
+} from "@/lib/s3";
 import { db } from "@/server/db";
 import {
   resourceAttachments,
@@ -11,10 +15,33 @@ import {
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
+// Helper function to generate presigned URLs for file attachments
+async function processAttachments(attachments: any[]) {
+  const processed = await Promise.all(
+    attachments.map(async (attachment) => {
+      if (attachment.type === "file") {
+        const key = extractKeyFromUrl(attachment.url);
+        if (key) {
+          try {
+            const presignedUrl = await generatePresignedPreviewUrl(key);
+            return { ...attachment, url: presignedUrl };
+          } catch (error) {
+            console.error("Failed to generate presigned URL for", key, error);
+            return attachment; // fallback to original URL
+          }
+        }
+      }
+      return attachment;
+    }),
+  );
+  return processed;
+}
+
 // --- Attachment Input Types ---
 const attachmentFileSchema = t.Object({
   name: t.String({ minLength: 1 }),
   type: t.Literal("file"),
+  url: t.String({ minLength: 1 }),
 });
 
 const attachmentUrlSchema = t.Object({
@@ -121,6 +148,34 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       },
     },
   )
+  // --- Presigned URLs ---
+  .post(
+    "/presigned-upload",
+    async ({ body }) => {
+      const { fileName, contentType } = body;
+
+      const { url, key } = await generatePresignedUploadUrl({
+        fileName,
+        contentType,
+      });
+
+      return {
+        success: true,
+        data: { url, key },
+      };
+    },
+    {
+      auth: true,
+      body: t.Object({
+        fileName: t.String({ minLength: 1 }),
+        contentType: t.String({ minLength: 1 }),
+      }),
+      detail: {
+        tags: ["Resources"],
+        summary: "Generate presigned upload URL for a file",
+      },
+    },
+  )
   // --- Resources (Listing) ---
   .get(
     "/",
@@ -193,9 +248,19 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         offset: offset,
       });
 
+      // Process attachments to generate presigned URLs
+      const processedResources = await Promise.all(
+        resourcesList.map(async (resource) => ({
+          ...resource,
+          attachments: resource.attachments
+            ? await processAttachments(resource.attachments)
+            : [],
+        })),
+      );
+
       return {
         success: true,
-        data: resourcesList,
+        data: processedResources,
         metadata: {
           totalCount,
           totalPages,
@@ -234,9 +299,19 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         orderBy: { createdAt: "desc" },
       });
 
+      // Process attachments to generate presigned URLs
+      const processedResources = await Promise.all(
+        myResources.map(async (resource) => ({
+          ...resource,
+          attachments: resource.attachments
+            ? await processAttachments(resource.attachments)
+            : [],
+        })),
+      );
+
       return {
         success: true,
-        data: myResources,
+        data: processedResources,
       };
     },
     {
@@ -271,9 +346,17 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         return { success: false, error: "Resource not found" };
       }
 
+      // Process attachments to generate presigned URLs
+      const processedResource = {
+        ...resource,
+        attachments: resource.attachments
+          ? await processAttachments(resource.attachments)
+          : [],
+      };
+
       return {
         success: true,
-        data: resource,
+        data: processedResource,
       };
     },
     {
@@ -308,7 +391,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
 
       const resourceId = crypto.randomUUID();
 
-      // Process attachments: upload files to S3 and collect attachment data
+      // Process attachments: collect attachment data (files already uploaded via presigned URLs)
       const processedAttachments: Array<{
         id: string;
         resourceId: string;
@@ -325,29 +408,16 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       ) {
         for (const attachment of normalizedAttachments) {
           if (attachment.type === "file") {
-            // For file uploads, we need to handle the File object
-            // Note: In Elysia with t.Files(), we get an array of files
-            const files = body.files as unknown as File[];
-            const file = files?.[0];
-            if (file) {
-              const fileName = file.name;
-              const fileFormat = fileName.split(".").pop() ?? "unknown";
+            const fileFormat = attachment.name.split(".").pop() ?? "unknown";
 
-              const { url } = await uploadToS3({
-                file: new Uint8Array(await file.arrayBuffer()),
-                fileName,
-                contentType: file.type,
-              });
-
-              processedAttachments.push({
-                id: crypto.randomUUID(),
-                resourceId,
-                type: "file",
-                url,
-                name: attachment.name,
-                fileFormat,
-              });
-            }
+            processedAttachments.push({
+              id: crypto.randomUUID(),
+              resourceId,
+              type: "file",
+              url: attachment.url,
+              name: attachment.name,
+              fileFormat,
+            });
           } else if (attachment.type === "url") {
             processedAttachments.push({
               id: crypto.randomUUID(),
@@ -410,7 +480,6 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       body: t.Object({
         title: t.String({ minLength: 1 }),
         description: t.Optional(t.String()),
-        files: t.Files(),
         contentTypeId: t.String(),
         categoryIds: t.Optional(t.Union([t.String(), t.Array(t.String())])),
         attachments: t.Optional(

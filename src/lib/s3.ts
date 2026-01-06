@@ -1,4 +1,9 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { appEnv } from "@/env";
 
 const s3Client = new S3Client({
@@ -48,4 +53,55 @@ export async function uploadToS3(params: {
     key,
     url,
   };
+}
+
+/**
+ * Generate a presigned URL for uploading a file to S3.
+ */
+export async function generatePresignedUploadUrl(params: {
+  fileName: string;
+  contentType: string;
+}): Promise<{ url: string; key: string }> {
+  const { fileName, contentType } = params;
+  const key = `resources/${crypto.randomUUID()}-${fileName}`;
+
+  const command = new PutObjectCommand({
+    Bucket: appEnv.S3_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
+  });
+
+  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+
+  return { url, key };
+}
+
+/**
+ * Generate a presigned URL for previewing/downloading a file from S3.
+ */
+export async function generatePresignedPreviewUrl(
+  key: string,
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: appEnv.S3_BUCKET_NAME,
+    Key: key,
+  });
+
+  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+
+  return url;
+}
+
+/**
+ * Extract the S3 key from a full S3 URL.
+ */
+export function extractKeyFromUrl(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    const path = urlObj.pathname;
+    // Remove leading slash
+    return path.startsWith("/") ? path.slice(1) : path;
+  } catch {
+    return null;
+  }
 }

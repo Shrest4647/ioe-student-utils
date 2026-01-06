@@ -102,10 +102,48 @@ export function UploadResourceModal({
       }
 
       try {
+        // Upload files to S3 using presigned URLs
+        const uploadedFiles: Array<{ name: string; url: string; key: string }> =
+          [];
+        for (const file of value.files) {
+          const { data: presignedData } = await apiClient.api.resources[
+            "presigned-upload"
+          ].post({
+            fileName: file.name,
+            contentType: file.type,
+          });
+
+          if (!presignedData?.success) {
+            throw new Error("Failed to get presigned upload URL");
+          }
+
+          const { url: uploadUrl, key } = presignedData.data;
+
+          // Upload file to S3
+          const response = await fetch(uploadUrl, {
+            method: "PUT",
+            body: file,
+            headers: {
+              "Content-Type": file.type,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to upload file to S3");
+          }
+
+          uploadedFiles.push({
+            name: file.name,
+            url: uploadUrl.split("?")[0], // Remove query params
+            key,
+          });
+        }
+
         // Build attachments array for API
-        const fileAttachments = value.files.map((file) => ({
+        const fileAttachments = uploadedFiles.map((file) => ({
           type: "file" as const,
           name: file.name,
+          url: file.url,
         }));
 
         // Add URL attachments
@@ -120,7 +158,6 @@ export function UploadResourceModal({
         const { data, error } = await apiClient.api.resources.post({
           title: value.title,
           description: value.description ?? "",
-          files: value.files,
           contentTypeId: value.contentTypeId,
           categoryIds:
             value.categoryIds.length > 0 ? value.categoryIds : undefined,
