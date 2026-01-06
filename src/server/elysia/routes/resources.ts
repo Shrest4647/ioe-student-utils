@@ -110,8 +110,66 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
   .get(
     "/",
     async ({ query }) => {
-      const { category, contentType, search } = query;
+      const { category, contentType, search, page, limit } = query;
 
+      const p = page ?? "1";
+      const l = limit ?? "10";
+      const pageNum = Math.max(1, parseInt(p, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(l, 10) || 10));
+      const offset = (pageNum - 1) * limitNum;
+
+      // Get total count for pagination metadata
+      const allResources = await db.query.resources.findMany({
+        with: {
+          contentType: true,
+          categories: {
+            with: {
+              category: true,
+            },
+          },
+          uploader: {
+            columns: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        where: (res, { and, eq, ilike, exists }) => {
+          const conditions = [];
+
+          if (contentType) {
+            conditions.push(eq(res.contentTypeId, contentType));
+          }
+
+          if (search) {
+            conditions.push(ilike(res.title, `%${search}%`));
+          }
+
+          if (category) {
+            conditions.push(
+              exists(
+                db
+                  .select()
+                  .from(resourcesToCategories)
+                  .where(
+                    and(
+                      eq(resourcesToCategories.resourceId, res.id),
+                      eq(resourcesToCategories.categoryId, category),
+                    ),
+                  ),
+              ),
+            );
+          }
+
+          return and(...conditions);
+        },
+      });
+
+      const totalCount = allResources.length;
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      // Get paginated results
       const resourcesList = await db.query.resources.findMany({
         with: {
           contentType: true,
@@ -158,11 +216,20 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
           return and(...conditions);
         },
         orderBy: (res, { desc }) => [desc(res.createdAt)],
+        limit: limitNum,
+        offset: offset,
       });
 
       return {
         success: true,
         data: resourcesList,
+        metadata: {
+          totalCount,
+          totalPages,
+          currentPage: pageNum,
+          limit: limitNum,
+          hasMore: pageNum < totalPages,
+        },
       };
     },
     {
@@ -170,10 +237,12 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         category: t.Optional(t.String()),
         contentType: t.Optional(t.String()),
         search: t.Optional(t.String()),
+        page: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
       }),
       detail: {
         tags: ["Resources"],
-        summary: "List resources with filtering",
+        summary: "List resources with filtering and pagination",
       },
     },
   )
