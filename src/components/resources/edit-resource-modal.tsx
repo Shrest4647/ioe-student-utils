@@ -175,7 +175,7 @@ export function EditResourceModal({
       form.setFieldValue("contentTypeId", resource.contentType.id);
       form.setFieldValue(
         "categoryIds",
-        resource.categories.map((c) => c.category.id),
+        resource.categories.map((c) => c.id),
       );
       // Reset attachment state
       setRemovedAttachmentIds([]);

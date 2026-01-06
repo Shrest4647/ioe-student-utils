@@ -189,11 +189,11 @@ export default function ResourceDashboardPage() {
                         <div className="flex flex-wrap gap-1">
                           {resource.categories.map((c) => (
                             <Badge
-                              key={c.category.id}
+                              key={c.id}
                               variant="secondary"
                               className="text-[10px]"
                             >
-                              {c.category.name}
+                              {c.name}
                             </Badge>
                           ))}
                         </div>

@@ -42,10 +42,11 @@ export type Resource = {
     name: string;
   };
   categories: {
-    category: {
-      id: string;
-      name: string;
-    };
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
   }[];
   uploader: {
     id: string;
@@ -126,11 +127,11 @@ export function ResourceCard({ resource }: ResourceCardProps) {
           <div className="mb-1 flex flex-wrap gap-1">
             {resource.categories.slice(0, 2).map((c) => (
               <Badge
-                key={c.category.id}
+                key={c.id}
                 variant="secondary"
                 className="px-1.5 py-0 text-[10px]"
               >
-                {c.category.name}
+                {c.name}
               </Badge>
             ))}
             {resource.categories.length > 2 && (
