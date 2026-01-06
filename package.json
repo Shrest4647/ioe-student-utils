@@ -34,7 +34,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "drizzle-orm": "^0.41.0",
+    "drizzle-orm": "^1.0.0-beta.8-734e789",
     "elysia": "^1.4.19",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.26",
@@ -62,7 +62,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "drizzle-kit": "^0.30.5",
+    "drizzle-kit": "^1.0.0-beta.8-734e789",
     "postcss": "^8.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
