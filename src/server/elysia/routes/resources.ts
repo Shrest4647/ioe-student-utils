@@ -287,8 +287,24 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
   .post(
     "/",
     async ({ user, body }) => {
-      const { title, description, contentTypeId, categoryIds, attachments } =
-        body;
+      const { title, description, contentTypeId, attachments } = body;
+
+      // Normalize categoryIds to an array
+      const categoryIds = body.categoryIds
+        ? Array.isArray(body.categoryIds)
+          ? body.categoryIds
+          : [body.categoryIds]
+        : [];
+
+      // Normalize attachments if it's a string (JSON)
+      let normalizedAttachments = attachments;
+      if (typeof attachments === "string") {
+        try {
+          normalizedAttachments = JSON.parse(attachments);
+        } catch (e) {
+          console.error("Failed to parse attachments JSON:", e);
+        }
+      }
 
       const resourceId = crypto.randomUUID();
 
@@ -302,8 +318,12 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         fileFormat: string | null;
       }> = [];
 
-      if (attachments && attachments.length > 0) {
-        for (const attachment of attachments) {
+      if (
+        normalizedAttachments &&
+        Array.isArray(normalizedAttachments) &&
+        normalizedAttachments.length > 0
+      ) {
+        for (const attachment of normalizedAttachments) {
           if (attachment.type === "file") {
             // For file uploads, we need to handle the File object
             // Note: In Elysia with t.Files(), we get an array of files
@@ -392,9 +412,12 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         description: t.Optional(t.String()),
         files: t.Files(),
         contentTypeId: t.String(),
-        categoryIds: t.Optional(t.Array(t.String())),
+        categoryIds: t.Optional(t.Union([t.String(), t.Array(t.String())])),
         attachments: t.Optional(
-          t.Array(t.Union([attachmentFileSchema, attachmentUrlSchema])),
+          t.Union([
+            t.String(),
+            t.Array(t.Union([attachmentFileSchema, attachmentUrlSchema])),
+          ]),
         ),
       }),
       detail: {
@@ -406,14 +429,16 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
   .put(
     "/:id",
     async ({ params: { id }, body, user, set }) => {
-      const {
-        title,
-        description,
-        contentTypeId,
-        categoryIds,
-        isFeatured,
-        attachments,
-      } = body;
+      const { title, description, contentTypeId, isFeatured, attachments } =
+        body;
+
+      // Normalize categoryIds to an array
+      const categoryIds =
+        body.categoryIds !== undefined
+          ? Array.isArray(body.categoryIds)
+            ? body.categoryIds
+            : [body.categoryIds]
+          : undefined;
 
       const existing = await db.query.resources.findFirst({
         where: { id },
@@ -514,7 +539,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         title: t.Optional(t.String({ minLength: 1 })),
         description: t.Optional(t.String()),
         contentTypeId: t.Optional(t.String()),
-        categoryIds: t.Optional(t.Array(t.String())),
+        categoryIds: t.Optional(t.Union([t.String(), t.Array(t.String())])),
         isFeatured: t.Optional(t.Boolean()),
         attachments: t.Optional(
           t.Object({
