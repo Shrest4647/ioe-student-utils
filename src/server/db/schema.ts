@@ -159,7 +159,6 @@ export const resources = pgTable("resource", {
   title: text("title").notNull(),
   description: text("description"),
   s3Url: text("s3_url").notNull(),
-  fileFormat: text("file_format").notNull(), // e.g., 'pdf', 'docx'
   contentTypeId: text("content_type_id")
     .notNull()
     .references(() => resourceContentTypes.id),
@@ -194,6 +193,33 @@ export const resourcesToCategories = pgTable(
 
 // --- Resource Library Relations ---
 
+export const resourceAttachments = pgTable("resource_attachment", {
+  id: text("id").primaryKey(),
+  resourceId: text("resource_id")
+    .notNull()
+    .references(() => resources.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["file", "url"] }).notNull(),
+  url: text("url").notNull(),
+  name: text("name").notNull(),
+  fileFormat: text("file_format"), // NULL for URLs
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const resourceAttachmentsRelations = relations(
+  resourceAttachments,
+  ({ one }) => ({
+    resource: one(resources, {
+      fields: [resourceAttachments.resourceId],
+      references: [resources.id],
+    }),
+  }),
+);
+
 export const resourceRelations = relations(resources, ({ one, many }) => ({
   uploader: one(user, {
     fields: [resources.uploaderId],
@@ -204,32 +230,5 @@ export const resourceRelations = relations(resources, ({ one, many }) => ({
     references: [resourceContentTypes.id],
   }),
   categories: many(resourcesToCategories),
+  attachments: many(resourceAttachments),
 }));
-
-export const resourceCategoryRelations = relations(
-  resourceCategories,
-  ({ many }) => ({
-    resources: many(resourcesToCategories),
-  }),
-);
-
-export const resourcesToCategoriesRelations = relations(
-  resourcesToCategories,
-  ({ one }) => ({
-    resource: one(resources, {
-      fields: [resourcesToCategories.resourceId],
-      references: [resources.id],
-    }),
-    category: one(resourceCategories, {
-      fields: [resourcesToCategories.categoryId],
-      references: [resourceCategories.id],
-    }),
-  }),
-);
-
-export const resourceContentTypeRelations = relations(
-  resourceContentTypes,
-  ({ many }) => ({
-    resources: many(resources),
-  }),
-);
