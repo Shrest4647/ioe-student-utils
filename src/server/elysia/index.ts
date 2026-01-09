@@ -4,6 +4,7 @@ import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
 import { resourceRoutes } from "./routes/resources";
+import { scholarshipRoutes } from "./routes/scholarships";
 import { userRoutes } from "./routes/user";
 
 export const elysiaApi = new Elysia({ prefix: "/api" })
@@ -13,6 +14,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(openApiPlugin)
   .use(userRoutes)
   .use(resourceRoutes)
+  .use(scholarshipRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],
