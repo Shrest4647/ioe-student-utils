@@ -27,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Dialog,
   DialogContent,
@@ -139,7 +140,7 @@ export default function ScholarshipEditPage() {
         return data;
       } else {
         const { data } = await apiClient.api.scholarships
-          .admin({ id: id as string })
+          .admin({ id: scholarshipQuery.data?.id || (id as string) })
           .patch(values);
         return data;
       }
@@ -158,7 +159,7 @@ export default function ScholarshipEditPage() {
     mutationFn: async (values: z.infer<typeof roundSchema>) => {
       const { data } = await apiClient.api.scholarships.admin.rounds.post({
         ...values,
-        scholarshipId: id as string,
+        scholarshipId: scholarshipQuery.data?.id || (id as string),
       });
       return data;
     },
@@ -424,7 +425,7 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Target Countries</FieldLabel>
                       <MultiSelect
-                        defaultValues={field.state.value as string[]}
+                        values={field.state.value as string[]}
                         onValuesChange={field.handleChange}
                       >
                         <MultiSelectTrigger className="w-full max-w-[400px]">
@@ -448,7 +449,7 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Degree Levels</FieldLabel>
                       <MultiSelect
-                        defaultValues={field.state.value as string[]}
+                        values={field.state.value as string[]}
                         onValuesChange={field.handleChange}
                       >
                         <MultiSelectTrigger className="w-full max-w-[400px]">
@@ -472,7 +473,7 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Fields of Study</FieldLabel>
                       <MultiSelect
-                        defaultValues={field.state.value as string[]}
+                        values={field.state.value as string[]}
                         onValuesChange={field.handleChange}
                       >
                         <MultiSelectTrigger className="w-full max-w-[400px]">
@@ -779,10 +780,11 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
               {(field) => (
                 <Field>
                   <FieldLabel>Open Date</FieldLabel>
-                  <Input
-                    type="date"
+                  <DateInput
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={(v) =>
+                      field.handleChange(v ? v.toISOString() : "")
+                    }
                   />
                   <FieldError errors={field.state.meta.errors} />
                 </Field>
@@ -792,11 +794,13 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
               {(field) => (
                 <Field>
                   <FieldLabel>Deadline Date</FieldLabel>
-                  <Input
-                    type="date"
+                  <DateInput
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={(v) =>
+                      field.handleChange(v ? v.toISOString() : "")
+                    }
                   />
+
                   <FieldError
                     errors={field.state.meta.errors.map((err: any) => ({
                       message: typeof err === "string" ? err : err?.message,
@@ -900,10 +904,9 @@ function AddEventModal({ onAdd }: { onAdd: (values: any) => void }) {
             {(field) => (
               <Field>
                 <FieldLabel>Date</FieldLabel>
-                <Input
-                  type="date"
+                <DateInput
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(v) => field.handleChange(v ? v.toISOString() : "")}
                 />
                 <FieldError errors={field.state.meta.errors} />
               </Field>
