@@ -23,7 +23,7 @@ export function ScholarshipCalendar() {
       id: e.id,
       start: new Date(e.date),
       end: new Date(e.date), // Events are point-in-time for now (deadlines)
-      title: `${e.round?.scholarship?.name} - ${e.name}`,
+      title: `${e.round?.scholarship?.name || "Scholarship"} - ${e.name}`,
       color: e.type === "deadline" ? "red" : "blue", // Simple color mapping
     }));
   }, [events]);
@@ -102,7 +102,7 @@ function CalendarStandardLayout() {
           <CalendarViewTrigger view="month">Month</CalendarViewTrigger>
           <CalendarViewTrigger view="week">Week</CalendarViewTrigger>
           <CalendarViewTrigger view="day">Day</CalendarViewTrigger>
-          {/* <CalendarViewTrigger view="year">Year</CalendarViewTrigger> */}
+          <CalendarViewTrigger view="year">Year</CalendarViewTrigger>
         </div>
       </div>
 

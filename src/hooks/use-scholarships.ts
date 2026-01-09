@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import type { Scholarship } from "@/components/scholarships/scholarship-card";
 import { apiClient } from "@/lib/eden";
 import type { ScholarshipFilters } from "./use-scholarship-filters";
@@ -74,6 +78,7 @@ export function useScholarships(filters: ScholarshipFilters) {
     },
     initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   });
 }

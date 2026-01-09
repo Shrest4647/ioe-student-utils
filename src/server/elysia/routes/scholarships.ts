@@ -1,9 +1,7 @@
-import { and, asc, desc, eq, gte, ilike, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import {
-  roundEvents,
-  scholarshipRounds,
   scholarships,
   scholarshipsToCountries,
   scholarshipsToDegrees,
@@ -60,16 +58,102 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      // Build WHERE clause using imported tables and operators
-      const conditions = [];
+      const results = await db.query.scholarships.findMany({
+        where: (() => {
+          const conditions = [];
 
-      if (search) {
-        conditions.push(ilike(scholarships.name, `%${search}%`));
-      }
+          if (search) {
+            conditions.push({
+              OR: [
+                {
+                  name: {
+                    ilike: `%${search}%`,
+                  },
+                },
+                {
+                  description: {
+                    ilike: `%${search}%`,
+                  },
+                },
+                {
+                  providerName: {
+                    ilike: `%${search}%`,
+                  },
+                },
+                {
+                  fundingType: {
+                    ilike: `%${search}%`,
+                  },
+                },
+                {
+                  countries: {
+                    countryCode: {
+                      ilike: `%${search}%`,
+                    },
+                  },
+                },
+              ],
+            });
+          }
 
-      // Filter by Country (Many-to-Many)
+          if (country) {
+            conditions.push({
+              countries: {
+                countryCode: country,
+              },
+            });
+          }
+
+          if (degree) {
+            conditions.push({
+              degrees: {
+                degreeId: degree,
+              },
+            });
+          }
+
+          if (field) {
+            conditions.push({
+              fields: {
+                fieldId: field,
+              },
+            });
+          }
+
+          return conditions.length > 0 ? { AND: conditions } : undefined;
+        })(),
+        with: {
+          countries: {
+            with: {
+              country: true,
+            },
+          },
+          degrees: {
+            with: {
+              degree: true,
+            },
+          },
+          fields: {
+            with: {
+              field: true,
+            },
+          },
+          rounds: {
+            where: { isActive: true },
+            orderBy: (r: any, { asc }: any) => [asc(r.deadlineDate)],
+            limit: 1,
+          },
+        },
+        limit: l,
+        offset: offset,
+        orderBy: (s: any, { desc }: any) => [desc(s.createdAt)],
+      });
+
+      // Count total (filtered) - use the built conditions for core query
+      const coreConditions = [];
+      if (search) coreConditions.push(ilike(scholarships.name, `%${search}%`));
       if (country) {
-        conditions.push(
+        coreConditions.push(
           inArray(
             scholarships.id,
             db
@@ -79,10 +163,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           ),
         );
       }
-
-      // Filter by Degree (Many-to-Many)
       if (degree) {
-        conditions.push(
+        coreConditions.push(
           inArray(
             scholarships.id,
             db
@@ -92,10 +174,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           ),
         );
       }
-
-      // Filter by Field (Many-to-Many)
       if (field) {
-        conditions.push(
+        coreConditions.push(
           inArray(
             scholarships.id,
             db
@@ -106,31 +186,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         );
       }
 
-      const whereClause =
-        conditions.length > 0 ? and(...conditions) : undefined;
-
-      const results = await db.query.scholarships.findMany({
-        where: whereClause as any,
-        with: {
-          countries: { with: { country: true } },
-          degrees: { with: { degree: true } },
-          fields: { with: { field: true } },
-          rounds: {
-            where: eq(scholarshipRounds.isActive, true) as any,
-            orderBy: [asc(scholarshipRounds.deadlineDate)] as any,
-            limit: 1, // Only show the most comprehensive next deadline
-          },
-        },
-        limit: l,
-        offset: offset,
-        orderBy: [desc(scholarships.createdAt)] as any,
-      });
-
-      // Count total (filtered)
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(scholarships)
-        .where(whereClause as any);
+        .where(coreConditions.length > 0 ? and(...coreConditions) : undefined);
 
       const realTotal = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(realTotal / l);
@@ -176,11 +235,16 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             },
           },
         },
-        where: and(
-          gte(roundEvents.date, new Date(start)),
-          lte(roundEvents.date, new Date(end)),
-        ) as any,
-        orderBy: [asc(roundEvents.date)] as any,
+        where: {
+          date: {
+            gte: new Date(start),
+            lte: new Date(end),
+          },
+          round: {
+            isActive: true,
+          },
+        },
+        orderBy: (re: any, { asc }: any) => [asc(re.date)],
       });
 
       return { success: true, data: events };
@@ -201,16 +265,18 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
     "/:slug",
     async ({ params: { slug }, set }) => {
       const scholarship = await db.query.scholarships.findFirst({
-        where: eq(scholarships.slug, slug) as any,
+        where: { slug },
         with: {
           countries: { with: { country: true } },
           degrees: { with: { degree: true } },
           fields: { with: { field: true } },
           rounds: {
             with: {
-              events: { orderBy: [asc(roundEvents.date)] as any },
+              events: {
+                orderBy: (e: any, { asc }: any) => [asc(e.date)],
+              },
             },
-            orderBy: [desc(scholarshipRounds.openDate)] as any,
+            orderBy: (r: any, { desc }: any) => [desc(r.openDate)],
           },
         },
       });

@@ -26,7 +26,6 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import {
   createContext,
-  forwardRef,
   type ReactNode,
   useCallback,
   useContext,
@@ -162,12 +161,15 @@ const Calendar = ({
 
 export const useCalendar = () => useContext(Context);
 
-const CalendarViewTrigger = forwardRef<
-  HTMLButtonElement,
-  React.HTMLAttributes<HTMLButtonElement> & {
-    view: View;
-  }
->(({ children, view, ...props }) => {
+type CalendarViewTriggerProps = React.HTMLAttributes<HTMLButtonElement> & {
+  view: View;
+};
+
+const CalendarViewTrigger = ({
+  children,
+  view,
+  ...props
+}: CalendarViewTriggerProps) => {
   const { view: currentView, setView, onChangeView } = useCalendar();
 
   return (
@@ -184,8 +186,7 @@ const CalendarViewTrigger = forwardRef<
       {children}
     </Button>
   );
-});
-CalendarViewTrigger.displayName = "CalendarViewTrigger";
+};
 
 const EventGroup = ({
   events,
@@ -460,10 +461,14 @@ const CalendarYearView = () => {
   );
 };
 
-const CalendarNextTrigger = forwardRef<
-  HTMLButtonElement,
-  React.HTMLAttributes<HTMLButtonElement>
->(({ children, onClick, ...props }, ref) => {
+const CalendarNextTrigger = ({
+  children,
+  onClick,
+  ref,
+  ...props
+}: React.HTMLAttributes<HTMLButtonElement> & {
+  ref?: React.Ref<HTMLButtonElement>;
+}) => {
   const { date, setDate, view, enableHotkeys } = useCalendar();
 
   const next = useCallback(() => {
@@ -496,13 +501,16 @@ const CalendarNextTrigger = forwardRef<
       {children}
     </Button>
   );
-});
-CalendarNextTrigger.displayName = "CalendarNextTrigger";
+};
 
-const CalendarPrevTrigger = forwardRef<
-  HTMLButtonElement,
-  React.HTMLAttributes<HTMLButtonElement>
->(({ children, onClick, ...props }, ref) => {
+const CalendarPrevTrigger = ({
+  children,
+  onClick,
+  ref,
+  ...props
+}: React.HTMLAttributes<HTMLButtonElement> & {
+  ref?: React.Ref<HTMLButtonElement>;
+}) => {
   const { date, setDate, view, enableHotkeys } = useCalendar();
 
   useHotkeys("ArrowLeft", () => prev(), {
@@ -535,13 +543,16 @@ const CalendarPrevTrigger = forwardRef<
       {children}
     </Button>
   );
-});
-CalendarPrevTrigger.displayName = "CalendarPrevTrigger";
+};
 
-const CalendarTodayTrigger = forwardRef<
-  HTMLButtonElement,
-  React.HTMLAttributes<HTMLButtonElement>
->(({ children, onClick, ...props }, ref) => {
+const CalendarTodayTrigger = ({
+  children,
+  onClick,
+  ref,
+  ...props
+}: React.HTMLAttributes<HTMLButtonElement> & {
+  ref?: React.Ref<HTMLButtonElement>;
+}) => {
   const { setDate, enableHotkeys, today } = useCalendar();
 
   useHotkeys("t", () => jumpToToday(), {
@@ -565,8 +576,7 @@ const CalendarTodayTrigger = forwardRef<
       {children}
     </Button>
   );
-});
-CalendarTodayTrigger.displayName = "CalendarTodayTrigger";
+};
 
 const CalendarCurrentDate = () => {
   const { date, view } = useCalendar();
