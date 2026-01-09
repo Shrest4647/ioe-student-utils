@@ -12,12 +12,12 @@ import {
   Plus,
   Save,
   Trash2,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +27,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -40,6 +57,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/eden";
 
 type Step = "details" | "rounds";
+
+const scholarshipSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase alphanumeric and hyphens only",
+    ),
+  description: z.string().min(1, "Description is required"),
+  providerName: z.string().min(1, "Provider name is required"),
+  websiteUrl: z
+    .string()
+    .trim()
+    .url("Must be a valid URL (starting with http:// or https://)")
+    .or(z.literal("")),
+  fundingType: z.enum(["fully_funded", "partial", "tuition_only"]),
+  status: z.enum(["active", "inactive", "archived"]),
+  countryCodes: z.array(z.string()),
+  degreeIds: z.array(z.string()),
+  fieldIds: z.array(z.string()),
+});
+
+const roundSchema = z.object({
+  roundName: z.string().min(1, "Round name is required"),
+  openDate: z.string().min(1, "Open date is required"),
+  deadlineDate: z.string().min(1, "Deadline date is required"),
+  isActive: z.boolean(),
+});
+
+const eventSchema = z.object({
+  name: z.string().min(1, "Event name is required"),
+  date: z.string().min(1, "Date is required"),
+  type: z.enum(["webinar", "interview", "result_announcement", "deadline"]),
+  description: z.string().optional(),
+});
 
 export default function ScholarshipEditPage() {
   const { id } = useParams();
@@ -79,7 +133,7 @@ export default function ScholarshipEditPage() {
 
   // --- Mutations ---
   const saveMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: z.infer<typeof scholarshipSchema>) => {
       if (isNew) {
         const { data } = await apiClient.api.scholarships.admin.post(values);
         return data;
@@ -96,11 +150,12 @@ export default function ScholarshipEditPage() {
       if (isNew && data?.success) {
         router.push(`/dashboard/scholarships/${data.data.id}`);
       }
+      setCurrentStep("rounds");
     },
   });
 
   const addRoundMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: z.infer<typeof roundSchema>) => {
       const { data } = await apiClient.api.scholarships.admin.rounds.post({
         ...values,
         scholarshipId: id as string,
@@ -129,6 +184,9 @@ export default function ScholarshipEditPage() {
       degreeIds:
         scholarshipQuery.data?.degrees?.map((d: any) => d.degreeId) || [],
       fieldIds: scholarshipQuery.data?.fields?.map((f: any) => f.fieldId) || [],
+    } as z.infer<typeof scholarshipSchema>,
+    validators: {
+      onChange: scholarshipSchema,
     },
     onSubmit: async ({ value }) => {
       saveMutation.mutate(value);
@@ -203,9 +261,9 @@ export default function ScholarshipEditPage() {
             e.stopPropagation();
             form.handleSubmit();
           }}
-          className="grid gap-6 lg:grid-cols-3"
+          className="grid gap-6 lg:grid-cols-2"
         >
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-6 lg:col-span-1">
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
@@ -220,11 +278,7 @@ export default function ScholarshipEditPage() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="e.g. Fulbright Foreign Student Program"
                       />
-                      <FieldError
-                        errors={field.state.meta.errors.map((err: any) => ({
-                          message: err as string,
-                        }))}
-                      />
+                      <FieldError errors={field.state.meta.errors} />
                     </Field>
                   )}
                 </form.Field>
@@ -238,11 +292,7 @@ export default function ScholarshipEditPage() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           placeholder="fulbright-scholarship"
                         />
-                        <FieldError
-                          errors={field.state.meta.errors.map((err: any) => ({
-                            message: err as string,
-                          }))}
-                        />
+                        <FieldError errors={field.state.meta.errors} />
                       </Field>
                     )}
                   </form.Field>
@@ -255,15 +305,29 @@ export default function ScholarshipEditPage() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           placeholder="DAAD, Gates Foundation, etc."
                         />
-                        <FieldError
-                          errors={field.state.meta.errors.map((err: any) => ({
-                            message: err as string,
-                          }))}
-                        />
+                        <FieldError errors={field.state.meta.errors} />
                       </Field>
                     )}
                   </form.Field>
                 </div>
+                <form.Field name="websiteUrl">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>Official Website URL</FieldLabel>
+                      <Input
+                        type="text"
+                        placeholder="https://example.com"
+                        value={field.state.value as string}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      <FieldError
+                        errors={field.state.meta.errors.map((err: any) => ({
+                          message: typeof err === "string" ? err : err?.message,
+                        }))}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
                 <form.Field name="description">
                   {(field) => (
                     <Field>
@@ -275,24 +339,7 @@ export default function ScholarshipEditPage() {
                       />
                       <FieldError
                         errors={field.state.meta.errors.map((err: any) => ({
-                          message: err as string,
-                        }))}
-                      />
-                    </Field>
-                  )}
-                </form.Field>
-                <form.Field name="websiteUrl">
-                  {(field) => (
-                    <Field>
-                      <FieldLabel>Official Website URL</FieldLabel>
-                      <Input
-                        type="url"
-                        value={field.state.value as string}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                      />
-                      <FieldError
-                        errors={field.state.meta.errors.map((err: any) => ({
-                          message: err as string,
+                          message: typeof err === "string" ? err : err?.message,
                         }))}
                       />
                     </Field>
@@ -300,9 +347,6 @@ export default function ScholarshipEditPage() {
                 </form.Field>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Status & Type</CardTitle>
@@ -314,7 +358,11 @@ export default function ScholarshipEditPage() {
                       <FieldLabel>Status</FieldLabel>
                       <Select
                         value={field.state.value as string}
-                        onValueChange={field.handleChange}
+                        onValueChange={(v) =>
+                          field.handleChange(
+                            v as z.infer<typeof scholarshipSchema>["status"],
+                          )
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -334,7 +382,13 @@ export default function ScholarshipEditPage() {
                       <FieldLabel>Funding Type</FieldLabel>
                       <Select
                         value={field.state.value as string}
-                        onValueChange={field.handleChange}
+                        onValueChange={(v) =>
+                          field.handleChange(
+                            v as z.infer<
+                              typeof scholarshipSchema
+                            >["fundingType"],
+                          )
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -354,7 +408,9 @@ export default function ScholarshipEditPage() {
                 </form.Field>
               </CardContent>
             </Card>
+          </div>
 
+          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Taxonomy</CardTitle>
@@ -368,13 +424,22 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Target Countries</FieldLabel>
                       <MultiSelect
-                        options={countries.map((c: any) => ({
-                          label: c.name,
-                          value: c.code,
-                        }))}
-                        selected={field.state.value as string[]}
-                        onChange={field.handleChange}
-                      />
+                        defaultValues={field.state.value as string[]}
+                        onValuesChange={field.handleChange}
+                      >
+                        <MultiSelectTrigger className="w-full max-w-[400px]">
+                          <MultiSelectValue placeholder="Select frameworks..." />
+                        </MultiSelectTrigger>
+                        <MultiSelectContent>
+                          <MultiSelectGroup>
+                            {countries.map((c) => (
+                              <MultiSelectItem key={c.code} value={c.code}>
+                                {c.name}
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectGroup>
+                        </MultiSelectContent>
+                      </MultiSelect>
                     </Field>
                   )}
                 </form.Field>
@@ -383,13 +448,22 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Degree Levels</FieldLabel>
                       <MultiSelect
-                        options={degrees.map((d: any) => ({
-                          label: d.name,
-                          value: d.id,
-                        }))}
-                        selected={field.state.value as string[]}
-                        onChange={field.handleChange}
-                      />
+                        defaultValues={field.state.value as string[]}
+                        onValuesChange={field.handleChange}
+                      >
+                        <MultiSelectTrigger className="w-full max-w-[400px]">
+                          <MultiSelectValue placeholder="Select frameworks..." />
+                        </MultiSelectTrigger>
+                        <MultiSelectContent>
+                          <MultiSelectGroup>
+                            {degrees.map((d) => (
+                              <MultiSelectItem key={d.id} value={d.id}>
+                                {d.name}
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectGroup>
+                        </MultiSelectContent>
+                      </MultiSelect>
                     </Field>
                   )}
                 </form.Field>
@@ -398,13 +472,22 @@ export default function ScholarshipEditPage() {
                     <Field>
                       <FieldLabel>Fields of Study</FieldLabel>
                       <MultiSelect
-                        options={fields.map((f: any) => ({
-                          label: f.name,
-                          value: f.id,
-                        }))}
-                        selected={field.state.value as string[]}
-                        onChange={field.handleChange}
-                      />
+                        defaultValues={field.state.value as string[]}
+                        onValuesChange={field.handleChange}
+                      >
+                        <MultiSelectTrigger className="w-full max-w-[400px]">
+                          <MultiSelectValue placeholder="Select frameworks..." />
+                        </MultiSelectTrigger>
+                        <MultiSelectContent>
+                          <MultiSelectGroup>
+                            {fields.map((f) => (
+                              <MultiSelectItem key={f.id} value={f.id}>
+                                {f.name}
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectGroup>
+                        </MultiSelectContent>
+                      </MultiSelect>
                     </Field>
                   )}
                 </form.Field>
@@ -469,6 +552,11 @@ export default function ScholarshipEditPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {scholarshipQuery.data?.rounds?.length === 0 && (
+                    <p className="py-2 text-muted-foreground text-xs italic">
+                      No rounds scheduled.
+                    </p>
+                  )}
                   {scholarshipQuery.data?.rounds?.map((r: any) => (
                     <div
                       key={r.id}
@@ -513,7 +601,7 @@ function RoundCard({
 }) {
   const queryClient = useQueryClient();
   const addEventMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: z.infer<typeof eventSchema>) => {
       const { data } = await apiClient.api.scholarships.admin
         .rounds({ id: round.id })
         .events.post(values);
@@ -620,6 +708,9 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
       openDate: "",
       deadlineDate: "",
       isActive: true,
+    } as z.infer<typeof roundSchema>,
+    validators: {
+      onChange: roundSchema,
     },
     onSubmit: async ({ value }) => {
       onAdd(value);
@@ -628,86 +719,102 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
     },
   });
 
-  if (!isOpen) {
-    return (
-      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Add Round
-      </Button>
-    );
-  }
-
   return (
-    <div className="space-y-4 rounded-lg border bg-muted/40 p-4">
-      <h3 className="font-bold">New Round</h3>
-      <div className="grid gap-4 md:grid-cols-2">
-        <form.Field name="roundName">
-          {(field) => (
-            <Field>
-              <FieldLabel>Round Name</FieldLabel>
-              <Input
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="e.g. 2025 General Intake"
-              />
-            </Field>
-          )}
-        </form.Field>
-        <form.Field name="isActive">
-          {(field) => (
-            <Field>
-              <FieldLabel>Status</FieldLabel>
-              <Select
-                value={field.state.value ? "true" : "false"}
-                onValueChange={(v) => field.handleChange(v === "true")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-        </form.Field>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <form.Field name="openDate">
-          {(field) => (
-            <Field>
-              <FieldLabel>Open Date</FieldLabel>
-              <Input
-                type="date"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </Field>
-          )}
-        </form.Field>
-        <form.Field name="deadlineDate">
-          {(field) => (
-            <Field>
-              <FieldLabel>Deadline Date</FieldLabel>
-              <Input
-                type="date"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </Field>
-          )}
-        </form.Field>
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
-          Cancel
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Round
         </Button>
-        <Button size="sm" onClick={() => form.handleSubmit()}>
-          Save Round
-        </Button>
-      </div>
-    </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>New Round</DialogTitle>
+          <DialogDescription>
+            Add a new application round for this scholarship.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <form.Field name="roundName">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Round Name</FieldLabel>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="e.g. 2025 General Intake"
+                  />
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+            <form.Field name="isActive">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Status</FieldLabel>
+                  <Select
+                    value={field.state.value ? "true" : "false"}
+                    onValueChange={(v) => field.handleChange(v === "true")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FieldError
+                    errors={field.state.meta.errors.map((err: any) => ({
+                      message: typeof err === "string" ? err : err?.message,
+                    }))}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <form.Field name="openDate">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Open Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+            <form.Field name="deadlineDate">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Deadline Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((err: any) => ({
+                      message: typeof err === "string" ? err : err?.message,
+                    }))}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => form.handleSubmit()}>Save Round</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -717,8 +824,11 @@ function AddEventModal({ onAdd }: { onAdd: (values: any) => void }) {
     defaultValues: {
       name: "",
       date: "",
-      type: "milestone",
+      type: "webinar",
       description: "",
+    } as z.infer<typeof eventSchema>,
+    validators: {
+      onChange: eventSchema,
     },
     onSubmit: async ({ value }) => {
       onAdd(value);
@@ -727,120 +837,86 @@ function AddEventModal({ onAdd }: { onAdd: (values: any) => void }) {
     },
   });
 
-  if (!isOpen) {
-    return (
-      <Button
-        variant="ghost"
-        className="h-7 text-[10px]"
-        onClick={() => setIsOpen(true)}
-      >
-        <Plus className="mr-1 h-3 w-3" />
-        Add Event
-      </Button>
-    );
-  }
-
   return (
-    <div className="mt-2 space-y-3 rounded-md border bg-background p-3 shadow-sm">
-      <div className="grid gap-3 md:grid-cols-2">
-        <form.Field name="name">
-          {(field) => (
-            <Field>
-              <FieldLabel className="text-[10px]">Event Name</FieldLabel>
-              <Input
-                className="h-8 text-xs"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="Webinar"
-              />
-            </Field>
-          )}
-        </form.Field>
-        <form.Field name="type">
-          {(field) => (
-            <Field>
-              <FieldLabel className="text-[10px]">Type</FieldLabel>
-              <Select
-                value={field.state.value}
-                onValueChange={field.handleChange}
-              >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="webinar">Webinar</SelectItem>
-                  <SelectItem value="interview">Interview</SelectItem>
-                  <SelectItem value="result_announcement">Result</SelectItem>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-        </form.Field>
-      </div>
-      <form.Field name="date">
-        {(field) => (
-          <Field>
-            <FieldLabel className="text-[10px]">Date</FieldLabel>
-            <Input
-              className="h-8 text-xs"
-              type="date"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </Field>
-        )}
-      </form.Field>
-      <div className="flex justify-end gap-1">
-        <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
-          Cancel
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="h-7 text-[10px]">
+          <Plus className="mr-1 h-3 w-3" />
+          Add Event
         </Button>
-        <Button size="sm" onClick={() => form.handleSubmit()}>
-          Add
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function MultiSelect({ options, selected, onChange }: any) {
-  return (
-    <div className="space-y-2">
-      <div className="flex min-h-[40px] flex-wrap gap-1 rounded-md border bg-background p-2">
-        {selected.length === 0 && (
-          <span className="text-muted-foreground text-sm">Select...</span>
-        )}
-        {selected.map((val: string) => {
-          const opt = options.find((o: any) => o.value === val);
-          return (
-            <Badge key={val} variant="secondary" className="gap-1">
-              {opt?.label || val}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
-                onClick={() =>
-                  onChange(selected.filter((v: string) => v !== val))
-                }
-              />
-            </Badge>
-          );
-        })}
-      </div>
-      <Select
-        onValueChange={(val) =>
-          !selected.includes(val) && onChange([...selected, val])
-        }
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Add more..." />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt: any) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Add Event</DialogTitle>
+          <DialogDescription>
+            Add a milestone event to this scholarship round.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <form.Field name="name">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Event Name</FieldLabel>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Webinar"
+                  />
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+            <form.Field name="type">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Type</FieldLabel>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) =>
+                      field.handleChange(
+                        v as z.infer<typeof eventSchema>["type"],
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="webinar">Webinar</SelectItem>
+                      <SelectItem value="interview">Interview</SelectItem>
+                      <SelectItem value="result_announcement">
+                        Result
+                      </SelectItem>
+                      <SelectItem value="deadline">Deadline</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+          </div>
+          <form.Field name="date">
+            {(field) => (
+              <Field>
+                <FieldLabel>Date</FieldLabel>
+                <Input
+                  type="date"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                <FieldError errors={field.state.meta.errors} />
+              </Field>
+            )}
+          </form.Field>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => form.handleSubmit()}>Add Event</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

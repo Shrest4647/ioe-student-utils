@@ -134,7 +134,7 @@ export default function ScholarshipsDashboardPage() {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" asChild>
                           <Link
-                            href={`/dashboard/scholarships/${scholarship.id}`}
+                            href={`/dashboard/scholarships/${scholarship.slug}`}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Link>
