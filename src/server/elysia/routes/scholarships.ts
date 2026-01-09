@@ -602,6 +602,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             openDate: t.Optional(t.String()), // ISO String, will be converted by Drizzle if configured or manually
             deadlineDate: t.Optional(t.String()),
             scholarshipAmount: t.Optional(t.String()),
+            description: t.Optional(t.String()),
           }),
         },
       )
@@ -629,6 +630,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             openDate: t.Optional(t.String()),
             deadlineDate: t.Optional(t.String()),
             scholarshipAmount: t.Optional(t.String()),
+            description: t.Optional(t.String()),
           }),
         },
       )

@@ -244,6 +244,7 @@ export const scholarshipRounds = pgTable("scholarship_round", {
     .notNull()
     .references(() => scholarships.id, { onDelete: "cascade" }),
   roundName: text("round_name"), // e.g., 'Fall 2025 Intake'
+  description: text("description"), // Markdown supported
   isActive: boolean("is_active").default(false).notNull(),
   openDate: timestamp("open_date"),
   deadlineDate: timestamp("deadline_date"),

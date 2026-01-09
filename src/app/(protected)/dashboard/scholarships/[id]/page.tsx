@@ -87,6 +87,7 @@ const roundSchema = z.object({
   openDate: z.string().min(1, "Open date is required"),
   deadlineDate: z.string().min(1, "Deadline date is required"),
   isActive: z.boolean(),
+  description: z.string().optional(),
 });
 
 const eventSchema = z.object({
@@ -632,6 +633,12 @@ function RoundCard({
         </div>
       </div>
 
+      {round.description && (
+        <p className="line-clamp-2 text-muted-foreground text-xs italic">
+          {round.description}
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-2 rounded bg-muted/50 p-2">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
@@ -682,7 +689,14 @@ function RoundCard({
                   <span className="min-w-[80px] font-medium text-primary text-xs uppercase">
                     {event.type.replace("_", " ")}
                   </span>
-                  <span>{event.name}</span>
+                  <div className="flex flex-col">
+                    <span>{event.name}</span>
+                    {event.description && (
+                      <span className="line-clamp-1 text-[10px] text-muted-foreground italic">
+                        {event.description}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground text-xs">
@@ -709,6 +723,7 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
       openDate: "",
       deadlineDate: "",
       isActive: true,
+      description: "",
     } as z.infer<typeof roundSchema>,
     validators: {
       onChange: roundSchema,
@@ -810,6 +825,20 @@ function AddRoundModal({ onAdd }: { onAdd: (values: any) => void }) {
               )}
             </form.Field>
           </div>
+          <form.Field name="description">
+            {(field) => (
+              <Field>
+                <FieldLabel>Description (Markdown supported)</FieldLabel>
+                <Textarea
+                  rows={4}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Additional details about this round..."
+                />
+                <FieldError errors={field.state.meta.errors} />
+              </Field>
+            )}
+          </form.Field>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setIsOpen(false)}>
@@ -907,6 +936,20 @@ function AddEventModal({ onAdd }: { onAdd: (values: any) => void }) {
                 <DateInput
                   value={field.state.value}
                   onChange={(v) => field.handleChange(v ? v.toISOString() : "")}
+                />
+                <FieldError errors={field.state.meta.errors} />
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="description">
+            {(field) => (
+              <Field>
+                <FieldLabel>Description (Markdown supported)</FieldLabel>
+                <Textarea
+                  rows={3}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Event details..."
                 />
                 <FieldError errors={field.state.meta.errors} />
               </Field>

@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "ff68ae76-aa6c-46cd-a18a-7178e1d1d29a",
-  "prevIds": [
-    "d2e616aa-9c81-4a2b-9b98-bbce6dab0af6"
-  ],
+  "prevIds": ["d2e616aa-9c81-4a2b-9b98-bbce6dab0af6"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -2083,14 +2081,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "account_user_id_user_id_fk",
@@ -2100,14 +2094,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "country_created_by_id_user_id_fkey",
@@ -2117,14 +2107,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "country_updated_by_id_user_id_fkey",
@@ -2134,14 +2120,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "degree_level_created_by_id_user_id_fkey",
@@ -2151,14 +2133,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "degree_level_updated_by_id_user_id_fkey",
@@ -2168,14 +2146,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "field_of_study_created_by_id_user_id_fkey",
@@ -2185,14 +2159,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "field_of_study_updated_by_id_user_id_fkey",
@@ -2202,14 +2172,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "createdById"
-      ],
+      "columns": ["createdById"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "pg-drizzle_post_createdById_user_id_fkey",
@@ -2219,14 +2185,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "resource_id"
-      ],
+      "columns": ["resource_id"],
       "schemaTo": "public",
       "tableTo": "resource",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_attachment_resource_id_resource_id_fk",
@@ -2236,14 +2198,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "content_type_id"
-      ],
+      "columns": ["content_type_id"],
       "schemaTo": "public",
       "tableTo": "resource_content_type",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "resource_content_type_id_resource_content_type_id_fkey",
@@ -2253,14 +2211,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "uploader_id"
-      ],
+      "columns": ["uploader_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "resource_uploader_id_user_id_fkey",
@@ -2270,14 +2224,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "resource_id"
-      ],
+      "columns": ["resource_id"],
       "schemaTo": "public",
       "tableTo": "resource",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_to_category_resource_id_resource_id_fk",
@@ -2287,14 +2237,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "category_id"
-      ],
+      "columns": ["category_id"],
       "schemaTo": "public",
       "tableTo": "resource_category",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_to_category_category_id_resource_category_id_fk",
@@ -2304,14 +2250,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "round_id"
-      ],
+      "columns": ["round_id"],
       "schemaTo": "public",
       "tableTo": "scholarship_round",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "round_event_round_id_scholarship_round_id_fkey",
@@ -2321,14 +2263,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "round_event_created_by_id_user_id_fkey",
@@ -2338,14 +2276,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "round_event_updated_by_id_user_id_fkey",
@@ -2355,14 +2289,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_round_scholarship_id_scholarship_id_fkey",
@@ -2372,14 +2302,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_round_created_by_id_user_id_fkey",
@@ -2389,14 +2315,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_round_updated_by_id_user_id_fkey",
@@ -2406,14 +2328,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_created_by_id_user_id_fkey",
@@ -2423,14 +2341,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_updated_by_id_user_id_fkey",
@@ -2440,14 +2354,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_country_scholarship_id_scholarship_id_fkey",
@@ -2457,14 +2367,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "country_code"
-      ],
+      "columns": ["country_code"],
       "schemaTo": "public",
       "tableTo": "country",
-      "columnsTo": [
-        "code"
-      ],
+      "columnsTo": ["code"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_country_country_code_country_code_fkey",
@@ -2474,14 +2380,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_degree_scholarship_id_scholarship_id_fkey",
@@ -2491,14 +2393,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "degree_id"
-      ],
+      "columns": ["degree_id"],
       "schemaTo": "public",
       "tableTo": "degree_level",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_degree_degree_id_degree_level_id_fkey",
@@ -2508,14 +2406,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_field_scholarship_id_scholarship_id_fkey",
@@ -2525,14 +2419,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "field_id"
-      ],
+      "columns": ["field_id"],
       "schemaTo": "public",
       "tableTo": "field_of_study",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_field_field_id_field_of_study_id_fkey",
@@ -2542,14 +2432,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "session_user_id_user_id_fk",
@@ -2559,14 +2445,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_application_user_id_user_id_fkey",
@@ -2576,14 +2458,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "round_id"
-      ],
+      "columns": ["round_id"],
       "schemaTo": "public",
       "tableTo": "scholarship_round",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_application_round_id_scholarship_round_id_fkey",
@@ -2593,14 +2471,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_profile_user_id_user_id_fk",
@@ -2609,9 +2483,7 @@
       "table": "user_profile"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pkey",
       "schema": "public",
@@ -2619,9 +2491,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nameExplicit": false,
       "name": "country_pkey",
       "schema": "public",
@@ -2629,9 +2499,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "degree_level_pkey",
       "schema": "public",
@@ -2639,9 +2507,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "field_of_study_pkey",
       "schema": "public",
@@ -2649,9 +2515,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "pg-drizzle_post_pkey",
       "schema": "public",
@@ -2659,9 +2523,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_attachment_pkey",
       "schema": "public",
@@ -2669,9 +2531,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_category_pkey",
       "schema": "public",
@@ -2679,9 +2539,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_content_type_pkey",
       "schema": "public",
@@ -2689,9 +2547,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_pkey",
       "schema": "public",
@@ -2699,9 +2555,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "round_event_pkey",
       "schema": "public",
@@ -2709,9 +2563,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "scholarship_round_pkey",
       "schema": "public",
@@ -2719,9 +2571,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "scholarship_pkey",
       "schema": "public",
@@ -2729,9 +2579,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pkey",
       "schema": "public",
@@ -2739,9 +2587,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pkey",
       "schema": "public",
@@ -2749,9 +2595,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_application_pkey",
       "schema": "public",
@@ -2759,9 +2603,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_profile_pkey",
       "schema": "public",
@@ -2769,9 +2611,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pkey",
       "schema": "public",
@@ -2780,9 +2620,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "degree_level_name_key",
       "schema": "public",
@@ -2791,9 +2629,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "field_of_study_name_key",
       "schema": "public",
@@ -2802,9 +2638,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "resource_category_name_unique",
       "schema": "public",
@@ -2813,9 +2647,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "resource_content_type_name_unique",
       "schema": "public",
@@ -2824,9 +2656,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "scholarship_slug_key",
       "schema": "public",
@@ -2835,9 +2665,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "session_token_unique",
       "schema": "public",
@@ -2846,9 +2674,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "user_email_unique",
       "schema": "public",
@@ -2857,9 +2683,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nullsNotDistinct": false,
       "name": "user_profile_user_id_unique",
       "schema": "public",
