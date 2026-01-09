@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { eq } from "drizzle-orm";
 import {
   ArrowLeftIcon,
   BookOpenIcon,
@@ -20,7 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/server/db";
-import { scholarships } from "@/server/db/schema";
 
 export default async function ScholarshipDetailsPage({
   params,
@@ -30,7 +28,7 @@ export default async function ScholarshipDetailsPage({
   const { slug } = await params;
 
   const scholarship = (await db.query.scholarships.findFirst({
-    where: eq(scholarships.slug, slug) as any,
+    where: { slug },
     with: {
       countries: { with: { country: true } },
       degrees: { with: { degree: true } },

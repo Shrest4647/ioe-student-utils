@@ -22,9 +22,16 @@ export function ScholarshipCalendar() {
     return events.map((e) => ({
       id: e.id,
       start: new Date(e.date),
-      end: new Date(e.date), // Events are point-in-time for now (deadlines)
+      end: new Date(e.date),
       title: `${e.round?.scholarship?.name || "Scholarship"} - ${e.name}`,
-      color: e.type === "deadline" ? "red" : "blue", // Simple color mapping
+      color: (e.type === "deadline"
+        ? "red"
+        : e.type === "interview"
+          ? "purple"
+          : e.type === "webinar"
+            ? "blue"
+            : "green") as any,
+      description: e.description || e.round?.roundName || undefined,
     }));
   }, [events]);
 

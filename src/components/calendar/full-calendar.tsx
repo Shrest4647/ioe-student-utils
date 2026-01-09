@@ -34,6 +34,11 @@ import {
 } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 
 const monthEventVariants = cva("size-2 rounded-full", {
@@ -44,6 +49,7 @@ const monthEventVariants = cva("size-2 rounded-full", {
       green: "bg-green-500",
       pink: "bg-pink-500",
       purple: "bg-purple-500",
+      red: "bg-red-500",
     },
   },
   defaultVariants: {
@@ -59,6 +65,7 @@ const dayEventVariants = cva("rounded border-l-4 p-2 font-bold text-xs", {
       green: "border-green-500 bg-green-500/30 text-green-600",
       pink: "border-pink-500 bg-pink-500/30 text-pink-600",
       purple: "border-purple-500 bg-purple-500/30 text-purple-600",
+      red: "border-red-500 bg-red-500/30 text-red-600",
     },
   },
   defaultVariants: {
@@ -90,6 +97,7 @@ export type CalendarEvent = {
   end: Date;
   title: string;
   color?: VariantProps<typeof monthEventVariants>["variant"];
+  description?: string;
 };
 
 type CalendarProps = {
@@ -326,7 +334,7 @@ const CalendarWeekView = () => {
 };
 
 const CalendarMonthView = () => {
-  const { date, view, events, locale } = useCalendar();
+  const { date, view, events, locale, onEventClick } = useCalendar();
 
   const monthDates = useMemo(() => getDaysInMonth(date), [date]);
   const weekDays = useMemo(() => generateWeekdays(locale), [locale]);
@@ -373,21 +381,52 @@ const CalendarMonthView = () => {
 
               {currentEvents.map((event) => {
                 return (
-                  <div
-                    key={event.id}
-                    className="flex items-center gap-1 rounded px-1 text-sm"
-                  >
-                    <div
-                      className={cn(
-                        "shrink-0",
-                        monthEventVariants({ variant: event.color }),
-                      )}
-                    ></div>
-                    <span className="flex-1 truncate">{event.title}</span>
-                    <time className="text-muted-foreground/50 text-xs tabular-nums">
-                      {format(event.start, "HH:mm")}
-                    </time>
-                  </div>
+                  <HoverCard key={event.id}>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full cursor-pointer items-center gap-1 rounded px-1 text-left text-sm transition-colors hover:bg-muted"
+                        onClick={() => onEventClick?.(event)}
+                      >
+                        <div
+                          className={cn(
+                            "shrink-0",
+                            monthEventVariants({ variant: event.color }),
+                          )}
+                        ></div>
+                        <span className="flex-1 truncate">{event.title}</span>
+                        <time className="text-muted-foreground/50 text-xs tabular-nums">
+                          {format(event.start, "HH:mm")}
+                        </time>
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80 shadow-lg" side="top">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "size-2 rounded-full",
+                              monthEventVariants({ variant: event.color }),
+                            )}
+                          ></div>
+                          <h4 className="font-semibold text-sm">
+                            {event.title}
+                          </h4>
+                        </div>
+                        <p className="text-muted-foreground text-xs">
+                          {format(event.start, "PPP p")} (UTC)
+                        </p>
+                        {event.description && (
+                          <p className="border-t pt-2 text-xs">
+                            {event.description}
+                          </p>
+                        )}
+                        <div className="mt-2 text-[10px] text-muted-foreground italic">
+                          Click to view details
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                 );
               })}
             </div>
@@ -399,7 +438,7 @@ const CalendarMonthView = () => {
 };
 
 const CalendarYearView = () => {
-  const { view, date, today, locale } = useCalendar();
+  const { view, date, today, locale, events, setDate, setView } = useCalendar();
 
   const months = useMemo(() => {
     if (!view) {
@@ -416,10 +455,19 @@ const CalendarYearView = () => {
   if (view !== "year") return null;
 
   return (
-    <div className="grid h-full grid-cols-4 gap-10 overflow-auto">
+    <div className="grid h-full grid-cols-1 gap-10 overflow-auto md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {months.map((days, i) => (
-        <div key={days[0].toString()}>
-          <span className="text-xl">{i + 1}</span>
+        <div key={days[0].toString()} className="flex flex-col">
+          <button
+            type="button"
+            className="w-fit font-semibold text-lg transition-colors hover:text-primary"
+            onClick={() => {
+              setDate(setMonth(date, i));
+              setView("month");
+            }}
+          >
+            {format(setMonth(new Date(), i), "MMMM")}
+          </button>
 
           <div className="my-5 grid grid-cols-7 gap-2">
             {weekDays.map((day) => (
@@ -432,25 +480,56 @@ const CalendarYearView = () => {
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-x-2 text-center text-xs tabular-nums">
+          <div className="grid grid-cols-7 gap-x-2 gap-y-1 text-center text-xs tabular-nums">
             {days.map((_date) => {
+              const isCurrentMonth = getMonth(_date) === i;
+              const hasEvents = events.some((event) =>
+                isSameDay(event.start, _date),
+              );
+
               return (
                 <div
                   key={_date.toString()}
                   className={cn(
-                    getMonth(_date) !== i && "text-muted-foreground",
+                    "relative flex flex-col items-center gap-1",
+                    !isCurrentMonth && "text-muted-foreground/30",
                   )}
                 >
-                  <div
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDate(_date);
+                      setView("day");
+                    }}
                     className={cn(
-                      "grid aspect-square size-full place-content-center tabular-nums",
+                      "grid aspect-square size-7 place-content-center rounded-full tabular-nums transition-colors hover:bg-primary/20",
                       isSameDay(today, _date) &&
-                        getMonth(_date) === i &&
-                        "rounded-full bg-primary text-primary-foreground",
+                        isCurrentMonth &&
+                        "bg-primary text-primary-foreground",
+                      hasEvents &&
+                        isCurrentMonth &&
+                        !isSameDay(today, _date) &&
+                        "bg-primary/20 font-bold text-primary",
                     )}
                   >
                     {format(_date, "d")}
-                  </div>
+                  </button>
+                  {hasEvents && isCurrentMonth && (
+                    <div className="flex gap-0.5">
+                      {events
+                        .filter((e) => isSameDay(e.start, _date))
+                        .slice(0, 3)
+                        .map((e) => (
+                          <div
+                            key={e.id}
+                            className={cn(
+                              "size-1 rounded-full",
+                              monthEventVariants({ variant: e.color }),
+                            )}
+                          />
+                        ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
