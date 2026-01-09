@@ -515,7 +515,7 @@ function RoundCard({
   const addEventMutation = useMutation({
     mutationFn: async (values: any) => {
       const { data } = await apiClient.api.scholarships.admin
-        .rounds({ roundId: round.id })
+        .rounds({ id: round.id })
         .events.post(values);
       return data;
     },

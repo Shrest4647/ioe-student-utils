@@ -1,4 +1,6 @@
+import { Loader2 } from "lucide-react";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ScholarshipCalendar } from "@/components/scholarships/scholarship-calendar";
 
 export const metadata: Metadata = {
@@ -17,8 +19,13 @@ export default function ScholarshipCalendarPage() {
           Track upcoming application deadlines, webinars, and interview dates.
         </p>
       </div>
-
-      <ScholarshipCalendar />
+      <Suspense
+        fallback={
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        }
+      >
+        <ScholarshipCalendar />
+      </Suspense>
     </div>
   );
 }

@@ -634,8 +634,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       )
       // Round Events
       .post(
-        "/rounds/:roundId/events",
-        async ({ params: { roundId }, body, user }) => {
+        "/rounds/:id/events",
+        async ({ params: { id: roundId }, body, user }) => {
           const id = nanoid();
           await db.insert(roundEvents).values({
             ...body,

@@ -96,6 +96,59 @@ export default function TaxonomyDashboardPage() {
     },
   });
 
+  const updateCountryMutation = useMutation({
+    mutationFn: async ({
+      code,
+      ...values
+    }: {
+      code: string;
+      name?: string;
+      region?: string;
+    }) => {
+      const { data } = await apiClient.api.scholarships.admin
+        .countries({ code })
+        .patch(values);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "countries"] });
+      toast.success("Country updated successfully");
+    },
+  });
+
+  const updateDegreeMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...values
+    }: {
+      id: string;
+      name?: string;
+      rank?: string;
+    }) => {
+      const { data } = await apiClient.api.scholarships.admin
+        .degrees({ id })
+        .patch(values);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "degrees"] });
+      toast.success("Degree level updated successfully");
+    },
+  });
+
+  const updateFieldMutation = useMutation({
+    mutationFn: async ({ id, ...values }: { id: string; name?: string }) => {
+      const { data } = await apiClient.api.scholarships.admin
+        .fields({ id })
+        .patch(values);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "fields"] });
+      toast.success("Field of study updated successfully");
+    },
+  });
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -114,6 +167,9 @@ export default function TaxonomyDashboardPage() {
             data={countriesQuery.data || []}
             isLoading={countriesQuery.isLoading}
             onAdd={(values) => addCountryMutation.mutate(values)}
+            onUpdate={(id, values) =>
+              updateCountryMutation.mutate({ code: id, ...values })
+            }
             columns={[
               { key: "code", label: "Code" },
               { key: "name", label: "Name" },
@@ -153,6 +209,22 @@ export default function TaxonomyDashboardPage() {
                     </Field>
                   )}
                 </form.Field>
+                <form.Field name="region">
+                  {(field: any) => (
+                    <Field>
+                      <FieldLabel>Region</FieldLabel>
+                      <Input
+                        value={field.state.value as string}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      <FieldError
+                        errors={field.state.meta.errors.map((err: any) => ({
+                          message: err as string,
+                        }))}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
               </>
             )}
           />
@@ -165,6 +237,9 @@ export default function TaxonomyDashboardPage() {
             data={degreesQuery.data || []}
             isLoading={degreesQuery.isLoading}
             onAdd={(values) => addDegreeMutation.mutate(values)}
+            onUpdate={(id, values) =>
+              updateDegreeMutation.mutate({ id, ...values })
+            }
             columns={[
               { key: "name", label: "Name" },
               { key: "rank", label: "Rank" },
@@ -215,6 +290,9 @@ export default function TaxonomyDashboardPage() {
             data={fieldsQuery.data || []}
             isLoading={fieldsQuery.isLoading}
             onAdd={(values) => addFieldMutation.mutate(values)}
+            onUpdate={(id, values) =>
+              updateFieldMutation.mutate({ id, ...values })
+            }
             columns={[{ key: "name", label: "Name" }]}
             fields={(form) => (
               <form.Field name="name">
@@ -247,6 +325,7 @@ function TaxonomySection({
   data,
   isLoading,
   onAdd,
+  onUpdate,
   columns,
   fields,
 }: {
@@ -255,10 +334,12 @@ function TaxonomySection({
   data: any[];
   isLoading: boolean;
   onAdd: (values: any) => void;
+  onUpdate: (id: string, values: any) => void;
   columns: { key: string; label: string }[];
   fields: (form: any) => React.ReactNode;
 }) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: columns.reduce((acc, col) => {
@@ -266,11 +347,31 @@ function TaxonomySection({
       return acc;
     }, {} as any),
     onSubmit: async ({ value }) => {
-      onAdd(value);
-      setIsAdding(false);
+      if (editingId) {
+        onUpdate(editingId, value);
+        setEditingId(null);
+      } else {
+        onAdd(value);
+        setIsAdding(false);
+      }
       form.reset();
     },
   });
+
+  const startEdit = (item: any) => {
+    setEditingId(item.id || item.code);
+    setIsAdding(false);
+    form.reset();
+    columns.forEach((col) => {
+      form.setFieldValue(col.key as any, item[col.key] || "");
+    });
+  };
+
+  const cancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
+    form.reset();
+  };
 
   return (
     <Card>
@@ -279,7 +380,7 @@ function TaxonomySection({
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        {!isAdding && (
+        {!isAdding && !editingId && (
           <Button onClick={() => setIsAdding(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add {title.slice(0, -1)}
@@ -287,8 +388,13 @@ function TaxonomySection({
         )}
       </CardHeader>
       <CardContent>
-        {isAdding && (
+        {(isAdding || editingId) && (
           <div className="mb-6 rounded-lg border bg-muted/30 p-4">
+            <h3 className="mb-4 font-medium text-sm">
+              {editingId
+                ? `Edit ${title.slice(0, -1)}`
+                : `Add New ${title.slice(0, -1)}`}
+            </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -300,11 +406,7 @@ function TaxonomySection({
               {fields(form)}
               <div className="flex gap-2">
                 <Button type="submit">Save</Button>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setIsAdding(false)}
-                >
+                <Button variant="ghost" type="button" onClick={cancel}>
                   Cancel
                 </Button>
               </div>
@@ -348,7 +450,12 @@ function TaxonomySection({
                       </TableCell>
                     ))}
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEdit(item)}
+                        disabled={!!editingId || isAdding}
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
