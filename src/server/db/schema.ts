@@ -190,3 +190,149 @@ export const resourceAttachments = pgTable("resource_attachment", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
+
+// --- Reusable Taxonomy Tables ---
+
+export const countries = pgTable("country", {
+  code: text("code").primaryKey(), // ISO code, e.g., 'NP', 'US'
+  name: text("name").notNull(),
+  region: text("region"), // e.g., 'Asia', 'Europe'
+});
+
+export const degreeLevels = pgTable("degree_level", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(), // e.g., 'Bachelors', 'Masters', 'PhD'
+  rank: text("rank"), // Optional helper for sorting degrees
+});
+
+export const fieldsOfStudy = pgTable("field_of_study", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(), // e.g., 'Computer Science'
+});
+
+// --- Scholarship Core Tables ---
+
+export const scholarships = pgTable("scholarship", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"), // Markdown supported
+  providerName: text("provider_name"), // e.g. 'DAAD', 'Bill Gates Foundation'
+  websiteUrl: text("website_url"),
+  fundingType: text("funding_type", {
+    enum: ["fully_funded", "partial", "tuition_only"],
+  }),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const scholarshipRounds = pgTable("scholarship_round", {
+  id: text("id").primaryKey(),
+  scholarshipId: text("scholarship_id")
+    .notNull()
+    .references(() => scholarships.id, { onDelete: "cascade" }),
+  roundName: text("round_name"), // e.g., 'Fall 2025 Intake'
+  isActive: boolean("is_active").default(false).notNull(),
+  openDate: timestamp("open_date"),
+  deadlineDate: timestamp("deadline_date"),
+  scholarshipAmount: text("scholarship_amount"), // e.g. '$10,000 / year'
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+// --- Scholarship Junction Tables ---
+
+export const scholarshipsToCountries = pgTable(
+  "scholarship_to_country",
+  {
+    scholarshipId: text("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id, { onDelete: "cascade" }),
+    countryCode: text("country_code")
+      .notNull()
+      .references(() => countries.code, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      pk: [t.scholarshipId, t.countryCode],
+    },
+  ],
+);
+
+export const scholarshipsToFields = pgTable(
+  "scholarship_to_field",
+  {
+    scholarshipId: text("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id, { onDelete: "cascade" }),
+    fieldId: text("field_id")
+      .notNull()
+      .references(() => fieldsOfStudy.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      pk: [t.scholarshipId, t.fieldId],
+    },
+  ],
+);
+
+export const scholarshipsToDegrees = pgTable(
+  "scholarship_to_degree",
+  {
+    scholarshipId: text("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id, { onDelete: "cascade" }),
+    degreeId: text("degree_id")
+      .notNull()
+      .references(() => degreeLevels.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      pk: [t.scholarshipId, t.degreeId],
+    },
+  ],
+);
+
+// --- Events & User Data ---
+
+export const roundEvents = pgTable("round_event", {
+  id: text("id").primaryKey(),
+  roundId: text("round_id")
+    .notNull()
+    .references(() => scholarshipRounds.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // e.g., 'Interview Stage'
+  date: timestamp("date").notNull(),
+  type: text("type", {
+    enum: ["webinar", "interview", "result_announcement", "deadline"],
+  }),
+  description: text("description"),
+});
+
+export const userApplications = pgTable("user_application", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  roundId: text("round_id")
+    .notNull()
+    .references(() => scholarshipRounds.id, { onDelete: "cascade" }),
+  status: text("status", {
+    enum: ["saved", "preparing", "submitted", "rejected", "accepted"],
+  }).default("saved"),
+  personalNotes: text("personal_notes"),
+  deadlineReminder: timestamp("deadline_reminder"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});

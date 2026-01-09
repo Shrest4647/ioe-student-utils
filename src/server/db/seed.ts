@@ -1,10 +1,19 @@
 import { db } from "./index";
 import {
+  countries,
+  degreeLevels,
+  fieldsOfStudy,
   resourceAttachments,
   resourceCategories,
   resourceContentTypes,
   resources,
   resourcesToCategories,
+  roundEvents,
+  scholarshipRounds,
+  scholarships,
+  scholarshipsToCountries,
+  scholarshipsToDegrees,
+  scholarshipsToFields,
 } from "./schema";
 
 const categories = [
@@ -339,6 +348,179 @@ async function seed() {
       );
     } else {
       console.log("⏭️ Resources already seeded.");
+    }
+
+    // --- Seeding Scholarship Data ---
+
+    const existingCountries = await db.query.countries.findMany();
+    if (existingCountries.length === 0) {
+      await db.insert(countries).values([
+        { code: "NP", name: "Nepal", region: "Asia" },
+        { code: "US", name: "United States", region: "North America" },
+        { code: "GB", name: "United Kingdom", region: "Europe" },
+        { code: "DE", name: "Germany", region: "Europe" },
+        { code: "AU", name: "Australia", region: "Oceania" },
+        { code: "CA", name: "Canada", region: "North America" },
+      ]);
+      console.log("✅ Inserted countries.");
+    }
+
+    const existingDegrees = await db.query.degreeLevels.findMany();
+    if (existingDegrees.length === 0) {
+      await db.insert(degreeLevels).values([
+        { id: crypto.randomUUID(), name: "Bachelors", rank: "1" },
+        { id: crypto.randomUUID(), name: "Masters", rank: "2" },
+        { id: crypto.randomUUID(), name: "PhD", rank: "3" },
+      ]);
+      console.log("✅ Inserted degree levels.");
+    }
+
+    const existingFields = await db.query.fieldsOfStudy.findMany();
+    if (existingFields.length === 0) {
+      await db.insert(fieldsOfStudy).values([
+        { id: crypto.randomUUID(), name: "Computer Science" },
+        { id: crypto.randomUUID(), name: "Engineering" },
+        { id: crypto.randomUUID(), name: "Data Science" },
+        { id: crypto.randomUUID(), name: "Business" },
+      ]);
+      console.log("✅ Inserted fields of study.");
+    }
+
+    const existingScholarships = await db.query.scholarships.findMany();
+    if (existingScholarships.length === 0) {
+      // Fetch helpers
+      const degrees = await db.query.degreeLevels.findMany();
+      const fields = await db.query.fieldsOfStudy.findMany();
+      const masters = degrees.find((d) => d.name === "Masters");
+      const phd = degrees.find((d) => d.name === "PhD");
+
+      const cs = fields.find((f) => f.name === "Computer Science");
+      const eng = fields.find((f) => f.name === "Engineering");
+
+      // 1. Erasmus Mundus
+      const erasmusId = crypto.randomUUID();
+      await db.insert(scholarships).values({
+        id: erasmusId,
+        name: "Erasmus Mundus Joint Master Degrees",
+        slug: "erasmus-mundus",
+        description:
+          "Prestigious integrated study programmes offered by consortia of EU universities.",
+        providerName: "European Union",
+        websiteUrl: "https://erasmus-plus.ec.europa.eu/",
+        fundingType: "fully_funded",
+      });
+
+      // Link Erasmus to EU countries (mocking with DE and GB for now)
+      await db.insert(scholarshipsToCountries).values([
+        { scholarshipId: erasmusId, countryCode: "DE" },
+        { scholarshipId: erasmusId, countryCode: "GB" },
+      ]);
+
+      if (masters) {
+        await db.insert(scholarshipsToDegrees).values({
+          scholarshipId: erasmusId,
+          degreeId: masters.id,
+        });
+      }
+
+      if (cs && eng) {
+        await db.insert(scholarshipsToFields).values([
+          { scholarshipId: erasmusId, fieldId: cs.id },
+          { scholarshipId: erasmusId, fieldId: eng.id },
+        ]);
+      }
+
+      // Add Round for Erasmus
+      const erasmusRoundId = crypto.randomUUID();
+      await db.insert(scholarshipRounds).values({
+        id: erasmusRoundId,
+        scholarshipId: erasmusId,
+        roundName: "2026-2028 Intake",
+        isActive: true,
+        openDate: new Date("2025-10-01"),
+        deadlineDate: new Date("2026-01-15"),
+        scholarshipAmount: "Full tuition + €1,400 monthly stipend",
+      });
+
+      await db.insert(roundEvents).values([
+        {
+          id: crypto.randomUUID(),
+          roundId: erasmusRoundId,
+          name: "Application Deadline",
+          date: new Date("2026-01-15"),
+          type: "deadline",
+        },
+        {
+          id: crypto.randomUUID(),
+          roundId: erasmusRoundId,
+          name: "Results Announced",
+          date: new Date("2026-04-01"),
+          type: "result_announcement",
+        },
+      ]);
+
+      // 2. DAAD
+      const daadId = crypto.randomUUID();
+      await db.insert(scholarships).values({
+        id: daadId,
+        name: "DAAD EPOS Scholarship",
+        slug: "daad-epos",
+        description:
+          "Development-related postgraduate courses for professionals from developing countries.",
+        providerName: "DAAD (German Academic Exchange Service)",
+        websiteUrl: "https://www2.daad.de/",
+        fundingType: "fully_funded",
+      });
+
+      await db
+        .insert(scholarshipsToCountries)
+        .values({ scholarshipId: daadId, countryCode: "DE" });
+      if (masters && phd) {
+        await db.insert(scholarshipsToDegrees).values([
+          { scholarshipId: daadId, degreeId: masters.id },
+          { scholarshipId: daadId, degreeId: phd.id },
+        ]);
+      }
+
+      // Add Round for DAAD
+      const daadRoundId = crypto.randomUUID();
+      await db.insert(scholarshipRounds).values({
+        id: daadRoundId,
+        scholarshipId: daadId,
+        roundName: "2026 Intake",
+        isActive: true, // currently active
+        openDate: new Date("2025-08-01"),
+        deadlineDate: new Date("2025-10-31"), // Soon
+        scholarshipAmount: "€934 monthly + insurance + travel",
+      });
+
+      await db.insert(roundEvents).values({
+        id: crypto.randomUUID(),
+        roundId: daadRoundId,
+        name: "Deadline",
+        date: new Date("2025-10-31"),
+        type: "deadline",
+      });
+
+      // 3. Fulbright
+      const fulbrightId = crypto.randomUUID();
+      await db.insert(scholarships).values({
+        id: fulbrightId,
+        name: "Fulbright Foreign Student Program",
+        slug: "fulbright",
+        description:
+          "Enables graduate students, young professionals and artists from abroad to study and conduct research in the United States.",
+        providerName: "US Department of State",
+        websiteUrl: "https://foreign.fulbrightonline.org/",
+        fundingType: "fully_funded",
+      });
+      await db
+        .insert(scholarshipsToCountries)
+        .values({ scholarshipId: fulbrightId, countryCode: "US" });
+
+      console.log("✅ Inserted sample scholarships.");
+    } else {
+      console.log("⏭️ Scholarships already seeded.");
     }
 
     console.log("✨ Seeding completed!");
