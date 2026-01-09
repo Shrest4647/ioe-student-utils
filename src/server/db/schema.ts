@@ -17,11 +17,8 @@ export const posts = createTable(
     createdById: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => user.id),
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .$defaultFn(() => new Date())
-      .notNull(),
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: d.timestamp({ withTimezone: true }).$defaultFn(() => new Date()),
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [
@@ -101,12 +98,8 @@ export const userProfile = pgTable("user_profile", {
     .references(() => user.id, { onDelete: "cascade" }),
   bio: text("bio"),
   location: text("location"),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 // --- Resource Library Tables ---
@@ -115,24 +108,16 @@ export const resourceCategories = pgTable("resource_category", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const resourceContentTypes = pgTable("resource_content_type", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(), // e.g., 'Tool', 'Ebook', 'Guide'
   description: text("description"),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const resources = pgTable("resource", {
@@ -140,19 +125,16 @@ export const resources = pgTable("resource", {
   title: text("title").notNull(),
   description: text("description"),
   s3Url: text("s3_url").notNull(),
-  contentTypeId: text("content_type_id")
-    .notNull()
-    .references(() => resourceContentTypes.id),
-  uploaderId: text("uploader_id")
-    .notNull()
-    .references(() => user.id),
+  contentTypeId: text("content_type_id").references(
+    () => resourceContentTypes.id,
+    { onDelete: "set null" },
+  ),
+  uploaderId: text("uploader_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
   isFeatured: boolean("is_featured").default(false).notNull(),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const resourcesToCategories = pgTable(
@@ -183,12 +165,8 @@ export const resourceAttachments = pgTable("resource_attachment", {
   url: text("url").notNull(),
   name: text("name").notNull(),
   fileFormat: text("file_format"), // NULL for URLs
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 // --- Reusable Taxonomy Tables ---
@@ -197,17 +175,41 @@ export const countries = pgTable("country", {
   code: text("code").primaryKey(), // ISO code, e.g., 'NP', 'US'
   name: text("name").notNull(),
   region: text("region"), // e.g., 'Asia', 'Europe'
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const degreeLevels = pgTable("degree_level", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(), // e.g., 'Bachelors', 'Masters', 'PhD'
   rank: text("rank"), // Optional helper for sorting degrees
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const fieldsOfStudy = pgTable("field_of_study", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(), // e.g., 'Computer Science'
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 // --- Scholarship Core Tables ---
@@ -222,12 +224,18 @@ export const scholarships = pgTable("scholarship", {
   fundingType: text("funding_type", {
     enum: ["fully_funded", "partial", "tuition_only"],
   }),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  status: text("status", {
+    enum: ["active", "inactive", "archived"],
+  }).default("active"),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const scholarshipRounds = pgTable("scholarship_round", {
@@ -240,12 +248,14 @@ export const scholarshipRounds = pgTable("scholarship_round", {
   openDate: timestamp("open_date"),
   deadlineDate: timestamp("deadline_date"),
   scholarshipAmount: text("scholarship_amount"), // e.g. '$10,000 / year'
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 // --- Scholarship Junction Tables ---
@@ -314,6 +324,14 @@ export const roundEvents = pgTable("round_event", {
     enum: ["webinar", "interview", "result_announcement", "deadline"],
   }),
   description: text("description"),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
 export const userApplications = pgTable("user_application", {
@@ -329,10 +347,6 @@ export const userApplications = pgTable("user_application", {
   }).default("saved"),
   personalNotes: text("personal_notes"),
   deadlineReminder: timestamp("deadline_reminder"),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });

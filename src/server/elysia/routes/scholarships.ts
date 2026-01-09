@@ -1,7 +1,13 @@
 import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
+import { nanoid } from "nanoid";
 import { db } from "@/server/db";
 import {
+  countries,
+  degreeLevels,
+  fieldsOfStudy,
+  roundEvents,
+  scholarshipRounds,
   scholarships,
   scholarshipsToCountries,
   scholarshipsToDegrees,
@@ -294,4 +300,400 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         summary: "Get scholarship details by slug",
       },
     },
+  )
+  // --- Admin Taxonomy Management ---
+  .group("/admin", (app) =>
+    app
+      .use(authorizationPlugin)
+      // Countries
+      .post(
+        "/countries",
+        async ({ body, user }) => {
+          const id = body.code.toUpperCase();
+          await db.insert(countries).values({
+            ...body,
+            code: id,
+            createdById: user.id,
+            updatedById: user.id,
+          });
+          return { success: true, data: { code: id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            code: t.String(),
+            name: t.String(),
+            region: t.Optional(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/countries/:code",
+        async ({ params: { code }, body, user }) => {
+          await db
+            .update(countries)
+            .set({ ...body, updatedById: user.id, updatedAt: new Date() })
+            .where(eq(countries.code, code.toUpperCase()));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.Optional(t.String()),
+            region: t.Optional(t.String()),
+          }),
+        },
+      )
+      // Degree Levels
+      .post(
+        "/degrees",
+        async ({ body, user }) => {
+          const id = nanoid();
+          await db.insert(degreeLevels).values({
+            ...body,
+            id,
+            createdById: user.id,
+            updatedById: user.id,
+          });
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.String(),
+            rank: t.Optional(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/degrees/:id",
+        async ({ params: { id }, body, user }) => {
+          await db
+            .update(degreeLevels)
+            .set({ ...body, updatedById: user.id, updatedAt: new Date() })
+            .where(eq(degreeLevels.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.Optional(t.String()),
+            rank: t.Optional(t.String()),
+          }),
+        },
+      )
+      // Fields of Study
+      .post(
+        "/fields",
+        async ({ body, user }) => {
+          const id = nanoid();
+          await db.insert(fieldsOfStudy).values({
+            ...body,
+            id,
+            createdById: user.id,
+            updatedById: user.id,
+          });
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.String(),
+          }),
+        },
+      )
+      .patch(
+        "/fields/:id",
+        async ({ params: { id }, body, user }) => {
+          await db
+            .update(fieldsOfStudy)
+            .set({ ...body, updatedById: user.id, updatedAt: new Date() })
+            .where(eq(fieldsOfStudy.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.Optional(t.String()),
+          }),
+        },
+      )
+      // --- Admin Scholarship Management ---
+      .post(
+        "/",
+        async ({ body, user }) => {
+          const id = nanoid();
+          const { countryCodes, degreeIds, fieldIds, ...rest } = body;
+
+          await db.transaction(async (tx) => {
+            await tx.insert(scholarships).values({
+              ...rest,
+              id,
+              createdById: user.id,
+              updatedById: user.id,
+            });
+
+            if (countryCodes?.length) {
+              await tx.insert(scholarshipsToCountries).values(
+                countryCodes.map((code) => ({
+                  scholarshipId: id,
+                  countryCode: code,
+                })),
+              );
+            }
+            if (degreeIds?.length) {
+              await tx.insert(scholarshipsToDegrees).values(
+                degreeIds.map((degreeId) => ({
+                  scholarshipId: id,
+                  degreeId,
+                })),
+              );
+            }
+            if (fieldIds?.length) {
+              await tx.insert(scholarshipsToFields).values(
+                fieldIds.map((fieldId) => ({
+                  scholarshipId: id,
+                  fieldId,
+                })),
+              );
+            }
+          });
+
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.String(),
+            slug: t.String(),
+            description: t.Optional(t.String()),
+            providerName: t.Optional(t.String()),
+            websiteUrl: t.Optional(t.String()),
+            fundingType: t.Optional(
+              t.Enum({
+                fully_funded: "fully_funded",
+                partial: "partial",
+                tuition_only: "tuition_only",
+              }),
+            ),
+            isActive: t.Optional(t.Boolean()),
+            status: t.Optional(
+              t.Enum({
+                active: "active",
+                inactive: "inactive",
+                archived: "archived",
+              }),
+            ),
+            countryCodes: t.Optional(t.Array(t.String())),
+            degreeIds: t.Optional(t.Array(t.String())),
+            fieldIds: t.Optional(t.Array(t.String())),
+          }),
+        },
+      )
+      .patch(
+        "/:id",
+        async ({ params: { id }, body, user }) => {
+          const { countryCodes, degreeIds, fieldIds, ...rest } = body;
+
+          await db.transaction(async (tx) => {
+            if (Object.keys(rest).length > 0) {
+              await tx
+                .update(scholarships)
+                .set({ ...rest, updatedById: user.id, updatedAt: new Date() })
+                .where(eq(scholarships.id, id));
+            }
+
+            if (countryCodes !== undefined) {
+              await tx
+                .delete(scholarshipsToCountries)
+                .where(eq(scholarshipsToCountries.scholarshipId, id));
+              if (countryCodes.length > 0) {
+                await tx.insert(scholarshipsToCountries).values(
+                  countryCodes.map((code) => ({
+                    scholarshipId: id,
+                    countryCode: code,
+                  })),
+                );
+              }
+            }
+
+            if (degreeIds !== undefined) {
+              await tx
+                .delete(scholarshipsToDegrees)
+                .where(eq(scholarshipsToDegrees.scholarshipId, id));
+              if (degreeIds.length > 0) {
+                await tx.insert(scholarshipsToDegrees).values(
+                  degreeIds.map((degreeId) => ({
+                    scholarshipId: id,
+                    degreeId,
+                  })),
+                );
+              }
+            }
+
+            if (fieldIds !== undefined) {
+              await tx
+                .delete(scholarshipsToFields)
+                .where(eq(scholarshipsToFields.scholarshipId, id));
+              if (fieldIds.length > 0) {
+                await tx.insert(scholarshipsToFields).values(
+                  fieldIds.map((fieldId) => ({
+                    scholarshipId: id,
+                    fieldId,
+                  })),
+                );
+              }
+            }
+          });
+
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.Optional(t.String()),
+            slug: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            providerName: t.Optional(t.String()),
+            websiteUrl: t.Optional(t.String()),
+            fundingType: t.Optional(
+              t.Enum({
+                fully_funded: "fully_funded",
+                partial: "partial",
+                tuition_only: "tuition_only",
+              }),
+            ),
+            isActive: t.Optional(t.Boolean()),
+            status: t.Optional(
+              t.Enum({
+                active: "active",
+                inactive: "inactive",
+                archived: "archived",
+              }),
+            ),
+            countryCodes: t.Optional(t.Array(t.String())),
+            degreeIds: t.Optional(t.Array(t.String())),
+            fieldIds: t.Optional(t.Array(t.String())),
+          }),
+        },
+      )
+      // Scholarship Rounds
+      .post(
+        "/rounds",
+        async ({ body, user }) => {
+          const id = nanoid();
+          const { openDate, deadlineDate, ...rest } = body;
+          await db.insert(scholarshipRounds).values({
+            ...rest,
+            id,
+            openDate: openDate ? new Date(openDate) : undefined,
+            deadlineDate: deadlineDate ? new Date(deadlineDate) : undefined,
+            createdById: user.id,
+            updatedById: user.id,
+          });
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            scholarshipId: t.String(),
+            roundName: t.Optional(t.String()),
+            isActive: t.Optional(t.Boolean()),
+            openDate: t.Optional(t.String()), // ISO String, will be converted by Drizzle if configured or manually
+            deadlineDate: t.Optional(t.String()),
+            scholarshipAmount: t.Optional(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/rounds/:id",
+        async ({ params: { id }, body, user }) => {
+          const { openDate, deadlineDate, ...rest } = body;
+          await db
+            .update(scholarshipRounds)
+            .set({
+              ...rest,
+              openDate: openDate ? new Date(openDate) : undefined,
+              deadlineDate: deadlineDate ? new Date(deadlineDate) : undefined,
+              updatedById: user.id,
+              updatedAt: new Date(),
+            })
+            .where(eq(scholarshipRounds.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            roundName: t.Optional(t.String()),
+            isActive: t.Optional(t.Boolean()),
+            openDate: t.Optional(t.String()),
+            deadlineDate: t.Optional(t.String()),
+            scholarshipAmount: t.Optional(t.String()),
+          }),
+        },
+      )
+      // Round Events
+      .post(
+        "/rounds/:roundId/events",
+        async ({ params: { roundId }, body, user }) => {
+          const id = nanoid();
+          await db.insert(roundEvents).values({
+            ...body,
+            id,
+            roundId,
+            date: new Date(body.date),
+            createdById: user.id,
+            updatedById: user.id,
+          });
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.String(),
+            date: t.String(),
+            type: t.Optional(
+              t.Enum({
+                webinar: "webinar",
+                interview: "interview",
+                result_announcement: "result_announcement",
+                deadline: "deadline",
+              }),
+            ),
+            description: t.Optional(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/rounds/events/:id",
+        async ({ params: { id }, body, user }) => {
+          const { date, ...rest } = body;
+          await db
+            .update(roundEvents)
+            .set({
+              ...rest,
+              date: date ? new Date(date) : undefined,
+              updatedById: user.id,
+              updatedAt: new Date(),
+            })
+            .where(eq(roundEvents.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            name: t.Optional(t.String()),
+            date: t.Optional(t.String()),
+            type: t.Optional(
+              t.Enum({
+                webinar: "webinar",
+                interview: "interview",
+                result_announcement: "result_announcement",
+                deadline: "deadline",
+              }),
+            ),
+            description: t.Optional(t.String()),
+          }),
+        },
+      ),
   );
