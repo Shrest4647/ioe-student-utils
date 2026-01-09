@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Resource } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +23,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -408,32 +415,24 @@ export function EditResourceModal({
                 {(field) => (
                   <div className="space-y-3">
                     <Label>Categories (Select all that apply)</Label>
-                    <div className="grid h-40 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3">
-                      {categories.map((cat) => (
-                        <div
-                          key={cat.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`edit-cat-${cat.id}`}
-                            checked={field.state.value.includes(cat.id)}
-                            onCheckedChange={() => {
-                              const current = field.state.value;
-                              const updated = current.includes(cat.id)
-                                ? current.filter((id) => id !== cat.id)
-                                : [...current, cat.id];
-                              field.handleChange(updated);
-                            }}
-                          />
-                          <Label
-                            htmlFor={`edit-cat-${cat.id}`}
-                            className="cursor-pointer font-normal text-sm leading-none"
-                          >
-                            {cat.name}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+
+                    <MultiSelect
+                      defaultValues={field.state.value as string[]}
+                      onValuesChange={field.handleChange}
+                    >
+                      <MultiSelectTrigger className="w-full max-w-[400px]">
+                        <MultiSelectValue placeholder="Select frameworks..." />
+                      </MultiSelectTrigger>
+                      <MultiSelectContent>
+                        <MultiSelectGroup>
+                          {categories.map((f) => (
+                            <MultiSelectItem key={f.id} value={f.id}>
+                              {f.name}
+                            </MultiSelectItem>
+                          ))}
+                        </MultiSelectGroup>
+                      </MultiSelectContent>
+                    </MultiSelect>
                   </div>
                 )}
               </form.Field>
