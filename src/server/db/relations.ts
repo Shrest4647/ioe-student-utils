@@ -219,11 +219,16 @@ export const relations = defineRelations(schema, (r) => ({
         r.collegeDepartmentsToPrograms.programId,
       ),
     }),
-    ratings: r.many.ratings({
-      from: r.collegeDepartments.id.through(
-        r.collegeDepartmentsToRatings.collegeDepartmentId,
-      ),
-      to: r.ratings.id.through(r.collegeDepartmentsToRatings.ratingId),
+  },
+
+  collegeDepartmentsToPrograms: {
+    collegeDepartment: r.one.collegeDepartments({
+      from: r.collegeDepartmentsToPrograms.collegeDepartmentId,
+      to: r.collegeDepartments.id,
+    }),
+    program: r.one.academicPrograms({
+      from: r.collegeDepartmentsToPrograms.programId,
+      to: r.academicPrograms.id,
     }),
   },
 
@@ -261,14 +266,72 @@ export const relations = defineRelations(schema, (r) => ({
         r.collegeDepartmentProgramToCourses.programId,
       ),
     }),
-    ratings: r.many.ratings({
-      from: r.academicCourses.id.through(
-        r.collegeDepartmentProgramCourseToRatings
-          .collegeDepartmentProgramToCourseId,
-      ),
-      to: r.ratings.id.through(
-        r.collegeDepartmentProgramCourseToRatings.ratingId,
-      ),
+  },
+
+  collegeDepartmentProgramToCourses: {
+    program: r.one.collegeDepartmentsToPrograms({
+      from: r.collegeDepartmentProgramToCourses.programId,
+      to: r.collegeDepartmentsToPrograms.id,
+    }),
+    course: r.one.academicCourses({
+      from: r.collegeDepartmentProgramToCourses.courseId,
+      to: r.academicCourses.id,
+    }),
+  },
+
+  universityToRatings: {
+    university: r.one.universities({
+      from: r.universityToRatings.universityId,
+      to: r.universities.id,
+    }),
+    rating: r.one.ratings({
+      from: r.universityToRatings.ratingId,
+      to: r.ratings.id,
+    }),
+  },
+
+  collegeToRatings: {
+    college: r.one.colleges({
+      from: r.collegeToRatings.collegeId,
+      to: r.colleges.id,
+    }),
+    rating: r.one.ratings({
+      from: r.collegeToRatings.ratingId,
+      to: r.ratings.id,
+    }),
+  },
+
+  collegeDepartmentsToRatings: {
+    collegeDepartment: r.one.collegeDepartments({
+      from: r.collegeDepartmentsToRatings.collegeDepartmentId,
+      to: r.collegeDepartments.id,
+    }),
+    rating: r.one.ratings({
+      from: r.collegeDepartmentsToRatings.ratingId,
+      to: r.ratings.id,
+    }),
+  },
+
+  collegeDepartmentProgramsToRatings: {
+    collegeDepartmentProgram: r.one.collegeDepartmentsToPrograms({
+      from: r.collegeDepartmentProgramsToRatings.collegeDepartmentProgramId,
+      to: r.collegeDepartmentsToPrograms.id,
+    }),
+    rating: r.one.ratings({
+      from: r.collegeDepartmentProgramsToRatings.ratingId,
+      to: r.ratings.id,
+    }),
+  },
+
+  collegeDepartmentProgramCourseToRatings: {
+    collegeDepartmentProgramCourse: r.one.collegeDepartmentProgramToCourses({
+      from: r.collegeDepartmentProgramCourseToRatings
+        .collegeDepartmentProgramToCourseId,
+      to: r.collegeDepartmentProgramToCourses.id,
+    }),
+    rating: r.one.ratings({
+      from: r.collegeDepartmentProgramCourseToRatings.ratingId,
+      to: r.ratings.id,
     }),
   },
 
@@ -280,6 +343,13 @@ export const relations = defineRelations(schema, (r) => ({
     ratingCategory: r.one.ratingCategories({
       from: r.ratings.ratingCategoryId,
       to: r.ratingCategories.id,
+    }),
+  },
+
+  ratingCategories: {
+    ratings: r.many.ratings({
+      from: r.ratingCategories.id,
+      to: r.ratings.ratingCategoryId,
     }),
   },
 }));
