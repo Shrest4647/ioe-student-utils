@@ -166,4 +166,120 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.fieldsOfStudy.id,
     }),
   },
+
+  // --- University Yelper Relations ---
+
+  universities: {
+    colleges: r.many.colleges({
+      from: r.universities.id,
+      to: r.colleges.universityId,
+    }),
+    ratings: r.many.ratings({
+      from: r.universities.id.through(r.universityToRatings.universityId),
+      to: r.ratings.id.through(r.universityToRatings.ratingId),
+    }),
+  },
+
+  colleges: {
+    university: r.one.universities({
+      from: r.colleges.universityId,
+      to: r.universities.id,
+    }),
+    collegeDepartments: r.many.collegeDepartments({
+      from: r.colleges.id,
+      to: r.collegeDepartments.collegeId,
+    }),
+    ratings: r.many.ratings({
+      from: r.colleges.id.through(r.collegeToRatings.collegeId),
+      to: r.ratings.id.through(r.collegeToRatings.ratingId),
+    }),
+  },
+
+  departments: {
+    colleges: r.many.colleges({
+      from: r.departments.id.through(r.collegeDepartments.departmentId),
+      to: r.colleges.id.through(r.collegeDepartments.collegeId),
+    }),
+  },
+
+  collegeDepartments: {
+    college: r.one.colleges({
+      from: r.collegeDepartments.collegeId,
+      to: r.colleges.id,
+    }),
+    department: r.one.departments({
+      from: r.collegeDepartments.departmentId,
+      to: r.departments.id,
+    }),
+    academicPrograms: r.many.academicPrograms({
+      from: r.collegeDepartments.id.through(
+        r.collegeDepartmentsToPrograms.collegeDepartmentId,
+      ),
+      to: r.academicPrograms.id.through(
+        r.collegeDepartmentsToPrograms.programId,
+      ),
+    }),
+    ratings: r.many.ratings({
+      from: r.collegeDepartments.id.through(
+        r.collegeDepartmentsToRatings.collegeDepartmentId,
+      ),
+      to: r.ratings.id.through(r.collegeDepartmentsToRatings.ratingId),
+    }),
+  },
+
+  academicPrograms: {
+    collegeDepartments: r.many.collegeDepartments({
+      from: r.academicPrograms.id.through(
+        r.collegeDepartmentsToPrograms.programId,
+      ),
+      to: r.collegeDepartments.id.through(
+        r.collegeDepartmentsToPrograms.collegeDepartmentId,
+      ),
+    }),
+    academicCourses: r.many.academicCourses({
+      from: r.academicPrograms.id.through(
+        r.collegeDepartmentProgramToCourses.programId,
+      ),
+      to: r.academicCourses.id.through(
+        r.collegeDepartmentProgramToCourses.courseId,
+      ),
+    }),
+    ratings: r.many.ratings({
+      from: r.academicPrograms.id.through(
+        r.collegeDepartmentProgramsToRatings.collegeDepartmentProgramId,
+      ),
+      to: r.ratings.id.through(r.collegeDepartmentProgramsToRatings.ratingId),
+    }),
+  },
+
+  academicCourses: {
+    academicPrograms: r.many.academicPrograms({
+      from: r.academicCourses.id.through(
+        r.collegeDepartmentProgramToCourses.courseId,
+      ),
+      to: r.academicPrograms.id.through(
+        r.collegeDepartmentProgramToCourses.programId,
+      ),
+    }),
+    ratings: r.many.ratings({
+      from: r.academicCourses.id.through(
+        r.collegeDepartmentProgramCourseToRatings
+          .collegeDepartmentProgramToCourseId,
+      ),
+      to: r.ratings.id.through(
+        r.collegeDepartmentProgramCourseToRatings.ratingId,
+      ),
+    }),
+  },
+
+  ratings: {
+    user: r.one.user({
+      from: r.ratings.userId,
+      to: r.user.id,
+    }),
+    ratingCategory: r.one.ratingCategories({
+      from: r.ratings.ratingCategoryId,
+      to: r.ratingCategories.id,
+    }),
+  },
 }));

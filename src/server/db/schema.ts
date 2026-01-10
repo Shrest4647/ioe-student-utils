@@ -5,6 +5,7 @@ import {
   pgTableCreator,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `pg-drizzle_${name}`);
@@ -351,3 +352,248 @@ export const userApplications = pgTable("user_application", {
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
+
+// --- University Yelper Rating System ---
+
+export const universities = pgTable("university", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  logoUrl: text("logo_url"),
+  establishedYear: text("established_year"),
+  location: text("location"),
+  country: text("country"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const colleges = pgTable("college", {
+  id: text("id").primaryKey(),
+  universityId: text("university_id")
+    .notNull()
+    .references(() => universities.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  type: text("type"), // e.g., 'Consituent', 'Affiliated'
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  location: text("location"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const departments = pgTable("department", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const collegeDepartments = pgTable(
+  "college_department",
+  {
+    id: text("id").primaryKey(),
+    collegeId: text("college_id")
+      .notNull()
+      .references(() => colleges.id, { onDelete: "cascade" }),
+    departmentId: text("department_id")
+      .notNull()
+      .references(() => departments.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    uniqueCollegeDepartment: unique().on(t.collegeId, t.departmentId),
+  }),
+);
+
+export const academicPrograms = pgTable("academic_program", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  description: text("description"),
+  credits: text("credits"),
+  degreeLevels: text("degree_levels", {
+    enum: [
+      "certificate",
+      "diploma",
+      "associate",
+      "undergraduate",
+      "postgraduate",
+      "doctoral",
+      "postdoctoral",
+    ],
+  }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const academicCourses = pgTable("academic_course", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  description: text("description"),
+  credits: text("credits"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const collegeDepartmentsToPrograms = pgTable(
+  "collegedepartment_to_program",
+  {
+    id: text("id").primaryKey(),
+    collegeDepartmentId: text("college_department_id")
+      .notNull()
+      .references(() => collegeDepartments.id, { onDelete: "cascade" }),
+    programId: text("program_id")
+      .notNull()
+      .references(() => academicPrograms.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      uniqueCollegeDepartmentProgram: unique().on(
+        t.collegeDepartmentId,
+        t.programId,
+      ),
+    },
+  ],
+);
+
+export const collegeDepartmentProgramToCourses = pgTable(
+  "collegeprogram_to_course",
+  {
+    id: text("id").primaryKey(),
+    programId: text("college_program_id")
+      .notNull()
+      .references(() => collegeDepartmentsToPrograms.id, {
+        onDelete: "cascade",
+      }),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => academicCourses.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    {
+      uniqueProgramCourse: unique().on(t.programId, t.courseId),
+    },
+  ],
+);
+
+export const ratingCategories = pgTable("rating_category", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: text("created_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  updatedById: text("updated_by_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const ratings = pgTable("rating", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  rating: text("rating").notNull(),
+  review: text("review"),
+  ratingCategoryId: text("rating_category_id")
+    .notNull()
+    .references(() => ratingCategories.id, { onDelete: "set null" }),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export const universityToRatings = pgTable("university_to_rating", {
+  universityId: text("university_id")
+    .notNull()
+    .references(() => universities.id, { onDelete: "cascade" }),
+  ratingId: text("rating_id")
+    .notNull()
+    .references(() => ratings.id, { onDelete: "cascade" }),
+});
+
+export const collegeToRatings = pgTable("college_to_rating", {
+  collegeId: text("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+  ratingId: text("rating_id")
+    .notNull()
+    .references(() => ratings.id, { onDelete: "cascade" }),
+});
+
+export const collegeDepartmentsToRatings = pgTable(
+  "collegedepartment_to_rating",
+  {
+    collegeDepartmentId: text("college_department_id")
+      .notNull()
+      .references(() => collegeDepartments.id, { onDelete: "cascade" }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+);
+
+export const collegeDepartmentProgramsToRatings = pgTable(
+  "collegedepartmentprogram_to_rating",
+  {
+    collegeDepartmentProgramId: text("college_department_program_id")
+      .notNull()
+      .references(() => collegeDepartmentsToPrograms.id, {
+        onDelete: "cascade",
+      }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+);
+
+export const collegeDepartmentProgramCourseToRatings = pgTable(
+  "collegedepartmentprogramcourse_to_rating",
+  {
+    collegeDepartmentProgramToCourseId: text(
+      "college_department_program_course_id",
+    )
+      .notNull()
+      .references(() => collegeDepartmentProgramToCourses.id, {
+        onDelete: "cascade",
+      }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+);
