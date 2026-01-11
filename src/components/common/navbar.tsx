@@ -15,32 +15,50 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="relative h-8 w-8">
-              <Image
-                src="/logo.svg"
-                alt="Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="font-bold text-xl">IOESU</span>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="relative h-8 w-8">
+                <Image
+                  src="/logo.svg"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-bold text-xl">IOESU</span>
+            </Link>
           </div>
 
           <div className="hidden md:block">
             <div className="flex items-center space-x-8">
               <Link
-                href="#mission"
-                passHref
+                href="/universities"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Mission
+                Universities
               </Link>
               <Link
-                href="#features"
-                passHref
+                href="/colleges"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Features
+                Colleges
+              </Link>
+              <Link
+                href="/departments"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Departments
+              </Link>
+              <Link
+                href="/programs"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Programs
+              </Link>
+              <Link
+                href="/courses"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Courses
               </Link>
 
               <UserMenu />
@@ -66,16 +84,34 @@ export function Navbar() {
           <div className="md:hidden">
             <div className="space-y-1 px-2 pt-2 pb-3">
               <Link
-                href="#mission"
+                href="/universities"
                 className="block px-3 py-2 text-muted-foreground hover:text-foreground"
               >
-                Mission
+                Universities
               </Link>
               <Link
-                href="#features"
+                href="/colleges"
                 className="block px-3 py-2 text-muted-foreground hover:text-foreground"
               >
-                Features
+                Colleges
+              </Link>
+              <Link
+                href="/departments"
+                className="block px-3 py-2 text-muted-foreground hover:text-foreground"
+              >
+                Departments
+              </Link>
+              <Link
+                href="/programs"
+                className="block px-3 py-2 text-muted-foreground hover:text-foreground"
+              >
+                Programs
+              </Link>
+              <Link
+                href="/courses"
+                className="block px-3 py-2 text-muted-foreground hover:text-foreground"
+              >
+                Courses
               </Link>
 
               <div className="px-3 pt-2">

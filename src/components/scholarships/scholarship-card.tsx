@@ -26,7 +26,7 @@ export interface Scholarship {
     deadlineDate: string | Date | null;
     scholarshipAmount: string | null;
   }[];
-  createdAt: string | Date;
+  createdAt: string | Date | null;
 }
 
 interface ScholarshipCardProps {
