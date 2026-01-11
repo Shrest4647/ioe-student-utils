@@ -12,7 +12,7 @@ export default function ScholarshipCalendarPage() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
+        <h1 className="mb-2 bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
           Scholarship Calendar
         </h1>
         <p className="text-lg text-muted-foreground">
