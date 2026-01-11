@@ -1,4 +1,6 @@
-import { BookOpen, GraduationCap, Star } from "lucide-react";
+"use client";
+
+import { BookOpen, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RateButton } from "@/components/ui/rate-button";
+import type { RatingCategory } from "@/components/universities/rating-dialog";
 
 export interface Program {
   id: string;
@@ -32,9 +36,20 @@ export interface Program {
 
 interface ProgramCardProps {
   program: Program;
+  onSubmitRating?: (data: {
+    categoryId: string;
+    rating: string;
+    title: string;
+    review: string;
+  }) => Promise<void> | void;
+  categories?: RatingCategory[];
 }
 
-export function ProgramCard({ program }: ProgramCardProps) {
+export function ProgramCard({
+  program,
+  onSubmitRating,
+  categories = [],
+}: ProgramCardProps) {
   const degreeLevelColors: Record<string, string> = {
     certificate: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     diploma: "bg-purple-500/10 text-purple-500 border-purple-500/20",
@@ -88,10 +103,15 @@ export function ProgramCard({ program }: ProgramCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/20 pt-2">
         <div className="flex w-full items-center text-sm">
-          <div className="flex items-center gap-1.5">
-            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+          <RateButton
+            variant="ghost"
+            size="sm"
+            categories={categories}
+            entityName={program.name}
+            onSubmit={onSubmitRating || (() => Promise.resolve())}
+          >
             <span className="font-medium">Rate This Program</span>
-          </div>
+          </RateButton>
         </div>
       </CardFooter>
     </Card>

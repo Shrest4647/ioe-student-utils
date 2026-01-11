@@ -6,10 +6,8 @@ import {
   Globe,
   GraduationCap,
   Loader2,
-  MapPin,
   Star,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,25 +22,34 @@ import {
 } from "@/components/ui/card";
 import { RateButton } from "@/components/ui/rate-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RatingCard } from "@/components/universities/rating-card";
+import { RatingDisplay } from "@/components/universities/rating-display";
+import { useDepartmentColleges } from "@/hooks/use-content";
 import {
+  useDepartmentRatings,
   useRatingCategories,
-  useUniversityRatings,
 } from "@/hooks/use-universities";
-import { apiClient } from "@/lib/eden";
-import { RatingCard } from "./rating-card";
-import { RatingDisplay } from "./rating-display";
-import type { University } from "./university-card";
 
 interface College {
   id: string;
   name: string;
   slug: string;
-  type: string | null;
   description: string | null;
   websiteUrl: string | null;
-  location: string | null;
+  university: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+interface Department {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  websiteUrl: string | null;
   isActive: boolean;
-  createdAt: string | Date | null;
 }
 
 interface User {
@@ -57,12 +64,12 @@ interface User {
   createdAt: string | Date | null;
 }
 
-interface UniversityDetailProps {
-  university: University & { colleges: College[] };
+interface DepartmentDetailProps {
+  department: Department;
   user: User | null;
 }
 
-export function UniversityDetail({ university, user }: UniversityDetailProps) {
+export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "ratings" | "colleges"
   >("overview");
@@ -71,8 +78,11 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
     data: ratings,
     isLoading: ratingsLoading,
     refetch,
-  } = useUniversityRatings(university.id);
-  const { data: categories } = useRatingCategories("university");
+  } = useDepartmentRatings(department.id);
+  const { data: categories } = useRatingCategories("department");
+  const { data: colleges, isLoading: collegesLoading } = useDepartmentColleges(
+    department.id,
+  );
 
   const handleRatingSubmit = async (data: {
     categoryId: string;
@@ -81,21 +91,26 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
     review: string;
   }) => {
     if (!user) {
-      toast.error("Please sign in to rate this university");
+      toast.error("Please sign in to rate this department");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await apiClient.api.ratings.post({
-        entityType: "university",
-        entityId: university.id,
-        categoryId: data.categoryId,
-        rating: data.rating,
-        review: data.review,
+      const response = await fetch("/api/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityType: "department",
+          entityId: department.id,
+          categoryId: data.categoryId,
+          rating: data.rating,
+          title: data.title,
+          review: data.review,
+        }),
       });
 
-      if (response?.data?.success) {
+      if (response.ok) {
         toast.success("Review submitted successfully!");
         refetch();
       } else {
@@ -117,40 +132,18 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row">
         <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl bg-muted">
-          {university.logoUrl ? (
-            <Image
-              height={200}
-              width={200}
-              src={university.logoUrl}
-              alt={university.name}
-              className="h-24 w-24 object-contain"
-            />
-          ) : (
-            <Building2 className="h-16 w-16 text-muted-foreground" />
-          )}
+          <GraduationCap className="h-16 w-16 text-muted-foreground" />
         </div>
         <div className="flex flex-col gap-2">
           <h1 className="bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
-            {university.name}
+            {department.name}
           </h1>
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-            {university.location && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                <span>{university.location}</span>
-              </div>
-            )}
-            {university.country && (
-              <Badge variant="outline">{university.country}</Badge>
-            )}
-            {university.establishedYear && (
-              <span className="text-sm">
-                Established {university.establishedYear}
-              </span>
-            )}
+            <Badge variant={department.isActive ? "default" : "secondary"}>
+              {department.isActive ? "Active" : "Inactive"}
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <RatingDisplay
@@ -158,9 +151,9 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               totalReviews={ratings?.length}
             />
           </div>
-          {university.websiteUrl && (
+          {department.websiteUrl && (
             <a
-              href={university.websiteUrl}
+              href={department.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-primary text-sm transition-colors hover:text-primary/80"
@@ -173,18 +166,17 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
         </div>
         <div className="ml-auto">
           <RateButton
-            entityName={university.name}
+            entityName={department.name}
             categories={categories || []}
             isSubmitting={isSubmitting}
             onSubmit={handleRatingSubmit}
           >
             <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-            Rate This University
+            Rate This Department
           </RateButton>
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs
         value={activeTab}
         onValueChange={(v: string) => setActiveTab(v as typeof activeTab)}
@@ -202,44 +194,44 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
           </TabsTrigger>
           <TabsTrigger value="colleges">
             Colleges
-            {university.colleges && university.colleges.length > 0 && (
+            {colleges && colleges.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {university.colleges.length}
+                {colleges.length}
               </Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {university.description && (
+          {department.description && (
             <Card>
               <CardHeader>
                 <CardTitle>About</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  {university.description}
+                  {department.description}
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {university.colleges && university.colleges.length > 0 && (
+          {colleges && colleges.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Colleges & Schools</CardTitle>
+                <CardTitle>Offered At</CardTitle>
                 <CardDescription>
-                  This university has {university.colleges.length} colleges
+                  This department is offered at {colleges.length} colleges
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {university.colleges.map((college) => (
+                  {colleges.map((college) => (
                     <div
                       key={college.id}
                       className="flex items-center gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/50"
                     >
-                      <GraduationCap className="h-8 w-8 text-muted-foreground" />
+                      <Building2 className="h-8 w-8 text-muted-foreground" />
                       <div>
                         <Link
                           href={`/colleges/${college.slug}`}
@@ -247,11 +239,9 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
                         >
                           <div className="font-medium">{college.name}</div>
                         </Link>
-                        {college.location && (
-                          <div className="text-muted-foreground text-sm">
-                            {college.location}
-                          </div>
-                        )}
+                        <div className="text-muted-foreground text-sm">
+                          {college.university?.name || "University"}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -270,13 +260,13 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               </p>
             </div>
             <RateButton
-              entityName={university.name}
+              entityName={department.name}
               categories={categories || []}
               isSubmitting={isSubmitting}
               onSubmit={handleRatingSubmit}
             >
               <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-              Rate This University
+              Rate This Department
             </RateButton>
           </div>
 
@@ -284,7 +274,7 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
             <Card className="bg-muted/50">
               <CardContent className="py-6 text-center">
                 <p className="mb-4 text-muted-foreground">
-                  Sign in to rate this university and see detailed reviews
+                  Sign in to rate this department and see detailed reviews
                 </p>
                 <Button>Sign In</Button>
               </CardContent>
@@ -306,7 +296,7 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">No ratings yet</p>
                 <p className="text-muted-foreground text-sm">
-                  Be the first to rate this university!
+                  Be the first to rate this department!
                 </p>
               </CardContent>
             </Card>
@@ -316,26 +306,27 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
         <TabsContent value="colleges" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Colleges & Schools</CardTitle>
+              <CardTitle>Offered At</CardTitle>
               <CardDescription>
-                Explore different colleges within {university.name}
+                Explore colleges offering {department.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {university.colleges && university.colleges.length > 0 ? (
+              {collegesLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : colleges && colleges.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {university.colleges.map((college: College) => (
+                  {colleges.map((college: College) => (
                     <Card key={college.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
                           {college.name}
                         </CardTitle>
-                        {college.location && (
-                          <CardDescription className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {college.location}
-                          </CardDescription>
-                        )}
+                        <CardDescription className="flex items-center gap-1">
+                          {college.university?.name || "University"}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-muted-foreground text-sm">

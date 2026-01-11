@@ -4,22 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SearchIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useCollegeFilters } from "@/hooks/use-college-filters";
-import { useUniversities } from "@/hooks/use-universities";
+import { useDepartmentFilters } from "@/hooks/use-department-filters";
 
-export function CollegeFilters() {
-  const { filters, setFilter, debouncedSetSearch, resetFilters } =
-    useCollegeFilters();
-
-  const { data } = useUniversities({});
-  const universities = data?.pages.flatMap((page) => page.data) || [];
+export function DepartmentFilters() {
+  const { filters, debouncedSetSearch, resetFilters } = useDepartmentFilters();
 
   return (
     <motion.div
@@ -37,41 +25,15 @@ export function CollegeFilters() {
         >
           <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search colleges..."
+            placeholder="Search departments..."
             className="pl-9"
             defaultValue={filters.search}
             onChange={(e) => debouncedSetSearch(e.target.value)}
           />
         </motion.div>
-
-        <motion.div
-          className="grid grid-cols-1 gap-4 md:grid-cols-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Select
-            value={filters.universityId}
-            onValueChange={(val) =>
-              setFilter("universityId", val === "all" ? null : val)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All Universities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Universities</SelectItem>
-              {universities.map((university) => (
-                <SelectItem key={university.id} value={university.id}>
-                  {university.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </motion.div>
       </div>
       <AnimatePresence>
-        {(filters.universityId || filters.search) && (
+        {filters.search && (
           <motion.div
             className="flex gap-2"
             initial={{ opacity: 0, height: 0 }}

@@ -1,4 +1,6 @@
-import { Clock, Star } from "lucide-react";
+"use client";
+
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RateButton } from "@/components/ui/rate-button";
+import type { RatingCategory } from "@/components/universities/rating-dialog";
 
 export interface Course {
   id: string;
@@ -23,9 +27,20 @@ export interface Course {
 
 interface CourseCardProps {
   course: Course;
+  onSubmitRating?: (data: {
+    categoryId: string;
+    rating: string;
+    title: string;
+    review: string;
+  }) => Promise<void> | void;
+  categories?: RatingCategory[];
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({
+  course,
+  onSubmitRating,
+  categories = [],
+}: CourseCardProps) {
   return (
     <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
       <CardHeader>
@@ -59,10 +74,15 @@ export function CourseCard({ course }: CourseCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/20 pt-2">
         <div className="flex w-full items-center text-sm">
-          <div className="flex items-center gap-1.5">
-            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+          <RateButton
+            variant="ghost"
+            size="sm"
+            categories={categories}
+            entityName={course.name}
+            onSubmit={onSubmitRating || (() => Promise.resolve())}
+          >
             <span className="font-medium">Rate This Course</span>
-          </div>
+          </RateButton>
         </div>
       </CardFooter>
     </Card>

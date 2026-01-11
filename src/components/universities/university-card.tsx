@@ -1,6 +1,10 @@
+"use client";
+
 import { Building2, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,6 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RateButton } from "@/components/ui/rate-button";
+import { useAuth } from "@/hooks/use-auth";
+import { useRatingCategories } from "@/hooks/use-universities";
 
 export interface University {
   id: string;
@@ -30,6 +37,48 @@ interface UniversityCardProps {
 }
 
 export function UniversityCard({ university }: UniversityCardProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { data: categories } = useRatingCategories("university");
+
+  const handleRatingSubmit = async (data: {
+    categoryId: string;
+    rating: string;
+    title: string;
+    review: string;
+  }) => {
+    if (!user) {
+      toast.error("Please sign in to rate this university");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityType: "university",
+          entityId: university.id,
+          categoryId: data.categoryId,
+          rating: data.rating,
+          title: data.title,
+          review: data.review,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Review submitted successfully!");
+      } else {
+        throw new Error("Failed to submit review");
+      }
+    } catch (_error) {
+      toast.error("Failed to submit review");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
       <CardHeader>
@@ -37,6 +86,8 @@ export function UniversityCard({ university }: UniversityCardProps) {
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted">
             {university.logoUrl ? (
               <Image
+                height={200}
+                width={200}
                 src={university.logoUrl}
                 alt={university.name}
                 className="h-12 w-12 object-contain"
@@ -80,10 +131,18 @@ export function UniversityCard({ university }: UniversityCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/20 pt-2">
         <div className="flex w-full items-center justify-between text-sm">
-          <div className="flex items-center gap-1.5">
+          <RateButton
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-primary hover:text-primary/80"
+            entityName={university.name}
+            categories={categories || []}
+            isSubmitting={isSubmitting}
+            onSubmit={handleRatingSubmit}
+          >
             <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
             <span className="font-medium">Rate This University</span>
-          </div>
+          </RateButton>
           {university.websiteUrl && (
             <a
               href={university.websiteUrl}

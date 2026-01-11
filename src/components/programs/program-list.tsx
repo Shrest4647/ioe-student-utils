@@ -1,24 +1,24 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { usePrograms } from "@/hooks/use-content";
+import { useProgramFilters } from "@/hooks/use-program-filters";
 import { ProgramCard } from "./program-card";
 
 export function ProgramList() {
-  const searchParams = useSearchParams();
-  const search = searchParams.get("search") || undefined;
-  const degreeLevelParam = searchParams.get("degreeLevel");
+  const { filters } = useProgramFilters();
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     usePrograms({
-      search,
-      degreeLevel: degreeLevelParam as any,
+      search: filters.search || undefined,
+      degreeLevel: (filters.degreeLevel as any) || undefined,
+      page: String(filters.page),
     });
 
   const programs = data?.pages.flatMap((page) => page.data) || [];
   const totalCount = data?.pages[0]?.metadata.totalCount || 0;
 
-  if (isLoading) {
+  if (isLoading && programs.length === 0) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
@@ -41,20 +41,64 @@ export function ProgramList() {
     );
   }
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+    exit: { opacity: 0, scale: 0.95 },
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-muted-foreground text-sm">
+      <motion.div
+        className="text-muted-foreground text-sm"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        key={`count-${totalCount}`}
+      >
         Showing {programs.length} of {totalCount} programs
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {programs.map((program) => (
-          <ProgramCard key={program.id} program={program} />
-        ))}
-      </div>
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+        key={`list-${filters.search}-${filters.degreeLevel}-${filters.page}`}
+      >
+        <AnimatePresence mode="popLayout">
+          {programs.map((program) => (
+            <motion.div
+              key={program.id}
+              variants={item}
+              layout
+              transition={{
+                layout: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
+            >
+              <ProgramCard program={program} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {hasNextPage && (
-        <div className="flex justify-center">
+        <motion.div
+          className="flex justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           <button
             type="button"
             onClick={() => fetchNextPage()}
@@ -63,7 +107,7 @@ export function ProgramList() {
           >
             {isFetchingNextPage ? "Loading more..." : "Load more programs"}
           </button>
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -9,7 +9,6 @@ import {
   MapPin,
   Star,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,25 +23,47 @@ import {
 } from "@/components/ui/card";
 import { RateButton } from "@/components/ui/rate-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RatingCard } from "@/components/universities/rating-card";
+import { RatingDisplay } from "@/components/universities/rating-display";
+import { useCollegeDepartments } from "@/hooks/use-content";
 import {
+  useCollegeRatings,
   useRatingCategories,
-  useUniversityRatings,
 } from "@/hooks/use-universities";
-import { apiClient } from "@/lib/eden";
-import { RatingCard } from "./rating-card";
-import { RatingDisplay } from "./rating-display";
-import type { University } from "./university-card";
+
+interface Department {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  websiteUrl: string | null;
+  isActive: boolean;
+}
 
 interface College {
   id: string;
   name: string;
   slug: string;
-  type: string | null;
   description: string | null;
   websiteUrl: string | null;
   location: string | null;
   isActive: boolean;
+  university: {
+    id: string;
+    name: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+    createdById: string | null;
+    location: string | null;
+    description: string | null;
+    country: string | null;
+    websiteUrl: string | null;
+    establishedYear: string | null;
+    logoUrl: string | null;
+    isActive: boolean;
+  } | null;
   createdAt: string | Date | null;
+  updatedAt: string | Date | null;
 }
 
 interface User {
@@ -57,22 +78,24 @@ interface User {
   createdAt: string | Date | null;
 }
 
-interface UniversityDetailProps {
-  university: University & { colleges: College[] };
+interface CollegeDetailProps {
+  college: College;
   user: User | null;
 }
 
-export function UniversityDetail({ university, user }: UniversityDetailProps) {
+export function CollegeDetail({ college, user }: CollegeDetailProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "ratings" | "colleges"
+    "overview" | "ratings" | "departments"
   >("overview");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     data: ratings,
     isLoading: ratingsLoading,
     refetch,
-  } = useUniversityRatings(university.id);
-  const { data: categories } = useRatingCategories("university");
+  } = useCollegeRatings(college.id);
+  const { data: categories } = useRatingCategories("college");
+  const { data: departments, isLoading: departmentsLoading } =
+    useCollegeDepartments(college.id);
 
   const handleRatingSubmit = async (data: {
     categoryId: string;
@@ -81,21 +104,26 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
     review: string;
   }) => {
     if (!user) {
-      toast.error("Please sign in to rate this university");
+      toast.error("Please sign in to rate this college");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await apiClient.api.ratings.post({
-        entityType: "university",
-        entityId: university.id,
-        categoryId: data.categoryId,
-        rating: data.rating,
-        review: data.review,
+      const response = await fetch("/api/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entityType: "college",
+          entityId: college.id,
+          categoryId: data.categoryId,
+          rating: data.rating,
+          title: data.title,
+          review: data.review,
+        }),
       });
 
-      if (response?.data?.success) {
+      if (response.ok) {
         toast.success("Review submitted successfully!");
         refetch();
       } else {
@@ -117,40 +145,24 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row">
         <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl bg-muted">
-          {university.logoUrl ? (
-            <Image
-              height={200}
-              width={200}
-              src={university.logoUrl}
-              alt={university.name}
-              className="h-24 w-24 object-contain"
-            />
-          ) : (
-            <Building2 className="h-16 w-16 text-muted-foreground" />
-          )}
+          <GraduationCap className="h-16 w-16 text-muted-foreground" />
         </div>
         <div className="flex flex-col gap-2">
           <h1 className="bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
-            {university.name}
+            {college.name}
           </h1>
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-            {university.location && (
+            {college.location && (
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
-                <span>{university.location}</span>
+                <span>{college.location}</span>
               </div>
             )}
-            {university.country && (
-              <Badge variant="outline">{university.country}</Badge>
-            )}
-            {university.establishedYear && (
-              <span className="text-sm">
-                Established {university.establishedYear}
-              </span>
-            )}
+            <Badge variant={college.isActive ? "default" : "secondary"}>
+              {college.isActive ? "Active" : "Inactive"}
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <RatingDisplay
@@ -158,9 +170,20 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               totalReviews={ratings?.length}
             />
           </div>
-          {university.websiteUrl && (
+          {college.university && (
+            <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
+              <span>Part of</span>
+              <Link
+                href={`/universities/${college.university.id}`}
+                className="text-primary hover:underline"
+              >
+                {college.university.name}
+              </Link>
+            </div>
+          )}
+          {college.websiteUrl && (
             <a
-              href={university.websiteUrl}
+              href={college.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-primary text-sm transition-colors hover:text-primary/80"
@@ -173,18 +196,17 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
         </div>
         <div className="ml-auto">
           <RateButton
-            entityName={university.name}
+            entityName={college.name}
             categories={categories || []}
             isSubmitting={isSubmitting}
             onSubmit={handleRatingSubmit}
           >
             <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-            Rate This University
+            Rate This College
           </RateButton>
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs
         value={activeTab}
         onValueChange={(v: string) => setActiveTab(v as typeof activeTab)}
@@ -200,56 +222,82 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="colleges">
-            Colleges
-            {university.colleges && university.colleges.length > 0 && (
+          <TabsTrigger value="departments">
+            Departments
+            {departments && departments.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {university.colleges.length}
+                {departments.length}
               </Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {university.description && (
+          {college.description && (
             <Card>
               <CardHeader>
                 <CardTitle>About</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  {university.description}
+                  {college.description}
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {university.colleges && university.colleges.length > 0 && (
+          {college.university && (
             <Card>
               <CardHeader>
-                <CardTitle>Colleges & Schools</CardTitle>
+                <CardTitle>University</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/50">
+                  <Building2 className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <Link
+                      href={`/universities/${college.university.id}`}
+                      className="hover:underline"
+                    >
+                      <div className="font-medium">
+                        {college.university.name}
+                      </div>
+                    </Link>
+                    <div className="text-muted-foreground text-sm">
+                      Explore more about this university
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {departments && departments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Departments</CardTitle>
                 <CardDescription>
-                  This university has {university.colleges.length} colleges
+                  This college has {departments.length} departments
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {university.colleges.map((college) => (
+                  {departments.map((department) => (
                     <div
-                      key={college.id}
+                      key={department.id}
                       className="flex items-center gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/50"
                     >
                       <GraduationCap className="h-8 w-8 text-muted-foreground" />
                       <div>
                         <Link
-                          href={`/colleges/${college.slug}`}
+                          href={`/departments/${department.slug}`}
                           className="hover:underline"
                         >
-                          <div className="font-medium">{college.name}</div>
+                          <div className="font-medium">{department.name}</div>
                         </Link>
-                        {college.location && (
+                        {department.description && (
                           <div className="text-muted-foreground text-sm">
-                            {college.location}
+                            {department.description}
                           </div>
                         )}
                       </div>
@@ -270,13 +318,13 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               </p>
             </div>
             <RateButton
-              entityName={university.name}
+              entityName={college.name}
               categories={categories || []}
               isSubmitting={isSubmitting}
               onSubmit={handleRatingSubmit}
             >
               <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-              Rate This University
+              Rate This College
             </RateButton>
           </div>
 
@@ -284,7 +332,7 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
             <Card className="bg-muted/50">
               <CardContent className="py-6 text-center">
                 <p className="mb-4 text-muted-foreground">
-                  Sign in to rate this university and see detailed reviews
+                  Sign in to rate this college and see detailed reviews
                 </p>
                 <Button>Sign In</Button>
               </CardContent>
@@ -306,40 +354,45 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">No ratings yet</p>
                 <p className="text-muted-foreground text-sm">
-                  Be the first to rate this university!
+                  Be the first to rate this college!
                 </p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="colleges" className="space-y-6">
+        <TabsContent value="departments" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Colleges & Schools</CardTitle>
+              <CardTitle>Departments</CardTitle>
               <CardDescription>
-                Explore different colleges within {university.name}
+                Explore different departments within {college.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {university.colleges && university.colleges.length > 0 ? (
+              {departmentsLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : departments && departments.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {university.colleges.map((college: College) => (
-                    <Card key={college.id}>
+                  {departments.map((department: Department) => (
+                    <Card key={department.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
-                          {college.name}
+                          {department.name}
                         </CardTitle>
-                        {college.location && (
-                          <CardDescription className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {college.location}
-                          </CardDescription>
-                        )}
+                        <Badge
+                          variant={
+                            department.isActive ? "default" : "secondary"
+                          }
+                        >
+                          {department.isActive ? "Active" : "Inactive"}
+                        </Badge>
                       </CardHeader>
                       <CardContent>
                         <p className="text-muted-foreground text-sm">
-                          {college.description || "No description available"}
+                          {department.description || "No description available"}
                         </p>
                       </CardContent>
                     </Card>
@@ -347,7 +400,7 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <p className="text-muted-foreground">No colleges listed</p>
+                  <p className="text-muted-foreground">No departments listed</p>
                 </div>
               )}
             </CardContent>

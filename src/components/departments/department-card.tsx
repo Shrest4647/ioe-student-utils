@@ -1,4 +1,6 @@
-import { Building2, Star } from "lucide-react";
+"use client";
+
+import { Building2 } from "lucide-react";
 import Link from "next/link";
 import {
   Card,
@@ -8,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RateButton } from "@/components/ui/rate-button";
+import type { RatingCategory } from "@/components/universities/rating-dialog";
 
 export interface Department {
   id: string;
@@ -21,9 +25,20 @@ export interface Department {
 
 interface DepartmentCardProps {
   department: Department;
+  onSubmitRating?: (data: {
+    categoryId: string;
+    rating: string;
+    title: string;
+    review: string;
+  }) => Promise<void> | void;
+  categories?: RatingCategory[];
 }
 
-export function DepartmentCard({ department }: DepartmentCardProps) {
+export function DepartmentCard({
+  department,
+  onSubmitRating,
+  categories = [],
+}: DepartmentCardProps) {
   return (
     <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
       <CardHeader>
@@ -49,10 +64,15 @@ export function DepartmentCard({ department }: DepartmentCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/20 pt-2">
         <div className="flex w-full items-center justify-between text-sm">
-          <div className="flex items-center gap-1.5">
-            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+          <RateButton
+            variant="ghost"
+            size="sm"
+            categories={categories}
+            entityName={department.name}
+            onSubmit={onSubmitRating || (() => Promise.resolve())}
+          >
             <span className="font-medium">Rate This Department</span>
-          </div>
+          </RateButton>
           {department.websiteUrl && (
             <a
               href={department.websiteUrl}
