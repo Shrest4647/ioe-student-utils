@@ -442,8 +442,8 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
         },
       )
       .post(
-        "/:collegeId/departments/:departmentId",
-        async ({ params: { collegeId, departmentId } }) => {
+        "/:id/departments/:departmentId",
+        async ({ params: { id: collegeId, departmentId } }) => {
           const id = nanoid();
           await db.insert(collegeDepartments).values({
             id,
