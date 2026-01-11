@@ -54,7 +54,7 @@ export function Navbar() {
 
           <div className="hidden md:block">
             <NavigationMenu viewport={isMobile}>
-              <NavigationMenuList className="flex-wrap">
+              <NavigationMenuList className="flex-wrap gap-1">
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>
                     <span className="text-sm">Universities</span>
@@ -312,7 +312,7 @@ const ListItem = ({
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3",
-            className,
+            className
           )}
           href={href ?? "#"}
           {...props}
@@ -347,7 +347,7 @@ function MobileLink({
       href={href}
       className={cn(
         "flex items-center gap-2 px-6 py-2 text-muted-foreground hover:text-foreground",
-        className,
+        className
       )}
     >
       {icon}

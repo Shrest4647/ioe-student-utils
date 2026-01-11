@@ -25,6 +25,9 @@ export function useScholarshipEvents(start: Date, end: Date) {
       }
       throw new Error("Failed to fetch events");
     },
+    staleTime: 10 * 60 * 1000, // 5 minutes
+    enabled: !!start && !!end,
+    refetchOnWindowFocus: false,
   });
 }
 
