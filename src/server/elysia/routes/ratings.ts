@@ -26,20 +26,53 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
       return { success: true, data: categories };
     },
     {
-      query: t.Object({
-        entityType: t.Optional(
-          t.Enum({
-            university: "university",
-            college: "college",
-            department: "department",
-            program: "program",
-            course: "course",
-          }),
-        ),
-      }),
       detail: {
         tags: ["Ratings"],
         summary: "Get rating categories",
+      },
+    },
+  )
+  .get(
+    "/categories/:id",
+    async ({ params: { id } }) => {
+      const category = await db.query.ratingCategories.findFirst({
+        where: {
+          id,
+        },
+      });
+
+      if (!category) {
+        return { success: false, error: "Category not found" };
+      }
+
+      return { success: true, data: category };
+    },
+    {
+      detail: {
+        tags: ["Ratings"],
+        summary: "Get rating category by id",
+      },
+    },
+  )
+  .get(
+    "/categories/slug/:slug",
+    async ({ params: { slug } }) => {
+      const category = await db.query.ratingCategories.findFirst({
+        where: {
+          slug,
+        },
+      });
+
+      if (!category) {
+        return { success: false, error: "Category not found" };
+      }
+
+      return { success: true, data: category };
+    },
+    {
+      detail: {
+        tags: ["Ratings"],
+        summary: "Get rating category by id",
       },
     },
   )
@@ -167,6 +200,16 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
             sortOrder: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+        },
+      )
+      .delete(
+        "/categories/:id",
+        async ({ params: { id } }) => {
+          await db.delete(ratingCategories).where(eq(ratingCategories.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
         },
       ),
   );
