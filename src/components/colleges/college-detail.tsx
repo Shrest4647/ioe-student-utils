@@ -51,6 +51,7 @@ interface College {
   university: {
     id: string;
     name: string;
+    slug: string;
     createdAt: Date | null;
     updatedAt: Date | null;
     createdById: string | null;
@@ -174,7 +175,7 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
             <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
               <span>Part of</span>
               <Link
-                href={`/universities/${college.university.id}`}
+                href={`/universities/${college.university?.slug}`}
                 className="text-primary hover:underline"
               >
                 {college.university.name}
@@ -256,7 +257,7 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                   <Building2 className="h-8 w-8 text-muted-foreground" />
                   <div>
                     <Link
-                      href={`/universities/${college.university.id}`}
+                      href={`/universities/${college.university.slug}`}
                       className="hover:underline"
                     >
                       <div className="font-medium">
@@ -290,7 +291,7 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                       <GraduationCap className="h-8 w-8 text-muted-foreground" />
                       <div>
                         <Link
-                          href={`/departments/${department.slug}`}
+                          href={`/colleges/${college.slug}/departments/${department.slug}`}
                           className="hover:underline"
                         >
                           <div className="font-medium">{department.name}</div>
@@ -380,7 +381,12 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                     <Card key={department.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
-                          {department.name}
+                          <Link
+                            href={`/departments/${department.slug}`}
+                            className="hover:underline"
+                          >
+                            {department.name}
+                          </Link>
                         </CardTitle>
                         <Badge
                           variant={

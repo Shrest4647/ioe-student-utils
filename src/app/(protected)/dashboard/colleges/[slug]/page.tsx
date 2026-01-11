@@ -115,7 +115,7 @@ export default function CollegeEditPage() {
       queryClient.invalidateQueries({ queryKey: ["admin", "colleges"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "college", slug] });
       if (isNew && data?.success) {
-        router.push(`/dashboard/colleges/${data.data.id}`);
+        router.push(`/dashboard/colleges/${data.data.slug}`);
       } else {
         router.push("/dashboard/colleges");
       }
