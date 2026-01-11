@@ -32,7 +32,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -78,6 +77,7 @@ export default function UniversityEditPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isNew = slug === "new";
+  const [isCollegeModalOpen, setIsCollegeModalOpen] = useState(false);
 
   const universityQuery = useQuery({
     queryKey: ["admin", "university", slug],
@@ -101,8 +101,9 @@ export default function UniversityEditPage() {
       });
       return data?.success ? data.data : [];
     },
-    enabled: !isNew,
+    enabled: !isNew && !!universityQuery.data?.id,
   });
+  console.log(universityQuery.data?.id, collegesQuery.data);
 
   const saveMutation = useMutation({
     mutationFn: async (values: z.infer<typeof universitySchema>) => {
@@ -124,21 +125,10 @@ export default function UniversityEditPage() {
         queryKey: ["admin", "university", slug],
       });
       if (isNew && data?.success) {
-        router.push(`/dashboard/universities/${data.data.id}`);
+        router.push(`/dashboard/universities/${data.data.slug}`);
       } else {
         router.push("/dashboard/universities");
       }
-    },
-  });
-
-  const addCollegeMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof collegeSchema>) => {
-      const { data } = await apiClient.api.colleges.admin.post(values);
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("College added");
-      queryClient.invalidateQueries({ queryKey: ["admin", "colleges", slug] });
     },
   });
 
@@ -335,15 +325,15 @@ export default function UniversityEditPage() {
                     Manage colleges under this university.
                   </CardDescription>
                 </div>
-                <AddCollegeModal
-                  universityId={universityId}
-                  onAdd={(values) =>
-                    addCollegeMutation.mutate({
-                      ...values,
-                      universityId,
-                    })
-                  }
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCollegeModalOpen(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add College
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -412,7 +402,7 @@ export default function UniversityEditPage() {
                             <TableCell className="text-right">
                               <Button variant="ghost" size="icon" asChild>
                                 <Link
-                                  href={`/dashboard/colleges/${college.id}`}
+                                  href={`/dashboard/colleges/${college.slug}`}
                                 >
                                   <Edit2 className="h-4 w-4" />
                                 </Link>
@@ -480,18 +470,46 @@ export default function UniversityEditPage() {
           </Button>
         </div>
       </form>
+      <AddCollegeModal
+        universityId={universityId}
+        universityName={universityQuery.data?.name ?? ""}
+        isOpen={isCollegeModalOpen}
+        setIsOpen={setIsCollegeModalOpen}
+      />
     </div>
   );
 }
 
 function AddCollegeModal({
-  universityId: _,
-  onAdd,
+  universityId,
+  universityName,
+  isOpen,
+  setIsOpen,
 }: {
   universityId: string;
-  onAdd: (values: z.infer<typeof collegeSchema>) => void;
+  universityName: string;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { slug } = useParams();
+
+  const addCollegeMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof collegeSchema>) => {
+      const { data } = await apiClient.api.colleges.admin.post(values);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("College added");
+      setIsOpen(false);
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["admin", "colleges", slug] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const form = useForm({
     defaultValues: {
       name: "",
@@ -500,126 +518,128 @@ function AddCollegeModal({
       location: "",
       type: "",
       isActive: true,
+      universityId,
     } as z.infer<typeof collegeSchema>,
     validators: {
       onChange: collegeSchema,
     },
     onSubmit: async ({ value }) => {
-      onAdd(value);
-      setIsOpen(false);
-      form.reset();
+      console.log("value", value);
+      addCollegeMutation.mutate({ ...value, universityId });
     },
   });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add College
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Add New College</DialogTitle>
           <DialogDescription>
-            Add a college to this university.
+            Add a college to {universityName || "this university"}.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <form.Field name="name">
-            {(field) => (
-              <Field>
-                <FieldLabel>College Name</FieldLabel>
-                <Input
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="e.g. Institute of Engineering"
-                />
-                <FieldError errors={field.state.meta.errors} />
-              </Field>
-            )}
-          </form.Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <form.Field name="type">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
+          <div className="grid gap-4 py-4">
+            <form.Field name="name">
               {(field) => (
                 <Field>
-                  <FieldLabel>Type</FieldLabel>
+                  <FieldLabel>College Name</FieldLabel>
                   <Input
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Constituent, Affiliated"
+                    placeholder="e.g. Institute of Engineering"
                   />
                   <FieldError errors={field.state.meta.errors} />
                 </Field>
               )}
             </form.Field>
-            <form.Field name="location">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.Field name="type">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>Type</FieldLabel>
+                    <Input
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Constituent, Affiliated"
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </Field>
+                )}
+              </form.Field>
+              <form.Field name="location">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>Location</FieldLabel>
+                    <Input
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Pulchowk, Lalitpur"
+                    />
+                    <FieldError errors={field.state.meta.errors} />
+                  </Field>
+                )}
+              </form.Field>
+            </div>
+            <form.Field name="websiteUrl">
               {(field) => (
                 <Field>
-                  <FieldLabel>Location</FieldLabel>
+                  <FieldLabel>Website URL</FieldLabel>
                   <Input
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Pulchowk, Lalitpur"
+                    placeholder="https://example.com"
                   />
                   <FieldError errors={field.state.meta.errors} />
                 </Field>
+              )}
+            </form.Field>
+            <form.Field name="description">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Description</FieldLabel>
+                  <Textarea
+                    rows={3}
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Brief description of the college..."
+                  />
+                  <FieldError errors={field.state.meta.errors} />
+                </Field>
+              )}
+            </form.Field>
+            <form.Field name="isActive">
+              {(field) => (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <FieldLabel>Active</FieldLabel>
+                    <p className="text-muted-foreground text-sm">
+                      {field.state.value
+                        ? "College is visible to users"
+                        : "College is hidden from users"}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={field.state.value}
+                    onCheckedChange={field.handleChange}
+                  />
+                </div>
               )}
             </form.Field>
           </div>
-          <form.Field name="websiteUrl">
-            {(field) => (
-              <Field>
-                <FieldLabel>Website URL</FieldLabel>
-                <Input
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="https://example.com"
-                />
-                <FieldError errors={field.state.meta.errors} />
-              </Field>
-            )}
-          </form.Field>
-          <form.Field name="description">
-            {(field) => (
-              <Field>
-                <FieldLabel>Description</FieldLabel>
-                <Textarea
-                  rows={3}
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Brief description of the college..."
-                />
-                <FieldError errors={field.state.meta.errors} />
-              </Field>
-            )}
-          </form.Field>
-          <form.Field name="isActive">
-            {(field) => (
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <FieldLabel>Active</FieldLabel>
-                  <p className="text-muted-foreground text-sm">
-                    {field.state.value
-                      ? "College is visible to users"
-                      : "College is hidden from users"}
-                  </p>
-                </div>
-                <Switch
-                  checked={field.state.value as boolean}
-                  onCheckedChange={field.handleChange}
-                />
-              </div>
-            )}
-          </form.Field>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={() => form.handleSubmit()}>Add College</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Add College</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

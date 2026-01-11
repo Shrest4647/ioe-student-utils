@@ -328,7 +328,12 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
                     <Card key={college.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
-                          {college.name}
+                          <Link
+                            href={`/colleges/${college.slug}`}
+                            className="hover:underline"
+                          >
+                            {college.name}
+                          </Link>
                         </CardTitle>
                         {college.location && (
                           <CardDescription className="flex items-center gap-1">
