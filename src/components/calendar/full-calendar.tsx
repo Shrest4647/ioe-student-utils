@@ -217,7 +217,7 @@ const EventGroup = ({
         .map((event) => {
           const hoursDifference = Math.max(
             differenceInMinutes(event.end, event.start) / 60,
-            0.25
+            0.25,
           );
           const startPosition = event.start.getMinutes() / 60;
 
@@ -228,7 +228,7 @@ const EventGroup = ({
                   type="button"
                   className={cn(
                     "absolute line-clamp-1 w-full rounded-sm px-1 text-left text-xs",
-                    dayEventVariants({ variant: event.color })
+                    dayEventVariants({ variant: event.color }),
                   )}
                   style={{
                     top: `${startPosition * 100}%`,
@@ -321,7 +321,7 @@ const CalendarWeekView = () => {
             key={date.toString()}
             className={cn(
               "flex flex-1 items-center justify-center gap-1 pb-2 text-center text-muted-foreground text-sm",
-              [0, 6].includes(i) && "text-muted-foreground/50"
+              [0, 6].includes(i) && "text-muted-foreground/50",
             )}
           >
             {format(date, "E", { locale })}
@@ -329,7 +329,7 @@ const CalendarWeekView = () => {
               className={cn(
                 "grid h-6 place-content-center",
                 isToday(date) &&
-                  "size-6 rounded-full bg-primary text-primary-foreground"
+                  "size-6 rounded-full bg-primary text-primary-foreground",
               )}
             >
               {format(date, "d")}
@@ -347,7 +347,7 @@ const CalendarWeekView = () => {
               <div
                 className={cn(
                   "h-full border-l text-muted-foreground text-sm first:border-l-0",
-                  [0, 6].includes(i) && "bg-muted/50"
+                  [0, 6].includes(i) && "bg-muted/50",
                 )}
                 key={hours[0].toString()}
               >
@@ -383,7 +383,7 @@ const CalendarMonthView = () => {
             key={day}
             className={cn(
               "mb-2 pr-2 text-right text-muted-foreground text-sm",
-              [0, 6].includes(i) && "text-muted-foreground/50"
+              [0, 6].includes(i) && "text-muted-foreground/50",
             )}
           >
             {day}
@@ -393,21 +393,21 @@ const CalendarMonthView = () => {
       <div className="-mt-px grid flex-1 auto-rows-fr grid-cols-7 gap-px overflow-hidden p-px">
         {monthDates.map((_date) => {
           const currentEvents = events.filter((event) =>
-            isSameDay(event.start, _date)
+            isSameDay(event.start, _date),
           );
 
           return (
             <div
               className={cn(
                 "overflow-auto p-2 text-muted-foreground text-sm ring-1 ring-border",
-                !isSameMonth(date, _date) && "text-muted-foreground/50"
+                !isSameMonth(date, _date) && "text-muted-foreground/50",
               )}
               key={_date.toString()}
             >
               <span
                 className={cn(
                   "sticky top-0 mb-1 grid size-6 place-items-center rounded-full",
-                  isToday(_date) && "bg-primary text-primary-foreground"
+                  isToday(_date) && "bg-primary text-primary-foreground",
                 )}
               >
                 {format(_date, "d")}
@@ -425,7 +425,7 @@ const CalendarMonthView = () => {
                         <div
                           className={cn(
                             "shrink-0",
-                            monthEventVariants({ variant: event.color })
+                            monthEventVariants({ variant: event.color }),
                           )}
                         ></div>
                         <span className="flex-1 truncate">{event.title}</span>
@@ -440,7 +440,7 @@ const CalendarMonthView = () => {
                           <div
                             className={cn(
                               "size-2 rounded-full",
-                              monthEventVariants({ variant: event.color })
+                              monthEventVariants({ variant: event.color }),
                             )}
                           ></div>
                           <h4 className="font-semibold text-sm">
@@ -518,7 +518,7 @@ const CalendarYearView = () => {
             {days.map((_date) => {
               const isCurrentMonth = getMonth(_date) === i;
               const hasEvents = events.some((event) =>
-                isSameDay(event.start, _date)
+                isSameDay(event.start, _date),
               );
 
               return (
@@ -526,7 +526,7 @@ const CalendarYearView = () => {
                   key={_date.toString()}
                   className={cn(
                     "relative flex flex-col items-center gap-1",
-                    !isCurrentMonth && "text-muted-foreground/30"
+                    !isCurrentMonth && "text-muted-foreground/30",
                   )}
                 >
                   <button
@@ -543,7 +543,7 @@ const CalendarYearView = () => {
                       hasEvents &&
                         isCurrentMonth &&
                         !isSameDay(today, _date) &&
-                        "bg-primary/20 font-bold text-primary"
+                        "bg-primary/20 font-bold text-primary",
                     )}
                   >
                     {format(_date, "d")}
@@ -558,7 +558,7 @@ const CalendarYearView = () => {
                             key={e.id}
                             className={cn(
                               "size-1 rounded-full",
-                              monthEventVariants({ variant: e.color })
+                              monthEventVariants({ variant: e.color }),
                             )}
                           />
                         ))}

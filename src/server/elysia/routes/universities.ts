@@ -1,11 +1,13 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
 import { db } from "@/server/db";
 import {
   collegeDepartmentProgramCourseToRatings,
   collegeDepartmentProgramsToRatings,
+  collegeDepartmentProgramToCourses,
   collegeDepartments,
+  collegeDepartmentsToPrograms,
   collegeDepartmentsToRatings,
   colleges,
   collegeToRatings,
@@ -375,17 +377,271 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
         },
       );
 
-      const departmentsList = collegeDepartmentsList.map((cd) => ({
-        ...cd.department,
-        collegeId: cd.collegeId,
-      }));
-
-      return { success: true, data: departmentsList };
+      return { success: true, data: collegeDepartmentsList };
     },
     {
       detail: {
         tags: ["Colleges"],
         summary: "Get departments for a college",
+      },
+    },
+  )
+  .get(
+    "/:id/departments/:departmentId",
+    async ({ params: { id: collegeId, departmentId }, set }) => {
+      const collegeDepartment = await db.query.collegeDepartments.findFirst({
+        where: {
+          AND: [
+            {
+              collegeId: collegeId,
+            },
+            {
+              departmentId: departmentId,
+            },
+          ],
+        },
+        with: {
+          department: true,
+        },
+      });
+
+      if (!collegeDepartment) {
+        set.status = 404;
+        return { success: false, error: "College department not found" };
+      }
+
+      return { success: true, data: collegeDepartment };
+    },
+    {
+      detail: {
+        tags: ["Colleges"],
+        summary: "Get college department details",
+      },
+    },
+  )
+  .get(
+    "/:id/departments/:departmentId/programs",
+    async ({ params: { id: collegeId, departmentId }, set }) => {
+      const collegeDepartment = await db.query.collegeDepartments.findFirst({
+        where: {
+          AND: [
+            {
+              collegeId: collegeId,
+            },
+            {
+              departmentId: departmentId,
+            },
+          ],
+        },
+      });
+
+      if (!collegeDepartment) {
+        set.status = 404;
+        return { success: false, error: "College department not found" };
+      }
+
+      const collegePrograms =
+        await db.query.collegeDepartmentsToPrograms.findMany({
+          where: {
+            collegeDepartmentId: collegeDepartment.id,
+          },
+          with: {
+            program: true,
+          },
+        });
+
+      return { success: true, data: collegePrograms };
+    },
+    {
+      detail: {
+        tags: ["Colleges"],
+        summary: "Get programs for a college department",
+      },
+    },
+  )
+  .get(
+    "/:id/departments/:departmentId/programs/:programId",
+    async ({ params: { id: collegeId, departmentId, programId }, set }) => {
+      const collegeDepartment = await db.query.collegeDepartments.findFirst({
+        where: {
+          AND: [
+            {
+              collegeId: collegeId,
+            },
+            {
+              departmentId: departmentId,
+            },
+          ],
+        },
+      });
+
+      if (!collegeDepartment) {
+        set.status = 404;
+        return { success: false, error: "College department not found" };
+      }
+
+      const collegeProgram =
+        await db.query.collegeDepartmentsToPrograms.findFirst({
+          where: {
+            AND: [
+              {
+                collegeDepartmentId: departmentId,
+              },
+              {
+                programId: programId,
+              },
+            ],
+          },
+
+          with: {
+            program: true,
+          },
+        });
+
+      if (!collegeProgram) {
+        set.status = 404;
+        return { success: false, error: "College program not found" };
+      }
+
+      return { success: true, data: collegeProgram };
+    },
+    {
+      detail: {
+        tags: ["Colleges"],
+        summary: "Get college program details",
+      },
+    },
+  )
+  .get(
+    "/:id/departments/:departmentId/programs/:programId/courses",
+    async ({ params: { id: collegeId, departmentId, programId }, set }) => {
+      const collegeDepartment = await db.query.collegeDepartments.findFirst({
+        where: {
+          AND: [
+            {
+              collegeId: collegeId,
+            },
+            {
+              departmentId: departmentId,
+            },
+          ],
+        },
+      });
+
+      if (!collegeDepartment) {
+        set.status = 404;
+        return { success: false, error: "College department not found" };
+      }
+
+      const collegeProgram =
+        await db.query.collegeDepartmentsToPrograms.findFirst({
+          where: {
+            AND: [
+              {
+                collegeDepartmentId: departmentId,
+              },
+              {
+                programId: programId,
+              },
+            ],
+          },
+        });
+
+      if (!collegeProgram) {
+        set.status = 404;
+        return { success: false, error: "College program not found" };
+      }
+
+      const collegeCourses =
+        await db.query.collegeDepartmentProgramToCourses.findMany({
+          where: {
+            programId: programId,
+          },
+          with: {
+            course: true,
+          },
+        });
+
+      return { success: true, data: collegeCourses };
+    },
+    {
+      detail: {
+        tags: ["Colleges"],
+        summary: "Get college program courses",
+      },
+    },
+  )
+  .get(
+    "/:id/departments/:departmentId/programs/:programId/courses/:courseId",
+    async ({
+      params: { id: collegeId, departmentId, programId, courseId },
+      set,
+    }) => {
+      const collegeDepartment = await db.query.collegeDepartments.findFirst({
+        where: {
+          AND: [
+            {
+              collegeId: collegeId,
+            },
+            {
+              departmentId: departmentId,
+            },
+          ],
+        },
+      });
+
+      if (!collegeDepartment) {
+        set.status = 404;
+        return { success: false, error: "College department not found" };
+      }
+
+      const collegeProgram =
+        await db.query.collegeDepartmentsToPrograms.findFirst({
+          where: {
+            AND: [
+              {
+                collegeDepartmentId: departmentId,
+              },
+              {
+                programId: programId,
+              },
+            ],
+          },
+        });
+
+      if (!collegeProgram) {
+        set.status = 404;
+        return { success: false, error: "College program not found" };
+      }
+
+      const collegeCourse =
+        await db.query.collegeDepartmentProgramToCourses.findFirst({
+          where: {
+            AND: [
+              {
+                courseId: courseId,
+              },
+              {
+                programId: programId,
+              },
+            ],
+          },
+          with: {
+            course: true,
+          },
+        });
+
+      if (!collegeCourse) {
+        set.status = 404;
+        return { success: false, error: "College course not found" };
+      }
+
+      return { success: true, data: collegeCourse };
+    },
+    {
+      detail: {
+        tags: ["Colleges"],
+        summary: "Get college course details",
       },
     },
   )
@@ -444,19 +700,475 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
         },
       )
       .post(
+        "/:id/departments",
+        async ({ params: { id: collegeId }, body: { departmentIds } }) => {
+          const currentDepartmentIds = await db
+            .select({ departmentId: collegeDepartments.departmentId })
+            .from(collegeDepartments)
+            .where(eq(collegeDepartments.collegeId, collegeId));
+          const currentDepartmentIdsSet = new Set(
+            currentDepartmentIds.map((d) => d.departmentId),
+          );
+          const inputDepartmentIdsSet = new Set(departmentIds);
+
+          const newDepartmentIds = inputDepartmentIdsSet.difference(
+            currentDepartmentIdsSet,
+          );
+
+          const removedDepartmentIds = currentDepartmentIdsSet.difference(
+            inputDepartmentIdsSet,
+          );
+          if (removedDepartmentIds.size > 0) {
+            await db
+              .update(collegeDepartments)
+              .set({ isActive: false })
+              .where(
+                and(
+                  eq(collegeDepartments.collegeId, collegeId),
+                  inArray(
+                    collegeDepartments.departmentId,
+                    Array.from(removedDepartmentIds),
+                  ),
+                ),
+              );
+          }
+          if (newDepartmentIds.size > 0) {
+            await db.insert(collegeDepartments).values(
+              Array.from(newDepartmentIds).map((departmentId) => ({
+                id: nanoid(),
+                collegeId,
+                departmentId,
+              })),
+            );
+          }
+
+          return {
+            success: true,
+            data: {
+              added: newDepartmentIds.size,
+              removed: removedDepartmentIds.size,
+            },
+          };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            departmentIds: t.Array(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/:id/departments/:departmentId",
+        async ({ params: { id: collegeId, departmentId }, body }) => {
+          await db
+            .update(collegeDepartments)
+            .set(body)
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+              ),
+            );
+          return { success: true, data: { id: collegeId, departmentId } };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            description: t.Optional(t.String()),
+            websiteUrl: t.Optional(t.String()),
+            isActive: t.Optional(t.Boolean()),
+          }),
+        },
+      )
+      .delete(
         "/:id/departments/:departmentId",
         async ({ params: { id: collegeId, departmentId } }) => {
-          const id = nanoid();
-          await db.insert(collegeDepartments).values({
-            id,
-            collegeId,
-            departmentId,
-          });
-          return { success: true, data: { id } };
+          await db
+            .delete(collegeDepartments)
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+              ),
+            );
+          return { success: true, data: { id: collegeId, departmentId } };
         },
         {
           role: "admin",
         },
+      )
+      .post(
+        "/:id/departments/:departmentId/programs",
+        async ({
+          params: { id: collegeId, departmentId },
+          body: { programIds },
+        }) => {
+          const collegeDepartmentIds = await db
+            .select({ collegeDepartmentId: collegeDepartments.id })
+            .from(collegeDepartments)
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+              ),
+            )
+            .limit(1);
+
+          const collegeDepartmentId =
+            collegeDepartmentIds?.[0].collegeDepartmentId;
+          if (!collegeDepartmentId) {
+            return { success: false, error: "College department not found" };
+          }
+
+          const currentProgramIds = await db
+            .select({ programId: collegeDepartmentsToPrograms.programId })
+            .from(collegeDepartmentsToPrograms)
+            .where(
+              eq(
+                collegeDepartmentsToPrograms.collegeDepartmentId,
+                collegeDepartmentId,
+              ),
+            );
+          const currentProgramIdsSet = new Set(
+            currentProgramIds.map((p) => p.programId),
+          );
+          const inputProgramIdsSet = new Set(programIds);
+
+          const newProgramids =
+            inputProgramIdsSet.difference(currentProgramIdsSet);
+          const removedProgramIds =
+            currentProgramIdsSet.difference(inputProgramIdsSet);
+
+          if (newProgramids.size > 0) {
+            await db.insert(collegeDepartmentsToPrograms).values(
+              Array.from(newProgramids).map((programId) => ({
+                id: nanoid(),
+                collegeDepartmentId,
+                programId,
+              })),
+            );
+          }
+
+          if (removedProgramIds.size > 0) {
+            await db
+              .delete(collegeDepartmentsToPrograms)
+              .where(
+                and(
+                  eq(
+                    collegeDepartmentsToPrograms.collegeDepartmentId,
+                    collegeDepartmentId,
+                  ),
+                  inArray(
+                    collegeDepartmentsToPrograms.programId,
+                    Array.from(removedProgramIds),
+                  ),
+                ),
+              );
+          }
+
+          return {
+            success: true,
+            data: {
+              added: newProgramids.size,
+              removed: removedProgramIds.size,
+            },
+          };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            programIds: t.Array(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/:id/departments/:departmentId/programs/:programId",
+        async ({ params: { id, departmentId, programId }, body }) => {
+          const collegeDepartmentIds = await db
+            .select({ id: collegeDepartments.id })
+            .from(collegeDepartments)
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, id),
+                eq(collegeDepartments.departmentId, departmentId),
+              ),
+            )
+            .limit(1);
+
+          const collegeDepartmentId = collegeDepartmentIds?.[0]?.id;
+
+          if (!collegeDepartmentId) {
+            return { success: false, error: "College department not found" };
+          }
+
+          await db
+            .update(collegeDepartmentsToPrograms)
+            .set({ ...body })
+            .where(
+              and(
+                eq(
+                  collegeDepartmentsToPrograms.collegeDepartmentId,
+                  collegeDepartmentId,
+                ),
+                eq(collegeDepartmentsToPrograms.programId, programId),
+              ),
+            );
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            code: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            credits: t.Optional(t.String()),
+            isActive: t.Optional(t.Boolean()),
+          }),
+        },
+      )
+      .delete(
+        "/:id/departments/:departmentId/programs/:programId",
+        async ({ params: { id, departmentId, programId } }) => {
+          const collegeDepartmentIds = await db
+            .select({ id: collegeDepartments.id })
+            .from(collegeDepartments)
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, id),
+                eq(collegeDepartments.departmentId, departmentId),
+              ),
+            )
+            .limit(1);
+
+          const collegeDepartmentId = collegeDepartmentIds?.[0]?.id;
+
+          if (!collegeDepartmentId) {
+            return { success: false, error: "College department not found" };
+          }
+
+          await db
+            .delete(collegeDepartmentsToPrograms)
+            .where(
+              and(
+                eq(
+                  collegeDepartmentsToPrograms.collegeDepartmentId,
+                  collegeDepartmentId,
+                ),
+                eq(collegeDepartmentsToPrograms.programId, programId),
+              ),
+            );
+          return { success: true };
+        },
+        { role: "admin" },
+      )
+      .post(
+        "/:id/departments/:departmentId/programs/:programId/courses",
+        async ({
+          params: { id: collegeId, departmentId, programId },
+          body,
+        }) => {
+          const courseIds = body.courseIds;
+          const collegeDepartmentProgramIds = await db
+            .select({ id: collegeDepartmentsToPrograms.id })
+            .from(collegeDepartmentsToPrograms)
+            .innerJoin(
+              collegeDepartments,
+              eq(
+                collegeDepartments.id,
+                collegeDepartmentsToPrograms.collegeDepartmentId,
+              ),
+            )
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+                eq(collegeDepartmentsToPrograms.programId, programId),
+              ),
+            )
+            .limit(1);
+          const collegeDepartmentProgramId =
+            collegeDepartmentProgramIds?.[0]?.id;
+
+          if (!collegeDepartmentProgramId) {
+            return {
+              success: false,
+              error: "College department program not found",
+            };
+          }
+
+          const currentCourseIds = await db
+            .select({ courseId: collegeDepartmentProgramToCourses.courseId })
+            .from(collegeDepartmentProgramToCourses)
+            .where(
+              eq(
+                collegeDepartmentProgramToCourses.programId,
+                collegeDepartmentProgramId,
+              ),
+            );
+
+          const currentCourseIdSet = new Set(
+            currentCourseIds.map((course) => course.courseId),
+          );
+          const inputCourseIdSet = new Set(courseIds);
+
+          const newCourseIds = inputCourseIdSet.difference(currentCourseIdSet);
+          const removedCourseIds =
+            currentCourseIdSet.difference(inputCourseIdSet);
+
+          if (removedCourseIds.size > 0) {
+            await db
+              .update(collegeDepartmentProgramToCourses)
+              .set({ isActive: false })
+              .where(
+                and(
+                  eq(
+                    collegeDepartmentProgramToCourses.programId,
+                    collegeDepartmentProgramId,
+                  ),
+                  inArray(
+                    collegeDepartmentProgramToCourses.courseId,
+                    Array.from(removedCourseIds),
+                  ),
+                ),
+              );
+          }
+
+          if (newCourseIds.size > 0) {
+            await db.insert(collegeDepartmentProgramToCourses).values(
+              Array.from(courseIds).map((courseId) => ({
+                id: nanoid(),
+                programId: collegeDepartmentProgramId,
+                courseId,
+              })),
+            );
+          }
+
+          return {
+            success: true,
+            data: { added: newCourseIds.size, removed: removedCourseIds.size },
+          };
+        },
+
+        {
+          role: "admin",
+          body: t.Object({
+            courseIds: t.Array(t.String()),
+          }),
+        },
+      )
+      .patch(
+        "/:id/departments/:departmentId/programs/:programId/courses/:courseId",
+        async ({
+          params: { id: collegeId, departmentId, programId, courseId },
+          body,
+        }) => {
+          const collegeDepartmentProgramCourseIds = await db
+            .select({ id: collegeDepartmentProgramToCourses.id })
+            .from(collegeDepartmentProgramToCourses)
+            .innerJoin(
+              collegeDepartmentsToPrograms,
+              eq(
+                collegeDepartmentsToPrograms.id,
+                collegeDepartmentProgramToCourses.programId,
+              ),
+            )
+            .innerJoin(
+              collegeDepartments,
+              eq(
+                collegeDepartments.id,
+                collegeDepartmentsToPrograms.collegeDepartmentId,
+              ),
+            )
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+                eq(collegeDepartmentsToPrograms.programId, programId),
+                eq(collegeDepartmentProgramToCourses.courseId, courseId),
+              ),
+            )
+            .limit(1);
+          const collegeDepartmentProgramCourseId =
+            collegeDepartmentProgramCourseIds?.[0]?.id;
+
+          if (!collegeDepartmentProgramCourseId) {
+            return {
+              success: false,
+              error: "College department program course not found",
+            };
+          }
+
+          await db
+            .update(collegeDepartmentProgramToCourses)
+            .set({ ...body })
+            .where(
+              eq(
+                collegeDepartmentProgramToCourses.id,
+                collegeDepartmentProgramCourseId,
+              ),
+            );
+          return { success: true };
+        },
+        {
+          role: "admin",
+          body: t.Object({
+            code: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            credits: t.Optional(t.String()),
+            isActive: t.Optional(t.Boolean()),
+          }),
+        },
+      )
+      .delete(
+        "/:id/departments/:departmentId/programs/:programId/courses/:courseId",
+        async ({
+          params: { id: collegeId, departmentId, programId, courseId },
+        }) => {
+          const collegeDepartmentProgramCourseIds = await db
+            .select({ id: collegeDepartmentProgramToCourses.id })
+            .from(collegeDepartmentProgramToCourses)
+            .innerJoin(
+              collegeDepartmentsToPrograms,
+              eq(
+                collegeDepartmentsToPrograms.id,
+                collegeDepartmentProgramToCourses.programId,
+              ),
+            )
+            .innerJoin(
+              collegeDepartments,
+              eq(
+                collegeDepartments.id,
+                collegeDepartmentsToPrograms.collegeDepartmentId,
+              ),
+            )
+            .where(
+              and(
+                eq(collegeDepartments.collegeId, collegeId),
+                eq(collegeDepartments.departmentId, departmentId),
+                eq(collegeDepartmentsToPrograms.programId, programId),
+                eq(collegeDepartmentProgramToCourses.courseId, courseId),
+              ),
+            )
+            .limit(1);
+          const collegeDepartmentProgramCourseId =
+            collegeDepartmentProgramCourseIds?.[0]?.id;
+
+          if (!collegeDepartmentProgramCourseId) {
+            return {
+              success: false,
+              error: "College department program course not found",
+            };
+          }
+          await db
+            .delete(collegeDepartmentProgramToCourses)
+            .where(
+              eq(
+                collegeDepartmentProgramToCourses.id,
+                collegeDepartmentProgramCourseId,
+              ),
+            );
+          return { success: true };
+        },
+        { role: "admin" },
       ),
   );
 
@@ -705,17 +1417,9 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
   .use(authorizationPlugin)
   .get(
     "/categories",
-    async ({ query }) => {
-      const { entityType } = query;
-
+    async ({ query: _ }) => {
       const categories = await db.query.ratingCategories.findMany({
-        where: entityType
-          ? {
-              applicableEntityType: {
-                in: [entityType, "all"],
-              },
-            }
-          : undefined,
+        where: {},
         orderBy: { name: "asc" },
       });
 
