@@ -251,7 +251,9 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
       }
 
       const results = await db.query.colleges.findMany({
-        where: conditions.length > 0 ? { AND: conditions } : undefined,
+        where: {
+          AND: [...conditions],
+        },
         with: { university: true },
         limit: l,
         offset,
@@ -463,27 +465,61 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, page, limit } = query;
+      const { search, collegeId, page, limit } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      const whereConditions = search
+      const whereConditions: Record<string, unknown> = search
         ? { name: { ilike: `%${search}%` } }
-        : undefined;
+        : {};
+
+      let departmentIdsToFilter: string[] | undefined;
+
+      if (collegeId) {
+        const collegeDeptIds = await db
+          .select({ departmentId: collegeDepartments.departmentId })
+          .from(collegeDepartments)
+          .where(eq(collegeDepartments.collegeId, collegeId));
+
+        departmentIdsToFilter = collegeDeptIds.map((cd) => cd.departmentId);
+
+        if (departmentIdsToFilter.length === 0) {
+          return {
+            success: true,
+            data: [],
+            metadata: {
+              totalCount: 0,
+              totalPages: 0,
+              currentPage: p,
+              limit: l,
+              hasMore: false,
+            },
+          };
+        }
+      }
+
+      if (departmentIdsToFilter) {
+        (whereConditions as { id: unknown }).id = { in: departmentIdsToFilter };
+      }
 
       const results = await db.query.departments.findMany({
-        where: whereConditions,
+        where:
+          Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
         limit: l,
         offset,
         orderBy: { createdAt: "desc" },
       });
 
+      const dbWhereCondition = departmentIdsToFilter
+        ? eq(departments.id, departmentIdsToFilter[0])
+        : ilike(departments.name, `%${search || ""}%`);
+
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(departments)
-        .where(ilike(departments.name, `%${search || ""}%`));
+        .where(dbWhereCondition);
 
       const realTotal = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(realTotal / l);
@@ -503,6 +539,7 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
     {
       query: t.Object({
         search: t.Optional(t.String()),
+        collegeId: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),

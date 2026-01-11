@@ -8,6 +8,7 @@ import {
   collegeDepartmentProgramCourseToRatings,
   collegeDepartmentProgramsToRatings,
   collegeDepartmentProgramToCourses,
+  collegeDepartments,
   collegeDepartmentsToPrograms,
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
@@ -17,7 +18,8 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, degreeLevel, page, limit } = query;
+      const { search, degreeLevel, collegeId, departmentId, page, limit } =
+        query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
@@ -31,8 +33,91 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         whereCondition.degreeLevels = degreeLevel;
       }
 
+      let programIdsToFilter: string[] | undefined;
+
+      if (collegeId || departmentId) {
+        const collegeDepartmentsQuery = db
+          .select({ id: collegeDepartmentsToPrograms.programId })
+          .from(collegeDepartmentsToPrograms);
+
+        if (departmentId) {
+          const collegeDeptIds = await db
+            .select({ id: collegeDepartments.id })
+            .from(collegeDepartments)
+            .where(eq(collegeDepartments.departmentId, departmentId));
+
+          const cdIds = collegeDeptIds.map((cd) => cd.id);
+          if (cdIds.length === 0) {
+            return {
+              success: true,
+              data: [],
+              metadata: {
+                totalCount: 0,
+                totalPages: 0,
+                currentPage: p,
+                limit: l,
+                hasMore: false,
+              },
+            };
+          }
+
+          collegeDepartmentsQuery.where(
+            and(eq(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds[0])),
+          );
+        } else if (collegeId) {
+          const collegeDeptIds = await db
+            .select({ id: collegeDepartments.id })
+            .from(collegeDepartments)
+            .where(eq(collegeDepartments.collegeId, collegeId));
+
+          const cdIds = collegeDeptIds.map((cd) => cd.id);
+          if (cdIds.length === 0) {
+            return {
+              success: true,
+              data: [],
+              metadata: {
+                totalCount: 0,
+                totalPages: 0,
+                currentPage: p,
+                limit: l,
+                hasMore: false,
+              },
+            };
+          }
+
+          collegeDepartmentsQuery.where(
+            eq(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds[0]),
+          );
+        }
+
+        const filteredPrograms = await collegeDepartmentsQuery;
+        programIdsToFilter = filteredPrograms.map((fp) => fp.id);
+
+        if (programIdsToFilter.length === 0) {
+          return {
+            success: true,
+            data: [],
+            metadata: {
+              totalCount: 0,
+              totalPages: 0,
+              currentPage: p,
+              limit: l,
+              hasMore: false,
+            },
+          };
+        }
+      }
+
       const results = await db.query.academicPrograms.findMany({
-        where: { ...whereCondition },
+        where:
+          Object.keys(whereCondition).length > 0 || programIdsToFilter
+            ? {
+                ...whereCondition,
+                ...(programIdsToFilter && {
+                  id: { in: programIdsToFilter },
+                }),
+              }
+            : undefined,
         limit: l,
         offset,
         orderBy: { createdAt: "desc" },
@@ -83,6 +168,8 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
             postdoctoral: "postdoctoral",
           }),
         ),
+        collegeId: t.Optional(t.String()),
+        departmentId: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
@@ -308,7 +395,7 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, programId, page, limit } = query;
+      const { search, programId, collegeId, departmentId, page, limit } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
@@ -318,13 +405,54 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
       if (search) {
         whereCondition.name = { ilike: `%${search}%` };
       }
+
+      let courseIdsToFilter: string[] | undefined;
+
       if (programId) {
         const programCourseIds = await db
           .select({ courseId: collegeDepartmentProgramToCourses.courseId })
           .from(collegeDepartmentProgramToCourses)
           .where(eq(collegeDepartmentProgramToCourses.programId, programId));
-        const ids = programCourseIds.map((pc) => pc.courseId);
-        (whereCondition as { id: unknown }).id = { in: ids };
+        courseIdsToFilter = programCourseIds.map((pc) => pc.courseId);
+      } else if (collegeId && departmentId) {
+        const collegeDeptIds = await db
+          .select({ id: collegeDepartments.id })
+          .from(collegeDepartments)
+          .where(
+            and(
+              eq(collegeDepartments.collegeId, collegeId),
+              eq(collegeDepartments.departmentId, departmentId),
+            ),
+          );
+
+        if (collegeDeptIds.length > 0) {
+          const collegeDeptProgramIds = await db
+            .select({ id: collegeDepartmentsToPrograms.id })
+            .from(collegeDepartmentsToPrograms)
+            .where(
+              eq(
+                collegeDepartmentsToPrograms.collegeDepartmentId,
+                collegeDeptIds[0].id,
+              ),
+            );
+
+          if (collegeDeptProgramIds.length > 0) {
+            const programCourseIds = await db
+              .select({ courseId: collegeDepartmentProgramToCourses.courseId })
+              .from(collegeDepartmentProgramToCourses)
+              .where(
+                eq(
+                  collegeDepartmentProgramToCourses.programId,
+                  collegeDeptProgramIds[0].id,
+                ),
+              );
+            courseIdsToFilter = programCourseIds.map((pc) => pc.courseId);
+          }
+        }
+      }
+
+      if (courseIdsToFilter && courseIdsToFilter.length > 0) {
+        (whereCondition as { id: unknown }).id = { in: courseIdsToFilter };
       }
 
       const results = await db.query.academicCourses.findMany({
@@ -371,6 +499,8 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
       query: t.Object({
         search: t.Optional(t.String()),
         programId: t.Optional(t.String()),
+        collegeId: t.Optional(t.String()),
+        departmentId: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
