@@ -108,11 +108,7 @@ export default function RatingCategoriesDashboardPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {category.applicableEntityType || "all"}
-                        </Badge>
-                      </TableCell>
+
                       <TableCell>
                         <Badge
                           variant={category.isActive ? "default" : "secondary"}

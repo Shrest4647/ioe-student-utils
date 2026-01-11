@@ -143,16 +143,7 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
           body: t.Object({
             name: t.String(),
             description: t.Optional(t.String()),
-            applicableEntityType: t.Optional(
-              t.Enum({
-                university: "university",
-                college: "college",
-                department: "department",
-                program: "program",
-                course: "course",
-                all: "all",
-              }),
-            ),
+
             sortOrder: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
@@ -172,16 +163,7 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
           body: t.Object({
             name: t.Optional(t.String()),
             description: t.Optional(t.String()),
-            applicableEntityType: t.Optional(
-              t.Enum({
-                university: "university",
-                college: "college",
-                department: "department",
-                program: "program",
-                course: "course",
-                all: "all",
-              }),
-            ),
+
             sortOrder: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),

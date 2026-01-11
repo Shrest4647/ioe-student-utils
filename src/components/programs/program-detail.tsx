@@ -150,8 +150,6 @@ export function ProgramDetail({ program, user }: ProgramDetailProps) {
         category: {
           id: item.ratingCategory?.id || "",
           name: item.ratingCategory?.name || "",
-          applicationEntityType:
-            item.ratingCategory?.applicableEntityType || "program",
         },
         user: item.user
           ? {

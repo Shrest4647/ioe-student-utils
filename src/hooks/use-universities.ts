@@ -115,7 +115,6 @@ export function useUniversityRatings(
           category: {
             id: item.ratingCategory?.id,
             name: item.ratingCategory?.name,
-            applicationEntityType: item.ratingCategory?.applicableEntityType,
           },
         })) as Rating[];
       }
@@ -143,7 +142,6 @@ export function useCollegeRatings(collegeId: string, categoryId?: string) {
           category: {
             id: item.ratingCategory?.id,
             name: item.ratingCategory?.name,
-            applicationEntityType: item.ratingCategory?.applicableEntityType,
           },
         })) as Rating[];
       }
@@ -174,7 +172,6 @@ export function useDepartmentRatings(
           category: {
             id: item.ratingCategory?.id,
             name: item.ratingCategory?.name,
-            applicationEntityType: item.ratingCategory?.applicableEntityType,
           },
         })) as Rating[];
       }
@@ -198,7 +195,6 @@ export function useRatingCategories(entityType?: string) {
           id: string;
           name: string;
           description: string | null;
-          applicableEntityType: string;
           isActive: boolean;
           sortOrder: string | null;
           createdAt: string | Date | null;

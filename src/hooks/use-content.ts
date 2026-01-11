@@ -320,6 +320,29 @@ export interface CourseResponse {
   };
 }
 
+export type CollegeDepartment = {
+  id: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  description: string | null;
+  websiteUrl: string | null;
+  isActive: boolean;
+  collegeId: string;
+  departmentId: string;
+  department: {
+    name: string;
+    id: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+    createdById: string | null;
+    description: string | null;
+    updatedById: string | null;
+    slug: string;
+    websiteUrl: string | null;
+    isActive: boolean;
+  } | null;
+};
+
 export interface CourseFilters {
   search?: string;
   programId?: string;
@@ -572,15 +595,7 @@ export function useCollegeDepartments(collegeId: string) {
         .departments.get();
 
       if (response.data?.success) {
-        return response.data.data as Array<{
-          id: string;
-          name: string;
-          slug: string;
-          description: string | null;
-          websiteUrl: string | null;
-          isActive: boolean;
-          collegeId: string;
-        }>;
+        return response.data.data as CollegeDepartment[];
       }
       throw new Error("Failed to fetch college departments");
     },

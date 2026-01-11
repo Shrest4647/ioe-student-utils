@@ -27,7 +27,6 @@ export interface Rating {
   category?: {
     id: string;
     name: string;
-    applicationEntityType: string;
   };
 }
 

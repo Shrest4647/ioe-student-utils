@@ -31,15 +31,6 @@ import {
   useRatingCategories,
 } from "@/hooks/use-universities";
 
-interface Department {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  websiteUrl: string | null;
-  isActive: boolean;
-}
-
 interface College {
   id: string;
   name: string;
@@ -291,10 +282,12 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                       <GraduationCap className="h-8 w-8 text-muted-foreground" />
                       <div>
                         <Link
-                          href={`/colleges/${college.slug}/departments/${department.slug}`}
+                          href={`/colleges/${college.slug}/departments/${department.department?.slug}`}
                           className="hover:underline"
                         >
-                          <div className="font-medium">{department.name}</div>
+                          <div className="font-medium">
+                            {department.department?.name}
+                          </div>
                         </Link>
                         {department.description && (
                           <div className="text-muted-foreground text-sm">
@@ -377,15 +370,15 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                 </div>
               ) : departments && departments.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {departments.map((department: Department) => (
+                  {departments.map((department) => (
                     <Card key={department.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
                           <Link
-                            href={`/departments/${department.slug}`}
+                            href={`/departments/${department.department?.slug}`}
                             className="hover:underline"
                           >
-                            {department.name}
+                            {department.department?.name}
                           </Link>
                         </CardTitle>
                         <Badge
