@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2 } from "lucide-react";
+import { Building2, Star } from "lucide-react";
 import Link from "next/link";
 import {
   Card,
@@ -67,11 +67,13 @@ export function DepartmentCard({
           <RateButton
             variant="ghost"
             size="sm"
+            className="h-7 gap-1.5 px-2 text-primary hover:text-primary/80"
             categories={categories}
             entityName={department.name}
             onSubmit={onSubmitRating || (() => Promise.resolve())}
           >
-            <span className="font-medium">Rate This Department</span>
+            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+            Rate This College
           </RateButton>
           {department.websiteUrl && (
             <a

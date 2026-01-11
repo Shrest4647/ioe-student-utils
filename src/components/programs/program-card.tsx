@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap, Star } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -106,10 +106,12 @@ export function ProgramCard({
           <RateButton
             variant="ghost"
             size="sm"
+            className="h-7 gap-1.5 px-2 text-primary hover:text-primary/80"
             categories={categories}
             entityName={program.name}
             onSubmit={onSubmitRating || (() => Promise.resolve())}
           >
+            <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
             <span className="font-medium">Rate This Program</span>
           </RateButton>
         </div>
