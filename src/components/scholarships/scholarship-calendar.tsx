@@ -36,16 +36,15 @@ export function ScholarshipCalendar() {
   }, [events]);
 
   return (
-    <div className="relative h-[600px] rounded-lg border bg-card p-4 shadow-sm">
+    <div className="relative h-150 rounded-lg border bg-card p-4 shadow-sm">
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
       <Calendar
-        events={calendarEvents as any} // Cast if types slightly mismatch, though structurally compatible
+        events={calendarEvents}
         onEventClick={(event) => {
-          // Find original event to get scholarship slug?
           const original = events?.find((e) => e.id === event.id);
           if (original?.round?.scholarship?.slug) {
             router.push(`/scholarships/${original.round.scholarship.slug}`);

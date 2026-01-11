@@ -29,6 +29,7 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -57,7 +58,7 @@ const monthEventVariants = cva("size-2 rounded-full", {
   },
 });
 
-const dayEventVariants = cva("rounded border-l-4 p-2 font-bold text-xs", {
+const dayEventVariants = cva("rounded border-l-4 p-0.5 font-bold text-xs", {
   variants: {
     variant: {
       default: "border-muted bg-muted/30 text-muted-foreground",
@@ -146,6 +147,10 @@ const Calendar = ({
     enabled: enableHotkeys,
   });
 
+  useEffect(() => {
+    setEvents(defaultEvents);
+  }, [defaultEvents]);
+
   return (
     <Context.Provider
       value={{
@@ -203,29 +208,58 @@ const EventGroup = ({
   events: CalendarEvent[];
   hour: Date;
 }) => {
+  const { onEventClick } = useCalendar();
+
   return (
-    <div className="h-20 border-t last:border-b">
+    <div className="relative h-20 border-t last:border-b">
       {events
         .filter((event) => isSameHour(event.start, hour))
         .map((event) => {
-          const hoursDifference =
-            differenceInMinutes(event.end, event.start) / 60;
+          const hoursDifference = Math.max(
+            differenceInMinutes(event.end, event.start) / 60,
+            0.25
+          );
           const startPosition = event.start.getMinutes() / 60;
 
           return (
-            <div
-              key={event.id}
-              className={cn(
-                "relative",
-                dayEventVariants({ variant: event.color }),
-              )}
-              style={{
-                top: `${startPosition * 100}%`,
-                height: `${hoursDifference * 100}%`,
-              }}
-            >
-              {event.title}
-            </div>
+            <HoverCard key={event.id} openDelay={300}>
+              <HoverCardTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "absolute line-clamp-1 w-full rounded-sm px-1 text-left text-xs",
+                    dayEventVariants({ variant: event.color })
+                  )}
+                  style={{
+                    top: `${startPosition * 100}%`,
+                    height: `${hoursDifference * 100}%`,
+                  }}
+                  onClick={() => onEventClick?.(event)}
+                >
+                  {event.title}
+                </button>
+              </HoverCardTrigger>
+
+              <HoverCardContent
+                side="top"
+                align="center"
+                className="w-64 text-sm"
+              >
+                <div className="space-y-1">
+                  <p className="font-medium">{event.title}</p>
+
+                  <p className="text-muted-foreground">
+                    {format(event.start, "p")} – {format(event.end, "p")}
+                  </p>
+
+                  {event.description && (
+                    <p className="text-muted-foreground leading-snug">
+                      {event.description}
+                    </p>
+                  )}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           );
         })}
     </div>
@@ -240,7 +274,7 @@ const CalendarDayView = () => {
   const hours = [...Array(24)].map((_, i) => setHours(date, i));
 
   return (
-    <div className="relative flex h-full overflow-auto pt-2">
+    <div className="relative flex h-full pt-2">
       <TimeTable />
       <div className="flex-1">
         {hours.map((hour) => (
@@ -279,15 +313,15 @@ const CalendarWeekView = () => {
   if (view !== "week") return null;
 
   return (
-    <div className="relative flex h-full flex-col overflow-auto">
-      <div className="sticky top-0 z-10 mb-3 flex border-b bg-card">
+    <div className="relative flex h-full flex-col overflow-y-auto sm:overflow-x-hidden">
+      <div className="sticky top-0 z-10 mb-3 flex min-w-140 border-b bg-card">
         <div className="w-12"></div>
         {headerDays.map((date, i) => (
           <div
             key={date.toString()}
             className={cn(
               "flex flex-1 items-center justify-center gap-1 pb-2 text-center text-muted-foreground text-sm",
-              [0, 6].includes(i) && "text-muted-foreground/50",
+              [0, 6].includes(i) && "text-muted-foreground/50"
             )}
           >
             {format(date, "E", { locale })}
@@ -295,7 +329,7 @@ const CalendarWeekView = () => {
               className={cn(
                 "grid h-6 place-content-center",
                 isToday(date) &&
-                  "size-6 rounded-full bg-primary text-primary-foreground",
+                  "size-6 rounded-full bg-primary text-primary-foreground"
               )}
             >
               {format(date, "d")}
@@ -304,16 +338,16 @@ const CalendarWeekView = () => {
         ))}
       </div>
       <div className="flex flex-1">
-        <div className="w-fit">
+        <div className="sticky left-0 z-10 w-12 shrink-0 bg-background">
           <TimeTable />
         </div>
-        <div className="grid flex-1 grid-cols-7">
+        <div className="grid min-w-125 flex-1 grid-cols-7 divide-x">
           {weekDates.map((hours, i) => {
             return (
               <div
                 className={cn(
                   "h-full border-l text-muted-foreground text-sm first:border-l-0",
-                  [0, 6].includes(i) && "bg-muted/50",
+                  [0, 6].includes(i) && "bg-muted/50"
                 )}
                 key={hours[0].toString()}
               >
@@ -349,7 +383,7 @@ const CalendarMonthView = () => {
             key={day}
             className={cn(
               "mb-2 pr-2 text-right text-muted-foreground text-sm",
-              [0, 6].includes(i) && "text-muted-foreground/50",
+              [0, 6].includes(i) && "text-muted-foreground/50"
             )}
           >
             {day}
@@ -359,21 +393,21 @@ const CalendarMonthView = () => {
       <div className="-mt-px grid flex-1 auto-rows-fr grid-cols-7 gap-px overflow-hidden p-px">
         {monthDates.map((_date) => {
           const currentEvents = events.filter((event) =>
-            isSameDay(event.start, _date),
+            isSameDay(event.start, _date)
           );
 
           return (
             <div
               className={cn(
                 "overflow-auto p-2 text-muted-foreground text-sm ring-1 ring-border",
-                !isSameMonth(date, _date) && "text-muted-foreground/50",
+                !isSameMonth(date, _date) && "text-muted-foreground/50"
               )}
               key={_date.toString()}
             >
               <span
                 className={cn(
                   "sticky top-0 mb-1 grid size-6 place-items-center rounded-full",
-                  isToday(_date) && "bg-primary text-primary-foreground",
+                  isToday(_date) && "bg-primary text-primary-foreground"
                 )}
               >
                 {format(_date, "d")}
@@ -391,7 +425,7 @@ const CalendarMonthView = () => {
                         <div
                           className={cn(
                             "shrink-0",
-                            monthEventVariants({ variant: event.color }),
+                            monthEventVariants({ variant: event.color })
                           )}
                         ></div>
                         <span className="flex-1 truncate">{event.title}</span>
@@ -406,7 +440,7 @@ const CalendarMonthView = () => {
                           <div
                             className={cn(
                               "size-2 rounded-full",
-                              monthEventVariants({ variant: event.color }),
+                              monthEventVariants({ variant: event.color })
                             )}
                           ></div>
                           <h4 className="font-semibold text-sm">
@@ -484,7 +518,7 @@ const CalendarYearView = () => {
             {days.map((_date) => {
               const isCurrentMonth = getMonth(_date) === i;
               const hasEvents = events.some((event) =>
-                isSameDay(event.start, _date),
+                isSameDay(event.start, _date)
               );
 
               return (
@@ -492,7 +526,7 @@ const CalendarYearView = () => {
                   key={_date.toString()}
                   className={cn(
                     "relative flex flex-col items-center gap-1",
-                    !isCurrentMonth && "text-muted-foreground/30",
+                    !isCurrentMonth && "text-muted-foreground/30"
                   )}
                 >
                   <button
@@ -509,7 +543,7 @@ const CalendarYearView = () => {
                       hasEvents &&
                         isCurrentMonth &&
                         !isSameDay(today, _date) &&
-                        "bg-primary/20 font-bold text-primary",
+                        "bg-primary/20 font-bold text-primary"
                     )}
                   >
                     {format(_date, "d")}
@@ -524,7 +558,7 @@ const CalendarYearView = () => {
                             key={e.id}
                             className={cn(
                               "size-1 rounded-full",
-                              monthEventVariants({ variant: e.color }),
+                              monthEventVariants({ variant: e.color })
                             )}
                           />
                         ))}
@@ -680,7 +714,7 @@ const TimeTable = () => {
           >
             {now.getHours() === hour && (
               <div
-                className="z- absolute left-full h-[2px] w-dvw translate-x-2 bg-red-500"
+                className="z- absolute left-full h-0.5 w-dvw translate-x-2 bg-red-500"
                 style={{
                   top: `${(now.getMinutes() / 60) * 100}%`,
                 }}
