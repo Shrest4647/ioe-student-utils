@@ -38,38 +38,6 @@ const collegeSchema = z.object({
   isActive: z.boolean(),
 });
 
-const _departmentSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  websiteUrl: z.string().optional(),
-  isActive: z.boolean(),
-});
-
-const _programSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  code: z.string().optional(),
-  description: z.string().optional(),
-  credits: z.string().optional(),
-  degreeLevels: z.enum([
-    "certificate",
-    "diploma",
-    "associate",
-    "undergraduate",
-    "postgraduate",
-    "doctoral",
-    "postdoctoral",
-  ]),
-  isActive: z.boolean(),
-});
-
-const _courseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  code: z.string().optional(),
-  description: z.string().optional(),
-  credits: z.string().optional(),
-  isActive: z.boolean(),
-});
-
 export default function CollegeEditPage() {
   const { slug } = useParams();
   const router = useRouter();
