@@ -93,7 +93,7 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
     },
   )
   .get(
-    "/:code",
+    "/code/:code",
     async ({ params: { code }, set }) => {
       const program = await db.query.academicPrograms.findFirst({
         where: { code },
@@ -275,8 +275,8 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         },
       )
       .post(
-        "/:collegeDepartmentId/programs/:programId",
-        async ({ params: { collegeDepartmentId, programId } }) => {
+        "/:id/collegeDeptments/:collegeDepartmentId",
+        async ({ params: { collegeDepartmentId, id: programId } }) => {
           const id = nanoid();
           await db.insert(collegeDepartmentsToPrograms).values({
             id,
@@ -381,7 +381,7 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
     },
   )
   .get(
-    "/:code",
+    "/code/:code",
     async ({ params: { code }, set }) => {
       const course = await db.query.academicCourses.findFirst({
         where: { code },
@@ -560,8 +560,8 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
         },
       )
       .post(
-        "/:programId/courses/:courseId",
-        async ({ params: { programId, courseId } }) => {
+        "/:id/courses/:courseId",
+        async ({ params: { id: programId, courseId } }) => {
           const id = nanoid();
           await db.insert(collegeDepartmentProgramToCourses).values({
             id,

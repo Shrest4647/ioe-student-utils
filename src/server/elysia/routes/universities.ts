@@ -9,6 +9,7 @@ import {
   collegeDepartmentsToRatings,
   colleges,
   collegeToRatings,
+  countries,
   departments,
   ratingCategories,
   ratings,
@@ -22,14 +23,35 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, page, limit } = query;
+      const { search, country, page, limit } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
+      const conditions = [];
+      const dbConditions = [];
+
+      if (search) {
+        conditions.push({ name: { ilike: `%${search}%` } });
+        dbConditions.push(ilike(universities.name, `%${search}%`));
+      }
+
+      if (country) {
+        const countryRecords = await db
+          .select()
+          .from(countries)
+          .where(eq(countries.code, country))
+          .limit(1);
+
+        if (countryRecords.length > 0) {
+          conditions.push({ country: countryRecords[0].name });
+          dbConditions.push(eq(universities.country, countryRecords[0].name));
+        }
+      }
+
       const results = await db.query.universities.findMany({
-        where: search ? { name: { ilike: `%${search}%` } } : undefined,
+        where: conditions.length > 0 ? { AND: conditions } : undefined,
         limit: l,
         offset,
         orderBy: { createdAt: "desc" },
@@ -38,7 +60,7 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(universities)
-        .where(search ? ilike(universities.name, `%${search}%`) : undefined);
+        .where(conditions.length > 0 ? and(...dbConditions) : undefined);
 
       const realTotal = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(realTotal / l);
@@ -58,6 +80,7 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
     {
       query: t.Object({
         search: t.Optional(t.String()),
+        country: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
@@ -68,7 +91,7 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
     },
   )
   .get(
-    "/:slug",
+    "/slug/:slug",
     async ({ params: { slug }, set }) => {
       const university = await db.query.universities.findFirst({
         where: { slug },
@@ -269,7 +292,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
     },
   )
   .get(
-    "/:slug",
+    "/slug/:slug",
     async ({ params: { slug }, set }) => {
       const college = await db.query.colleges.findFirst({
         where: { slug },
@@ -490,7 +513,7 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
     },
   )
   .get(
-    "/:slug",
+    "/slug/:slug",
     async ({ params: { slug }, set }) => {
       const department = await db.query.departments.findFirst({
         where: { slug },
