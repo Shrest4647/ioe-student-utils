@@ -425,6 +425,9 @@ export const collegeDepartments = pgTable(
     departmentId: text("department_id")
       .notNull()
       .references(() => departments.id, { onDelete: "cascade" }),
+    description: text("description"), // Custom description for the college department
+    websiteUrl: text("website_url"), // Custom website URL for the college department
+    isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").$defaultFn(() => new Date()),
     updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
   },
@@ -470,6 +473,10 @@ export const collegeDepartmentsToPrograms = pgTable(
   "collegedepartment_to_program",
   {
     id: text("id").primaryKey(),
+    code: text("code"), // Custom code for the program in the college department
+    description: text("description"), // Custom description for the program in the college department
+    credits: text("credits"), // Custom credits for the program in the college department
+    isActive: boolean("is_active").default(true).notNull(),
     collegeDepartmentId: text("college_department_id")
       .notNull()
       .references(() => collegeDepartments.id, { onDelete: "cascade" }),
@@ -491,6 +498,10 @@ export const collegeDepartmentProgramToCourses = pgTable(
   "collegeprogram_to_course",
   {
     id: text("id").primaryKey(),
+    code: text("code"), // Custom code for the course in the college program
+    description: text("description"), // Custom description for the course in the college program
+    credits: text("credits"), // Custom credits for the course in the college program
+    isActive: boolean("is_active").default(true).notNull(),
     programId: text("college_program_id")
       .notNull()
       .references(() => collegeDepartmentsToPrograms.id, {
@@ -512,9 +523,6 @@ export const ratingCategories = pgTable("rating_category", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
-  applicableEntityType: text("applicable_entity_type", {
-    enum: ["university", "college", "department", "program", "course", "all"],
-  }).default("all"),
   sortOrder: text("sort_order"),
   isActive: boolean("is_active").default(true).notNull(),
   createdById: text("created_by_id").references(() => user.id, {
