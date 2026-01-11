@@ -18,7 +18,6 @@ export interface Course {
   id: string;
   name: string;
   code: string;
-  slug: string | null;
   description: string | null;
   credits: string | null;
   isActive: boolean;

@@ -24,7 +24,10 @@ import { RateButton } from "@/components/ui/rate-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RatingCard } from "@/components/universities/rating-card";
 import { RatingDisplay } from "@/components/universities/rating-display";
-import { useDepartmentColleges } from "@/hooks/use-content";
+import {
+  useDepartmentColleges,
+  useDepartmentPrograms,
+} from "@/hooks/use-content";
 import {
   useDepartmentRatings,
   useRatingCategories,
@@ -71,7 +74,7 @@ interface DepartmentDetailProps {
 
 export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "ratings" | "colleges"
+    "overview" | "ratings" | "colleges" | "programs"
   >("overview");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -81,6 +84,9 @@ export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
   } = useDepartmentRatings(department.id);
   const { data: categories } = useRatingCategories("department");
   const { data: colleges, isLoading: collegesLoading } = useDepartmentColleges(
+    department.id,
+  );
+  const { data: programs, isLoading: programsLoading } = useDepartmentPrograms(
     department.id,
   );
 
@@ -197,6 +203,14 @@ export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
             {colleges && colleges.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {colleges.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="programs">
+            Programs
+            {programs && programs.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {programs.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -322,7 +336,12 @@ export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
                     <Card key={college.id}>
                       <CardHeader>
                         <CardTitle className="text-lg">
-                          {college.name}
+                          <Link
+                            href={`/colleges/${college.slug}`}
+                            className="hover:underline"
+                          >
+                            {college.name}
+                          </Link>
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1">
                           {college.university?.name || "University"}
@@ -339,6 +358,65 @@ export function DepartmentDetail({ department, user }: DepartmentDetailProps) {
               ) : (
                 <div className="py-12 text-center">
                   <p className="text-muted-foreground">No colleges listed</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="programs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Programs</CardTitle>
+              <CardDescription>
+                Explore academic programs offered in {department.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {programsLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : programs && programs.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {programs.map((program) => (
+                    <Card key={program.id}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">
+                          <Link
+                            href={`/programs/${program.code}`}
+                            className="hover:underline"
+                          >
+                            {program.name}
+                          </Link>
+                        </CardTitle>
+                        <CardDescription className="flex flex-wrap gap-2">
+                          {program.code && (
+                            <Badge variant="outline">{program.code}</Badge>
+                          )}
+                          {program.degreeLevels && (
+                            <Badge variant="secondary">
+                              {program.degreeLevels}
+                            </Badge>
+                          )}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground text-sm">
+                          {program.description || "No description available"}
+                        </p>
+                        {program.credits && (
+                          <p className="mt-2 text-muted-foreground text-sm">
+                            Credits: {program.credits}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">No programs listed</p>
                 </div>
               )}
             </CardContent>
