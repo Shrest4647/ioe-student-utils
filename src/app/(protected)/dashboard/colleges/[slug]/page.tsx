@@ -513,6 +513,12 @@ export default function CollegeEditPage() {
         collegeSlug={slug as string}
         collegeId={collegeId}
         collegeName={collegeQuery.data?.name ?? ""}
+        selectedDepartments={
+          collegeDepartmentsQuery?.data?.map((department) => ({
+            name: department.department?.name ?? "",
+            id: department.department?.id ?? "",
+          })) ?? []
+        }
         departments={departments}
         isOpen={isDepartmentModalOpen}
         setIsOpen={setIsDepartmentModalOpen}
@@ -528,10 +534,15 @@ function AddDepartmentModal({
   departments,
   isOpen,
   setIsOpen,
+  selectedDepartments: selectedDepartmentsProp,
 }: {
   collegeSlug: string;
   collegeId: string;
   collegeName: string;
+  selectedDepartments: {
+    id: string;
+    name: string;
+  }[];
   departments: {
     id: string;
     name: string;
@@ -564,6 +575,9 @@ function AddDepartmentModal({
       toast.error(error.message);
     },
   });
+  useEffect(() => {
+    setSelectedDepartments(selectedDepartmentsProp.map((d) => d.id));
+  }, [selectedDepartmentsProp]);
 
   const handleClick = () => {
     addDepartmentMutation.mutate(selectedDepartments);

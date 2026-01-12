@@ -152,7 +152,6 @@ export default function ProgramEditPage() {
   const programCoursesQuery = useQuery({
     queryKey: ["admin", "program-courses", slug, departmentSlug, programCode],
     queryFn: async () => {
-      if (!collegeProgramQuery.data?.id) return [];
       const collegeId = collegeQuery.data?.id;
       const departmentId = departmentQuery.data?.id;
       const programId = programQuery.data?.id;
@@ -167,19 +166,26 @@ export default function ProgramEditPage() {
 
       return data?.success ? data.data : [];
     },
-    enabled: !!collegeProgramQuery.data?.id,
+    enabled:
+      !!collegeQuery.data?.id &&
+      !!departmentQuery.data?.id &&
+      !!programQuery.data?.id,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (values: z.infer<typeof programSchema>) => {
       const collegeId = collegeQuery.data?.id;
       const departmentId = departmentQuery.data?.id;
+      const programId = programQuery.data?.id;
 
-      if (!collegeId || !departmentId) return null;
+      if (!collegeId || !departmentId || !programId) {
+        throw Error("College, department or program not found");
+      }
 
       const { data } = await apiClient.api.colleges
         .admin({ id: collegeId })
         .departments({ departmentId })
+        .programs({ programId })
         .patch(values);
       return data;
     },
@@ -502,11 +508,7 @@ export default function ProgramEditPage() {
             disabled={saveMutation.isPending}
           >
             <Save className="mr-2 h-4 w-4" />
-            {saveMutation.isPending
-              ? "Saving..."
-              : collegeProgramQuery.data?.id
-                ? "Update Program"
-                : "Create Program"}
+            {saveMutation.isPending ? "Saving..." : "Update Program"}
           </Button>
         </div>
       </form>
