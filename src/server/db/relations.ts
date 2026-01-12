@@ -200,6 +200,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.departments.id.through(r.collegeDepartments.departmentId),
       to: r.colleges.id.through(r.collegeDepartments.collegeId),
     }),
+    ratings: r.many.ratings({
+      from: r.departments.id.through(r.departmentToRatings.departmentId),
+      to: r.ratings.id.through(r.departmentToRatings.ratingId),
+    }),
   },
 
   collegeDepartments: {
@@ -219,6 +223,12 @@ export const relations = defineRelations(schema, (r) => ({
         r.collegeDepartmentsToPrograms.programId,
       ),
     }),
+    ratings: r.many.ratings({
+      from: r.collegeDepartments.id.through(
+        r.collegeDepartmentsToRatings.collegeDepartmentId,
+      ),
+      to: r.ratings.id.through(r.collegeDepartmentsToRatings.ratingId),
+    }),
   },
 
   collegeDepartmentsToPrograms: {
@@ -229,6 +239,12 @@ export const relations = defineRelations(schema, (r) => ({
     program: r.one.academicPrograms({
       from: r.collegeDepartmentsToPrograms.programId,
       to: r.academicPrograms.id,
+    }),
+    ratings: r.many.ratings({
+      from: r.collegeDepartmentsToPrograms.id.through(
+        r.collegeDepartmentProgramsToRatings.collegeDepartmentProgramId,
+      ),
+      to: r.ratings.id.through(r.collegeDepartmentProgramsToRatings.ratingId),
     }),
   },
 
@@ -266,6 +282,10 @@ export const relations = defineRelations(schema, (r) => ({
         r.collegeDepartmentProgramToCourses.programId,
       ),
     }),
+    ratings: r.many.ratings({
+      from: r.academicCourses.id.through(r.courseToRatings.courseId),
+      to: r.ratings.id.through(r.courseToRatings.ratingId),
+    }),
   },
 
   collegeDepartmentProgramToCourses: {
@@ -276,6 +296,15 @@ export const relations = defineRelations(schema, (r) => ({
     course: r.one.academicCourses({
       from: r.collegeDepartmentProgramToCourses.courseId,
       to: r.academicCourses.id,
+    }),
+    ratings: r.many.ratings({
+      from: r.collegeDepartmentProgramToCourses.id.through(
+        r.collegeDepartmentProgramCourseToRatings
+          .collegeDepartmentProgramToCourseId,
+      ),
+      to: r.ratings.id.through(
+        r.collegeDepartmentProgramCourseToRatings.ratingId,
+      ),
     }),
   },
 

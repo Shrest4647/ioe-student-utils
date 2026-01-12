@@ -7,6 +7,8 @@ import {
   collegeDepartmentProgramsToRatings,
   collegeDepartmentsToRatings,
   collegeToRatings,
+  courseToRatings,
+  departmentToRatings,
   ratingCategories,
   ratings,
   universityToRatings,
@@ -105,19 +107,39 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
               ratingId: id,
             });
             break;
+
           case "department":
+            await tx.insert(departmentToRatings).values({
+              departmentId: entityId,
+              ratingId: id,
+            });
+            break;
+
+          case "program":
+            await tx.insert(courseToRatings).values({
+              courseId: entityId,
+              ratingId: id,
+            });
+            break;
+          case "course":
+            await tx.insert(courseToRatings).values({
+              courseId: entityId,
+              ratingId: id,
+            });
+            break;
+          case "collegeDepartment":
             await tx.insert(collegeDepartmentsToRatings).values({
               collegeDepartmentId: entityId,
               ratingId: id,
             });
             break;
-          case "program":
+          case "collegeDepartmentProgram":
             await tx.insert(collegeDepartmentProgramsToRatings).values({
               collegeDepartmentProgramId: entityId,
               ratingId: id,
             });
             break;
-          case "course":
+          case "collegeDepartmentProgramCourse":
             await tx.insert(collegeDepartmentProgramCourseToRatings).values({
               collegeDepartmentProgramToCourseId: entityId,
               ratingId: id,
@@ -139,6 +161,9 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
           department: "department",
           program: "program",
           course: "course",
+          collegeDepartment: "collegeDepartment",
+          collegeDepartmentProgram: "collegeDepartmentProgram",
+          collegeDepartmentProgramCourse: "collegeDepartmentProgramCourse",
         }),
         entityId: t.String(),
         categoryId: t.String(),

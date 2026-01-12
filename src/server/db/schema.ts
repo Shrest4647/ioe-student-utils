@@ -586,6 +586,22 @@ export const collegeToRatings = pgTable(
   ],
 );
 
+export const departmentToRatings = pgTable(
+  "department_to_rating",
+  {
+    departmentId: text("department_id")
+      .notNull()
+      .references(() => departments.id, { onDelete: "cascade" }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("idx_department_rating_department_id").on(t.departmentId),
+    index("idx_department_rating_rating_id").on(t.ratingId),
+  ],
+);
+
 export const collegeDepartmentsToRatings = pgTable(
   "collegedepartment_to_rating",
   {
@@ -601,6 +617,22 @@ export const collegeDepartmentsToRatings = pgTable(
       t.collegeDepartmentId,
     ),
     index("idx_collegedept_rating_rating_id").on(t.ratingId),
+  ],
+);
+
+export const programToRatings = pgTable(
+  "program_to_rating",
+  {
+    programId: text("program_id")
+      .notNull()
+      .references(() => academicPrograms.id, { onDelete: "cascade" }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("idx_program_rating_program_id").on(t.programId),
+    index("idx_program_rating_rating_id").on(t.ratingId),
   ],
 );
 
@@ -621,6 +653,22 @@ export const collegeDepartmentProgramsToRatings = pgTable(
       t.collegeDepartmentProgramId,
     ),
     index("idx_collegedeptprog_rating_rating_id").on(t.ratingId),
+  ],
+);
+
+export const courseToRatings = pgTable(
+  "course_to_rating",
+  {
+    courseId: text("course_id")
+      .notNull()
+      .references(() => academicCourses.id, { onDelete: "cascade" }),
+    ratingId: text("rating_id")
+      .notNull()
+      .references(() => ratings.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    index("idx_course_rating_course_id").on(t.courseId),
+    index("idx_course_rating_rating_id").on(t.ratingId),
   ],
 );
 
