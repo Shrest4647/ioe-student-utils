@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RateButton } from "@/components/ui/rate-button";
-import type { RatingCategory } from "@/components/universities/rating-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useRatingCategories } from "@/hooks/use-universities";
 import { apiClient } from "@/lib/eden";
@@ -29,35 +28,21 @@ export interface Course {
   createdAt: string | Date | null;
 }
 
-interface CourseCardProps {
+export interface CourseCardProps {
   course: Course;
-  onSubmitRating?: (data: {
-    categoryId: string;
-    rating: string;
-    review: string;
-  }) => Promise<void>;
-  categories?: RatingCategory[];
+  entityType?: "course" | "collegeDepartmentProgramCourse";
 }
 
-export function CourseCard({
-  course,
-  onSubmitRating,
-  categories: initialCategories,
-}: CourseCardProps) {
+export function CourseCard({ course, entityType = "course" }: CourseCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  const { data: fetchedCategories } = useRatingCategories("course");
-  const categories = initialCategories || fetchedCategories || [];
+  const { data: categories } = useRatingCategories("course");
 
   const handleRatingSubmit = async (data: {
     categoryId: string;
     rating: string;
     review: string;
   }) => {
-    if (onSubmitRating) {
-      return onSubmitRating(data);
-    }
-
     if (!user) {
       toast.error("Please sign in to rate this course");
       return;
@@ -66,7 +51,7 @@ export function CourseCard({
     setIsSubmitting(true);
     try {
       const { data: response, error } = await apiClient.api.ratings.post({
-        entityType: "course",
+        entityType,
         entityId: course.id,
         categoryId: data.categoryId,
         rating: data.rating,
@@ -122,13 +107,14 @@ export function CourseCard({
           </div>
         )}
       </CardContent>
+
       <CardFooter className="border-t bg-muted/20 pt-2">
         <div className="flex w-full items-center text-sm">
           <RateButton
             variant="ghost"
             size="sm"
             className="h-7 gap-1.5 px-2 text-primary hover:text-primary/80"
-            categories={categories}
+            categories={categories || []}
             entityName={course.name}
             isSubmitting={isSubmitting}
             onSubmit={handleRatingSubmit}

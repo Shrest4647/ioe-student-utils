@@ -40,9 +40,13 @@ export interface Program {
 
 interface ProgramCardProps {
   program: Program;
+  entityType?: "program" | "collegeDepartmentProgram";
 }
 
-export function ProgramCard({ program }: ProgramCardProps) {
+export function ProgramCard({
+  program,
+  entityType = "program",
+}: ProgramCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { data: categories } = useRatingCategories("program");
@@ -60,7 +64,7 @@ export function ProgramCard({ program }: ProgramCardProps) {
     setIsSubmitting(true);
     try {
       const { data: response, error } = await apiClient.api.ratings.post({
-        entityType: "program",
+        entityType,
         entityId: program.id,
         categoryId: data.categoryId,
         rating: data.rating,

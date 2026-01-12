@@ -29,9 +29,13 @@ export interface Department {
 
 interface DepartmentCardProps {
   department: Department;
+  entityType?: "department" | "collegeDepartment";
 }
 
-export function DepartmentCard({ department }: DepartmentCardProps) {
+export function DepartmentCard({
+  department,
+  entityType = "department",
+}: DepartmentCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { data: categories } = useRatingCategories("department");
@@ -49,7 +53,7 @@ export function DepartmentCard({ department }: DepartmentCardProps) {
     setIsSubmitting(true);
     try {
       const { data: response, error } = await apiClient.api.ratings.post({
-        entityType: "department",
+        entityType,
         entityId: department.id,
         categoryId: data.categoryId,
         rating: data.rating,
