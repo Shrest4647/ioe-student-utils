@@ -77,7 +77,6 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
   const handleRatingSubmit = async (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => {
     if (!user) {

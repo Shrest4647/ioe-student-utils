@@ -16,7 +16,6 @@ export function RateButton({
   onSubmit: (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => Promise<void> | void;
   categories: RatingCategory[];

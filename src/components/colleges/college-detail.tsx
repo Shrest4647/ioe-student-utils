@@ -30,6 +30,7 @@ import {
   useCollegeRatings,
   useRatingCategories,
 } from "@/hooks/use-universities";
+import { apiClient } from "@/lib/eden";
 
 interface College {
   id: string;
@@ -92,7 +93,6 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
   const handleRatingSubmit = async (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => {
     if (!user) {
@@ -102,20 +102,15 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/ratings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entityType: "college",
-          entityId: college.id,
-          categoryId: data.categoryId,
-          rating: data.rating,
-          title: data.title,
-          review: data.review,
-        }),
+      const response = await apiClient.api.ratings.post({
+        entityType: "college",
+        entityId: college.id,
+        categoryId: data.categoryId,
+        rating: data.rating,
+        review: data.review,
       });
 
-      if (response.ok) {
+      if (response.data?.success) {
         toast.success("Review submitted successfully!");
         refetch();
       } else {

@@ -2,6 +2,8 @@
 
 import { BookOpen, GraduationCap, Star } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -12,7 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RateButton } from "@/components/ui/rate-button";
-import type { RatingCategory } from "@/components/universities/rating-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { useRatingCategories } from "@/hooks/use-universities";
+import { apiClient } from "@/lib/eden";
 
 export interface Program {
   id: string;
@@ -36,20 +40,50 @@ export interface Program {
 
 interface ProgramCardProps {
   program: Program;
-  onSubmitRating?: (data: {
-    categoryId: string;
-    rating: string;
-    title: string;
-    review: string;
-  }) => Promise<void> | void;
-  categories?: RatingCategory[];
 }
 
-export function ProgramCard({
-  program,
-  onSubmitRating,
-  categories = [],
-}: ProgramCardProps) {
+export function ProgramCard({ program }: ProgramCardProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { data: categories } = useRatingCategories("program");
+
+  const handleRatingSubmit = async (data: {
+    categoryId: string;
+    rating: string;
+    review: string;
+  }) => {
+    if (!user) {
+      toast.error("Please sign in to rate this program");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data: response, error } = await apiClient.api.ratings.post({
+        entityType: "program",
+        entityId: program.id,
+        categoryId: data.categoryId,
+        rating: data.rating,
+        review: data.review,
+      });
+
+      if (error || !response?.success) {
+        throw new Error(
+          (typeof error?.value === "object"
+            ? (error.value as any)?.message || (error.value as any)?.error
+            : error?.value) || "Failed to submit review",
+        );
+      }
+
+      toast.success("Review submitted successfully!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit review",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const degreeLevelColors: Record<string, string> = {
     certificate: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     diploma: "bg-purple-500/10 text-purple-500 border-purple-500/20",
@@ -107,9 +141,10 @@ export function ProgramCard({
             variant="ghost"
             size="sm"
             className="h-7 gap-1.5 px-2 text-primary hover:text-primary/80"
-            categories={categories}
+            categories={categories || []}
             entityName={program.name}
-            onSubmit={onSubmitRating || (() => Promise.resolve())}
+            isSubmitting={isSubmitting}
+            onSubmit={handleRatingSubmit}
           >
             <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
             <span className="font-medium">Rate This Program</span>

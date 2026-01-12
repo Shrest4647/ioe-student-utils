@@ -19,6 +19,7 @@ import { RatingCard } from "@/components/universities/rating-card";
 import { RatingDisplay } from "@/components/universities/rating-display";
 import { useProgramCourses, useProgramRatings } from "@/hooks/use-content";
 import { useRatingCategories } from "@/hooks/use-universities";
+import { apiClient } from "@/lib/eden";
 
 interface CollegeDepartment {
   id: string;
@@ -107,7 +108,6 @@ export function ProgramDetail({ program, user }: ProgramDetailProps) {
   const handleRatingSubmit = async (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => {
     if (!user) {
@@ -117,27 +117,28 @@ export function ProgramDetail({ program, user }: ProgramDetailProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/ratings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entityType: "program",
-          entityId: program.id,
-          categoryId: data.categoryId,
-          rating: data.rating,
-          title: data.title,
-          review: data.review,
-        }),
+      const { data: response, error } = await apiClient.api.ratings.post({
+        entityType: "program",
+        entityId: program.id,
+        categoryId: data.categoryId,
+        rating: data.rating,
+        review: data.review,
       });
 
-      if (response.ok) {
-        toast.success("Review submitted successfully!");
-        refetch();
-      } else {
-        throw new Error("Failed to submit review");
+      if (error || !response?.success) {
+        throw new Error(
+          (typeof error?.value === "object"
+            ? (error.value as any)?.message || (error.value as any)?.error
+            : error?.value) || "Failed to submit review",
+        );
       }
-    } catch (_error) {
-      toast.error("Failed to submit review");
+
+      toast.success("Review submitted successfully!");
+      refetch();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit review",
+      );
     } finally {
       setIsSubmitting(false);
     }

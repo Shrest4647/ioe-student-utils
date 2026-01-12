@@ -15,6 +15,7 @@ import {
 import { RateButton } from "@/components/ui/rate-button";
 import { useAuth } from "@/hooks/use-auth";
 import { useRatingCategories } from "@/hooks/use-universities";
+import { apiClient } from "@/lib/eden";
 
 export interface College {
   id: string;
@@ -45,7 +46,6 @@ export function CollegeCard({ college }: CollegeCardProps) {
   const handleRatingSubmit = async (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => {
     if (!user) {
@@ -55,26 +55,27 @@ export function CollegeCard({ college }: CollegeCardProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/ratings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entityType: "college",
-          entityId: college.id,
-          categoryId: data.categoryId,
-          rating: data.rating,
-          title: data.title,
-          review: data.review,
-        }),
+      const { data: response, error } = await apiClient.api.ratings.post({
+        entityType: "college",
+        entityId: college.id,
+        categoryId: data.categoryId,
+        rating: data.rating,
+        review: data.review,
       });
 
-      if (response.ok) {
-        toast.success("Review submitted successfully!");
-      } else {
-        throw new Error("Failed to submit review");
+      if (error || !response?.success) {
+        throw new Error(
+          (typeof error?.value === "object"
+            ? (error.value as any)?.message || (error.value as any)?.error
+            : error?.value) || "Failed to submit review",
+        );
       }
-    } catch (_error) {
-      toast.error("Failed to submit review");
+
+      toast.success("Review submitted successfully!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit review",
+      );
     } finally {
       setIsSubmitting(false);
     }
