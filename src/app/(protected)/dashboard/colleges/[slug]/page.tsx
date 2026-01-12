@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -182,7 +182,21 @@ export default function CollegeEditPage() {
     },
   });
 
-  if (!isNew && collegeQuery.isLoading) {
+  useEffect(() => {
+    if (collegeQuery.data) {
+      form.reset({
+        universityId: collegeQuery.data.universityId || "",
+        name: collegeQuery.data.name || "",
+        description: collegeQuery.data.description || "",
+        websiteUrl: collegeQuery.data.websiteUrl || "",
+        location: collegeQuery.data.location || "",
+        type: collegeQuery.data.type || "",
+        isActive: collegeQuery.data.isActive ?? true,
+      });
+    }
+  }, [collegeQuery.data, form.reset]);
+
+  if ((!isNew && collegeQuery.isLoading) || universitiesQuery.isLoading) {
     return (
       <div className="container mx-auto space-y-6 pt-8">
         <div className="h-10 w-48 animate-pulse rounded bg-muted" />
@@ -427,7 +441,7 @@ export default function CollegeEditPage() {
                             <TableCell className="text-right">
                               <Button variant="ghost" size="icon" asChild>
                                 <Link
-                                  href={`/dashboard/departments/${department.department?.slug}`}
+                                  href={`/dashboard/colleges/${slug}/departments/${department.department?.slug}`}
                                 >
                                   <Edit2 className="h-4 w-4" />
                                 </Link>

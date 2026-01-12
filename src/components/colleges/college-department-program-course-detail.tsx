@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { use } from "react";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { CourseCard } from "@/components/courses/course-card";
-import { useCourse } from "@/hooks/use-content";
+import { useCollegeDeptProgramCourse } from "@/hooks/use-content";
 
 function BreadcrumbsContent({
   params,
@@ -63,7 +63,12 @@ function CourseDetailContent({
 }) {
   const resolvedParams = use(params);
 
-  const { data: course, isLoading } = useCourse(resolvedParams.courseCode);
+  const { data: course, isLoading } = useCollegeDeptProgramCourse(
+    resolvedParams.slug,
+    resolvedParams.departmentSlug,
+    resolvedParams.programCode,
+    resolvedParams.courseCode,
+  );
 
   if (isLoading) {
     return (
@@ -83,7 +88,19 @@ function CourseDetailContent({
     );
   }
 
-  return <CourseCard course={course} />;
+  return (
+    <CourseCard
+      course={{
+        id: course.id,
+        name: course.course?.name || "",
+        code: course.code || course.course?.code || "",
+        description: course.description || course.course?.description || "",
+        credits: course.credits || course.course?.credits || "",
+        isActive: course.isActive || course.course?.isActive || false,
+        createdAt: course.course?.createdAt || "",
+      }}
+    />
+  );
 }
 
 export { BreadcrumbsContent, CourseDetailContent };

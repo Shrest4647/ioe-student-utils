@@ -1,9 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { Suspense, use } from "react";
-import { CollegeDepartmentFilters } from "@/components/colleges/college-department-filters";
-import { CollegeDepartmentList } from "@/components/colleges/college-department-list";
+import { CollegeDepartmentsContent } from "@/components/colleges/college-departments-content";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
-import { useCollegeDepartmentsBySlug } from "@/hooks/use-content";
 
 export const dynamic = "force-dynamic";
 
@@ -59,23 +57,5 @@ function BreadcrumbsContent({ params }: { params: Promise<{ slug: string }> }) {
         { label: "Departments", href: "" },
       ]}
     />
-  );
-}
-
-function CollegeDepartmentsContent({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const resolvedParams = use(params);
-  const { data: college } = useCollegeDepartmentsBySlug(resolvedParams.slug);
-
-  return (
-    <>
-      <CollegeDepartmentFilters collegeId={college?.id} />
-      <div className="min-h-125">
-        <CollegeDepartmentList collegeId={college?.id} />
-      </div>
-    </>
   );
 }

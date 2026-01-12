@@ -6,7 +6,7 @@ import { use } from "react";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { ProgramDetail } from "@/components/programs/program-detail";
 import { useAuth } from "@/hooks/use-auth";
-import { useProgram } from "@/hooks/use-content";
+import { useCollegeDepartmentProgram } from "@/hooks/use-content";
 
 function BreadcrumbsContent({
   params,
@@ -51,7 +51,11 @@ function ProgramDetailContent() {
     programCode: string;
   }>();
   const { user } = useAuth();
-  const { data: program, isLoading } = useProgram(resolvedParams.programCode);
+  const { data: program, isLoading } = useCollegeDepartmentProgram(
+    resolvedParams.slug,
+    resolvedParams.departmentSlug,
+    resolvedParams.programCode,
+  );
 
   if (isLoading) {
     return (
@@ -70,8 +74,20 @@ function ProgramDetailContent() {
       </div>
     );
   }
+  const programData = {
+    id: program.id,
+    name: program.program?.name || "",
+    code: program.code || program.program?.code || "",
+    description: program.description || program.program?.description || "",
+    credits: program.credits || program.program?.credits || "",
+    isActive: program.isActive || program.program?.isActive || false,
+    createdAt: program.program?.createdAt || null,
+    updatedAt: program.program?.updatedAt || null,
+    degreeLevels: program.program?.degreeLevels || null,
+    collegeDepartments: [],
+  };
 
-  return <ProgramDetail program={program} user={user} />;
+  return <ProgramDetail program={programData} user={user} />;
 }
 
 export { BreadcrumbsContent, ProgramDetailContent };

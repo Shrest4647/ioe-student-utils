@@ -298,6 +298,39 @@ export function useProgram(code: string) {
   });
 }
 
+export function useCollegeDepartmentProgram(
+  collegeSlug: string,
+  departmentSlug: string,
+  programCode: string,
+) {
+  const { data: college } = useCollege(collegeSlug);
+  const { data: department } = useDepartment(departmentSlug);
+  const { data: program } = useProgram(programCode);
+  return useQuery({
+    queryKey: [
+      "college-department-program",
+      collegeSlug,
+      departmentSlug,
+      programCode,
+    ],
+    queryFn: async () => {
+      const response = await apiClient.api
+        .colleges({ id: college?.id || "" })
+        .departments({ departmentId: department?.id || "" })
+        .programs({ programId: program?.id || "" })
+        .get();
+
+      if (response.data?.success) {
+        return response.data.data;
+      }
+      throw new Error("Failed to fetch program");
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!college?.id && !!department?.id && !!program?.id,
+  });
+}
+
 export interface CourseResponse {
   success: boolean;
   data: {
@@ -402,6 +435,44 @@ export function useCourse(code: string) {
   });
 }
 
+export function useCollegeDeptProgramCourse(
+  collegeSlug: string,
+  departmentSlug: string,
+  programCode: string,
+  courseCode: string,
+) {
+  const { data: college } = useCollege(collegeSlug);
+  const { data: department } = useCollege(departmentSlug);
+  const { data: program } = useProgram(programCode);
+  const { data: course } = useCourse(courseCode);
+
+  return useQuery({
+    queryKey: [
+      "college-department-program-course",
+      collegeSlug,
+      departmentSlug,
+      programCode,
+      courseCode,
+    ],
+    queryFn: async () => {
+      const response = await apiClient.api
+        .colleges({ id: college?.id || "" })
+        .departments({ departmentId: department?.id || "" })
+        .programs({ programId: program?.id || "" })
+        .courses({ courseId: course?.id || "" })
+        .get();
+
+      if (response?.data?.success) {
+        return response.data.data;
+      }
+      throw new Error("Failed to fetch course");
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!college?.id && !!department?.id && !!program?.id && !!course?.id,
+  });
+}
+
 export function useProgramRatings(programId: string, categoryId?: string) {
   return useQuery({
     queryKey: ["program-ratings", programId, categoryId],
@@ -487,6 +558,31 @@ export function useCollegeDepartmentsBySlug(slug: string) {
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useCollegeDepartment(
+  collegeSlug: string,
+  departmentSlug: string,
+) {
+  const { data: college } = useCollege(collegeSlug);
+  const { data: department } = useDepartment(departmentSlug);
+  return useQuery({
+    queryKey: ["department", college?.id, department?.id],
+    queryFn: async () => {
+      const response = await apiClient.api
+        .colleges({ id: college?.id || "" })
+        .departments({ departmentId: department?.id || "" })
+        .get();
+
+      if (response.data?.success) {
+        return response.data.data;
+      }
+      throw new Error("Failed to fetch department");
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!college?.id && !!department?.id,
   });
 }
 
