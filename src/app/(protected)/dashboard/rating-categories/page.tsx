@@ -120,7 +120,7 @@ export default function RatingCategoriesDashboardPage() {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" asChild>
                           <Link
-                            href={`/dashboard/rating-categories/${category.id}`}
+                            href={`/dashboard/rating-categories/${category.slug}`}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Link>

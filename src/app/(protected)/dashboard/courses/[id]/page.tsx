@@ -30,17 +30,17 @@ const courseSchema = z.object({
 });
 
 export default function CourseEditPage() {
-  const { id } = useParams();
+  const { id: code } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const isNew = id === "new";
+  const isNew = code === "new";
 
   const courseQuery = useQuery({
-    queryKey: ["admin", "course", id],
+    queryKey: ["admin", "course", code],
     queryFn: async () => {
       if (isNew) return null;
       const { data } = await apiClient.api.courses
-        .code({ code: id as string })
+        .code({ code: code as string })
         .get();
       return data?.success ? data.data : null;
     },
@@ -54,7 +54,7 @@ export default function CourseEditPage() {
         return data;
       } else {
         const { data } = await apiClient.api.courses
-          .admin({ id: courseQuery.data?.id || (id as string) })
+          .admin({ id: courseQuery.data?.id || (code as string) })
           .patch(values);
         return data;
       }
@@ -62,7 +62,7 @@ export default function CourseEditPage() {
     onSuccess: (data: any) => {
       toast.success(isNew ? "Course created" : "Course updated");
       queryClient.invalidateQueries({ queryKey: ["admin", "courses"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "course", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "course", code] });
       if (isNew && data?.success) {
         router.push(`/dashboard/courses/${data.data.id}`);
       } else {

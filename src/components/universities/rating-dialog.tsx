@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -44,7 +43,6 @@ interface RatingDialogProps {
   onSubmit: (data: {
     categoryId: string;
     rating: string;
-    title: string;
     review: string;
   }) => Promise<void>;
   isSubmitting?: boolean;
@@ -62,7 +60,6 @@ export function RatingDialog({
     defaultValues: {
       rating: "",
       categoryId: categories[0]?.id || "",
-      title: "",
       review: "",
     },
     onSubmit: async ({ value }) => {
@@ -167,35 +164,6 @@ export function RatingDialog({
                 </div>
               );
             }}
-          </form.Field>
-
-          <form.Field
-            name="title"
-            validators={{
-              onChange: ({ value }) =>
-                value.length > 100
-                  ? "Title must be less than 100 characters"
-                  : undefined,
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Title (optional)</Label>
-                <Input
-                  id={field.name}
-                  placeholder="Summarize your review"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  disabled={isSubmitting}
-                  maxLength={100}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-destructive text-sm">
-                    {String(field.state.meta.errors[0])}
-                  </p>
-                )}
-              </div>
-            )}
           </form.Field>
 
           <form.Field

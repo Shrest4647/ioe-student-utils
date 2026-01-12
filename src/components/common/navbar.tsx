@@ -107,6 +107,16 @@ export function Navbar() {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    <Link href="/scholarships">
+                      <span className="text-sm">Scholarships</span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
 
                 {isAuthenticated && (
                   <NavigationMenuItem>
@@ -147,6 +157,12 @@ export function Navbar() {
                         </ListItem>
                         <ListItem href="/dashboard/resources" title="Resources">
                           Manage educational resources.
+                        </ListItem>
+                        <ListItem
+                          href="/dashboard/rating-categories"
+                          title="Rating Categories"
+                        >
+                          Manage rating categories.
                         </ListItem>
                         <ListItem href="/dashboard/settings" title="Settings">
                           Configure your account settings.
@@ -276,6 +292,12 @@ export function Navbar() {
                     icon={<FileText className="h-4 w-4" />}
                   >
                     Resources
+                  </MobileLink>
+                  <MobileLink
+                    href="/dashboard/rating-categories"
+                    icon={<FileText className="h-4 w-4" />}
+                  >
+                    Rating Categories
                   </MobileLink>
                   <MobileLink
                     href="/dashboard/settings"

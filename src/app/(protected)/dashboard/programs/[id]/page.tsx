@@ -46,17 +46,17 @@ const programSchema = z.object({
 });
 
 export default function ProgramEditPage() {
-  const { id } = useParams();
+  const { id: code } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const isNew = id === "new";
+  const isNew = code === "new";
 
   const programQuery = useQuery({
-    queryKey: ["admin", "program", id],
+    queryKey: ["admin", "program", code],
     queryFn: async () => {
       if (isNew) return null;
       const { data } = await apiClient.api.programs
-        .code({ code: id as string })
+        .code({ code: code as string })
         .get();
       return data?.success ? data.data : null;
     },
@@ -70,7 +70,7 @@ export default function ProgramEditPage() {
         return data;
       } else {
         const { data } = await apiClient.api.programs
-          .admin({ id: programQuery.data?.id || (id as string) })
+          .admin({ id: programQuery.data?.id || (code as string) })
           .patch(values);
         return data;
       }
@@ -78,7 +78,7 @@ export default function ProgramEditPage() {
     onSuccess: (data: any) => {
       toast.success(isNew ? "Program created" : "Program updated");
       queryClient.invalidateQueries({ queryKey: ["admin", "programs"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "program", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "program", code] });
       if (isNew && data?.success) {
         router.push(`/dashboard/programs/${data.data.id}`);
       } else {

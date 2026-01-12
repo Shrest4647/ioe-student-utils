@@ -133,7 +133,7 @@ export default function CoursesDashboardPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" asChild>
-                          <Link href={`/dashboard/courses/${course.id}`}>
+                          <Link href={`/dashboard/courses/${course.code}`}>
                             <Edit2 className="h-4 w-4" />
                           </Link>
                         </Button>

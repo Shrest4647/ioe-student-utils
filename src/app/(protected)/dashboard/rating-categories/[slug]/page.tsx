@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export default function RatingCategoryEditPage() {
 
   // Fetch all categories and find the one we need when editing
   const { data: category, isLoading } = useQuery({
-    queryKey: ["admin", "rating-categories"],
+    queryKey: ["admin", "rating-categories", slug],
     queryFn: async () => {
       const { data } = await apiClient.api.ratings.categories
         .slug({ slug })
@@ -92,7 +93,7 @@ export default function RatingCategoryEditPage() {
     defaultValues: {
       name: category?.name || "",
       description: category?.description || "",
-      sortOrder: category?.sortOrder || "",
+      sortOrder: category?.sortOrder || "1",
       isActive: category?.isActive ?? true,
     } as z.infer<typeof categorySchema>,
     validators: {
@@ -102,6 +103,17 @@ export default function RatingCategoryEditPage() {
       saveMutation.mutate(value);
     },
   });
+
+  useEffect(() => {
+    if (category) {
+      form.reset({
+        name: category.name || "",
+        description: category.description || "",
+        sortOrder: category.sortOrder || "1",
+        isActive: category.isActive ?? true,
+      });
+    }
+  }, [category, form]);
 
   if (!isNew && (isLoading || !category)) {
     return (

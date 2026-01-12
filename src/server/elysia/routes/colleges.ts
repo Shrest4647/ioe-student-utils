@@ -266,7 +266,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           where: {
             AND: [
               {
-                collegeDepartmentId: departmentId,
+                collegeDepartmentId: collegeDepartment.id,
               },
               {
                 programId: programId,
@@ -319,7 +319,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           where: {
             AND: [
               {
-                collegeDepartmentId: departmentId,
+                collegeDepartmentId: collegeDepartment.id,
               },
               {
                 programId: programId,
@@ -336,7 +336,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
       const collegeCourses =
         await db.query.collegeDepartmentProgramToCourses.findMany({
           where: {
-            programId: programId,
+            programId: collegeProgram.id,
           },
           with: {
             course: true,
@@ -381,7 +381,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           where: {
             AND: [
               {
-                collegeDepartmentId: departmentId,
+                collegeDepartmentId: collegeDepartment.id,
               },
               {
                 programId: programId,
@@ -403,7 +403,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
                 courseId: courseId,
               },
               {
-                programId: programId,
+                programId: collegeProgram.id,
               },
             ],
           },
@@ -815,7 +815,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
 
           if (newCourseIds.size > 0) {
             await db.insert(collegeDepartmentProgramToCourses).values(
-              Array.from(courseIds).map((courseId) => ({
+              Array.from(newCourseIds).map((courseId) => ({
                 id: nanoid(),
                 programId: collegeDepartmentProgramId,
                 courseId,
