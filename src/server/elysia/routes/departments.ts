@@ -26,57 +26,72 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      const whereConditions: Record<string, unknown> = search
-        ? { name: { ilike: `%${search}%` } }
-        : {};
-
-      let departmentIdsToFilter: string[] | undefined;
+      let results: any[] = [];
+      let realTotal = 0;
 
       if (collegeId) {
-        const collegeDeptIds = await db
-          .select({ departmentId: collegeDepartments.departmentId })
+        const collegeDeptResults = await db
+          .select({
+            id: collegeDepartments.id,
+            name: departments.name,
+            slug: departments.slug,
+            description: departments.description,
+            websiteUrl: departments.websiteUrl,
+            isActive: departments.isActive,
+            createdAt: departments.createdAt,
+            updatedAt: departments.updatedAt,
+          })
           .from(collegeDepartments)
-          .where(eq(collegeDepartments.collegeId, collegeId));
+          .innerJoin(
+            departments,
+            eq(collegeDepartments.departmentId, departments.id),
+          )
+          .where(
+            search
+              ? sql`${eq(collegeDepartments.collegeId, collegeId)} AND ${ilike(departments.name, `%${search}%`)}`
+              : eq(collegeDepartments.collegeId, collegeId),
+          )
+          .limit(l)
+          .offset(offset)
+          .orderBy(departments.name);
 
-        departmentIdsToFilter = collegeDeptIds.map((cd) => cd.departmentId);
+        results = collegeDeptResults;
 
-        if (departmentIdsToFilter.length === 0) {
-          return {
-            success: true,
-            data: [],
-            metadata: {
-              totalCount: 0,
-              totalPages: 0,
-              currentPage: p,
-              limit: l,
-              hasMore: false,
-            },
-          };
-        }
+        const totalResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(collegeDepartments)
+          .innerJoin(
+            departments,
+            eq(collegeDepartments.departmentId, departments.id),
+          )
+          .where(
+            search
+              ? sql`${eq(collegeDepartments.collegeId, collegeId)} AND ${ilike(departments.name, `%${search}%`)}`
+              : eq(collegeDepartments.collegeId, collegeId),
+          );
+        realTotal = Number(totalResult[0]?.count || 0);
+      } else {
+        const whereConditions: any = search
+          ? { name: { ilike: `%${search}%` } }
+          : {};
+
+        results = (await db.query.departments.findMany({
+          where:
+            Object.keys(whereConditions).length > 0
+              ? whereConditions
+              : undefined,
+          limit: l,
+          offset,
+          orderBy: { name: "asc" },
+        })) as any[];
+
+        const totalResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(departments)
+          .where(search ? ilike(departments.name, `%${search}%`) : undefined);
+        realTotal = Number(totalResult[0]?.count || 0);
       }
 
-      if (departmentIdsToFilter) {
-        (whereConditions as { id: unknown }).id = { in: departmentIdsToFilter };
-      }
-
-      const results = await db.query.departments.findMany({
-        where:
-          Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-        limit: l,
-        offset,
-        orderBy: { createdAt: "desc" },
-      });
-
-      const dbWhereCondition = departmentIdsToFilter
-        ? eq(departments.id, departmentIdsToFilter[0])
-        : ilike(departments.name, `%${search || ""}%`);
-
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(departments)
-        .where(dbWhereCondition);
-
-      const realTotal = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(realTotal / l);
 
       return {

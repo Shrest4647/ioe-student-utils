@@ -395,92 +395,84 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, programId, collegeId, departmentId, page, limit } = query;
+      const { search, programId, page, limit } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      const whereCondition: Record<string, unknown> = {};
-      if (search) {
-        whereCondition.name = { ilike: `%${search}%` };
-      }
-
-      let courseIdsToFilter: string[] | undefined;
+      let results: any[] = [];
+      let realTotal = 0;
 
       if (programId) {
-        const programCourseIds = await db
-          .select({ courseId: collegeDepartmentProgramToCourses.courseId })
+        const programCourseResults = await db
+          .select({
+            id: collegeDepartmentProgramToCourses.id,
+            name: academicCourses.name,
+            code: academicCourses.code,
+            description: academicCourses.description,
+            credits: academicCourses.credits,
+            isActive: academicCourses.isActive,
+            createdAt: academicCourses.createdAt,
+            updatedAt: academicCourses.updatedAt,
+          })
           .from(collegeDepartmentProgramToCourses)
-          .where(eq(collegeDepartmentProgramToCourses.programId, programId));
-        courseIdsToFilter = programCourseIds.map((pc) => pc.courseId);
-      } else if (collegeId && departmentId) {
-        const collegeDeptIds = await db
-          .select({ id: collegeDepartments.id })
-          .from(collegeDepartments)
+          .innerJoin(
+            academicCourses,
+            eq(collegeDepartmentProgramToCourses.courseId, academicCourses.id),
+          )
           .where(
-            and(
-              eq(collegeDepartments.collegeId, collegeId),
-              eq(collegeDepartments.departmentId, departmentId),
-            ),
+            search
+              ? and(
+                  eq(collegeDepartmentProgramToCourses.programId, programId),
+                  ilike(academicCourses.name, `%${search}%`),
+                )
+              : eq(collegeDepartmentProgramToCourses.programId, programId),
+          )
+          .limit(l)
+          .offset(offset)
+          .orderBy(academicCourses.name);
+
+        results = programCourseResults;
+
+        const totalResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(collegeDepartmentProgramToCourses)
+          .innerJoin(
+            academicCourses,
+            eq(collegeDepartmentProgramToCourses.courseId, academicCourses.id),
+          )
+          .where(
+            search
+              ? and(
+                  eq(collegeDepartmentProgramToCourses.programId, programId),
+                  ilike(academicCourses.name, `%${search}%`),
+                )
+              : eq(collegeDepartmentProgramToCourses.programId, programId),
           );
+        realTotal = Number(totalResult[0]?.count || 0);
+      } else {
+        const whereCondition: any = search
+          ? { name: { ilike: `%${search}%` } }
+          : {};
 
-        if (collegeDeptIds.length > 0) {
-          const collegeDeptProgramIds = await db
-            .select({ id: collegeDepartmentsToPrograms.id })
-            .from(collegeDepartmentsToPrograms)
-            .where(
-              eq(
-                collegeDepartmentsToPrograms.collegeDepartmentId,
-                collegeDeptIds[0].id,
-              ),
-            );
+        results = (await db.query.academicCourses.findMany({
+          where:
+            Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+          limit: l,
+          offset,
+          orderBy: { name: "asc" },
+        })) as any[];
 
-          if (collegeDeptProgramIds.length > 0) {
-            const programCourseIds = await db
-              .select({ courseId: collegeDepartmentProgramToCourses.courseId })
-              .from(collegeDepartmentProgramToCourses)
-              .where(
-                eq(
-                  collegeDepartmentProgramToCourses.programId,
-                  collegeDeptProgramIds[0].id,
-                ),
-              );
-            courseIdsToFilter = programCourseIds.map((pc) => pc.courseId);
-          }
-        }
+        const totalResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(academicCourses)
+          .where(
+            search ? ilike(academicCourses.name, `%${search}%`) : undefined,
+          );
+        realTotal = Number(totalResult[0]?.count || 0);
       }
 
-      if (courseIdsToFilter && courseIdsToFilter.length > 0) {
-        (whereCondition as { id: unknown }).id = { in: courseIdsToFilter };
-      }
-
-      const results = await db.query.academicCourses.findMany({
-        where:
-          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
-        limit: l,
-        offset,
-        orderBy: { createdAt: "desc" },
-      });
-
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(academicCourses)
-        .where(
-          Object.keys(whereCondition).length > 0
-            ? (whereCondition as { id: unknown })
-              ? eq(
-                  academicCourses.id,
-                  (whereCondition.id as { in: string[] }).in[0] as string,
-                )
-              : ilike(
-                  academicCourses.name,
-                  (whereCondition.name as { ilike: string }).ilike,
-                )
-            : undefined,
-        );
-
-      const realTotal = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(realTotal / l);
 
       return {

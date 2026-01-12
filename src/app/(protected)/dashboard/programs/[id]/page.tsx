@@ -80,7 +80,7 @@ export default function ProgramEditPage() {
       queryClient.invalidateQueries({ queryKey: ["admin", "programs"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "program", code] });
       if (isNew && data?.success) {
-        router.push(`/dashboard/programs/${data.data.id}`);
+        router.push(`/dashboard/programs/${data.data.code}`);
       } else {
         router.push("/dashboard/programs");
       }

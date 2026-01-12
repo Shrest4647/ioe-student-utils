@@ -64,7 +64,7 @@ export default function CourseEditPage() {
       queryClient.invalidateQueries({ queryKey: ["admin", "courses"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "course", code] });
       if (isNew && data?.success) {
-        router.push(`/dashboard/courses/${data.data.id}`);
+        router.push(`/dashboard/courses/${data.data.code}`);
       } else {
         router.push("/dashboard/courses");
       }
