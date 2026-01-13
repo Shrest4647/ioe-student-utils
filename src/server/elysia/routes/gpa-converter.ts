@@ -216,9 +216,11 @@ export const gpaConverterRoutes = new Elysia({ prefix: "/gpa-converter" })
       } = body;
 
       // Validate standard exists
-      const standard = await db.query.gpaConversionStandards.findFirst({
-        where: eq(gpaConversionStandards.id, standardId),
-      });
+      const [standard] = await db
+        .select()
+        .from(gpaConversionStandards)
+        .where(eq(gpaConversionStandards.id, standardId))
+        .limit(1);
 
       if (!standard) {
         return {

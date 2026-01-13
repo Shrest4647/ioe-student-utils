@@ -10,7 +10,7 @@ export interface TemplateContext {
   current_year?: string;
 
   // All other variables from the template
-  [key: string]: string | undefined;
+  [key: string]: string | undefined | { name?: string; email?: string };
 }
 
 /**
