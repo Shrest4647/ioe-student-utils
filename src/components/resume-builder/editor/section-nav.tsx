@@ -81,4 +81,22 @@ export const DEFAULT_SECTIONS: Section[] = [
     isRequired: false,
   },
   { id: "skills", label: "Skills", isCompleted: false, isRequired: false },
+  {
+    id: "projects",
+    label: "Projects",
+    isCompleted: false,
+    isRequired: false,
+  },
+  {
+    id: "positions",
+    label: "Positions of Responsibility",
+    isCompleted: false,
+    isRequired: false,
+  },
+  {
+    id: "certifications",
+    label: "Awards & Certifications",
+    isCompleted: false,
+    isRequired: false,
+  },
 ];

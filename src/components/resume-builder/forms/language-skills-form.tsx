@@ -29,6 +29,8 @@ interface LanguageSkill {
 
 interface LanguageSkillsFormProps {
   onSave?: () => void;
+  initialData?: LanguageSkill[];
+  onDataChange?: () => void;
 }
 
 const CEFR_LEVELS = [
@@ -54,9 +56,15 @@ const COMMON_LANGUAGES = [
   "Other",
 ];
 
-export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
-  const [languageSkills, setLanguageSkills] = useState<LanguageSkill[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function LanguageSkillsForm({
+  onSave,
+  initialData,
+  onDataChange,
+}: LanguageSkillsFormProps) {
+  const [languageSkills, setLanguageSkills] = useState<LanguageSkill[]>(
+    initialData || [],
+  );
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -87,6 +95,7 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
           } else if (data?.success) {
             toast.success("Language skill updated successfully!");
             fetchLanguageSkills();
+            onDataChange?.();
             resetForm();
           }
         } else {
@@ -103,6 +112,7 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
           } else if (data?.success) {
             toast.success("Language skill added successfully!");
             fetchLanguageSkills();
+            onDataChange?.();
             resetForm();
           }
         }
@@ -130,8 +140,10 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
   }, []);
 
   useEffect(() => {
-    fetchLanguageSkills();
-  }, [fetchLanguageSkills]);
+    if (!initialData) {
+      fetchLanguageSkills();
+    }
+  }, [fetchLanguageSkills, initialData]);
 
   const resetForm = () => {
     form.reset();
@@ -162,6 +174,7 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
       } else if (data?.success) {
         toast.success("Language skill deleted successfully!");
         fetchLanguageSkills();
+        onDataChange?.();
         if (editingId === id) {
           resetForm();
         }
@@ -355,7 +368,7 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
               )}
             </form.Field>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <form.Field name="listening">
                 {(field) => (
                   <div className="space-y-2">

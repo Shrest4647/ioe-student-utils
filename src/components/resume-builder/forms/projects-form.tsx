@@ -10,105 +10,85 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/eden";
 
-interface WorkExperience {
+interface Project {
   id: string;
-  jobTitle: string | null;
-  employer: string | null;
+  name: string | null;
+  role: string | null;
   startDate: string | null;
   endDate: string | null;
-  city: string | null;
-  country: string | null;
   description: string | null;
+  referenceLink: string | null;
 }
 
-interface WorkExperienceFormProps {
+interface ProjectsFormProps {
   onSave?: () => void;
+  initialData?: Project[];
   onDataChange?: () => void;
 }
 
-const COUNTRIES = [
-  "Nepal",
-  "India",
-  "United States",
-  "United Kingdom",
-  "Canada",
-  "Australia",
-  "Germany",
-  "Other",
-];
-
-export function WorkExperienceForm({
+export function ProjectsForm({
   onSave,
+  initialData,
   onDataChange,
-}: WorkExperienceFormProps) {
-  const [experiences, setExperiences] = useState<WorkExperience[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+}: ProjectsFormProps) {
+  const [projects, setProjects] = useState<Project[]>(initialData || []);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrent, setIsCurrent] = useState(false);
 
   const form = useForm({
     defaultValues: {
-      jobTitle: "",
-      employer: "",
+      name: "",
+      role: "",
       startDate: "",
       endDate: "",
-      city: "",
-      country: "",
       description: "",
+      referenceLink: "",
     },
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
         if (editingId) {
-          // Update existing experience
-          const { data, error } = await apiClient.api["work-experiences"]({
-            id: editingId,
-          }).patch({
-            jobTitle: value.jobTitle || undefined,
-            employer: value.employer || undefined,
-            startDate: value.startDate || undefined,
-            endDate: isCurrent ? undefined : value.endDate || undefined,
-            city: value.city || undefined,
-            country: value.country || undefined,
-            description: value.description || undefined,
-          });
+          const { data, error } = await apiClient.api
+            .projects({
+              id: editingId,
+            })
+            .patch({
+              name: value.name || undefined,
+              role: value.role || undefined,
+              startDate: value.startDate || undefined,
+              endDate: isCurrent ? undefined : value.endDate || undefined,
+              description: value.description || undefined,
+              referenceLink: value.referenceLink || undefined,
+            });
 
           if (error) {
-            toast.error("Failed to update work experience.");
+            toast.error("Failed to update project.");
           } else if (data?.success) {
-            toast.success("Work experience updated successfully!");
-            fetchExperiences();
+            toast.success("Project updated successfully!");
+            fetchProjects();
             onDataChange?.();
             resetForm();
           }
         } else {
-          // Create new experience
-          const { data, error } = await apiClient.api["work-experiences"].post({
-            jobTitle: value.jobTitle || undefined,
-            employer: value.employer || undefined,
+          const { data, error } = await apiClient.api.projects.post({
+            name: value.name || undefined,
+            role: value.role || undefined,
             startDate: value.startDate || undefined,
             endDate: isCurrent ? undefined : value.endDate || undefined,
-            city: value.city || undefined,
-            country: value.country || undefined,
             description: value.description || undefined,
+            referenceLink: value.referenceLink || undefined,
           });
 
           if (error) {
-            toast.error("Failed to add work experience.");
+            toast.error("Failed to add project.");
           } else if (data?.success) {
-            toast.success("Work experience added successfully!");
-            fetchExperiences();
+            toast.success("Project added successfully!");
+            fetchProjects();
             onDataChange?.();
             resetForm();
           }
@@ -122,12 +102,12 @@ export function WorkExperienceForm({
     },
   });
 
-  const fetchExperiences = useCallback(async () => {
+  const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data } = await apiClient.api["work-experiences"].get();
+      const { data } = await apiClient.api.projects.get();
       if (data?.success) {
-        setExperiences(data.data as WorkExperience[]);
+        setProjects(data.data as Project[]);
       }
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -137,8 +117,10 @@ export function WorkExperienceForm({
   }, []);
 
   useEffect(() => {
-    fetchExperiences();
-  }, [fetchExperiences]);
+    if (!initialData) {
+      fetchProjects();
+    }
+  }, [fetchProjects, initialData]);
 
   const resetForm = () => {
     form.reset();
@@ -146,33 +128,34 @@ export function WorkExperienceForm({
     setIsCurrent(false);
   };
 
-  const handleEdit = (experience: WorkExperience) => {
-    setEditingId(experience.id);
-    form.setFieldValue("jobTitle", experience.jobTitle ?? "");
-    form.setFieldValue("employer", experience.employer ?? "");
-    form.setFieldValue("startDate", experience.startDate ?? "");
-    form.setFieldValue("endDate", experience.endDate ?? "");
-    form.setFieldValue("city", experience.city ?? "");
-    form.setFieldValue("country", experience.country ?? "");
-    form.setFieldValue("description", experience.description ?? "");
-    setIsCurrent(!experience.endDate);
+  const handleEdit = (project: Project) => {
+    setEditingId(project.id);
+    form.setFieldValue("name", project.name ?? "");
+    form.setFieldValue("role", project.role ?? "");
+    form.setFieldValue("startDate", project.startDate ?? "");
+    form.setFieldValue("endDate", project.endDate ?? "");
+    form.setFieldValue("description", project.description ?? "");
+    form.setFieldValue("referenceLink", project.referenceLink ?? "");
+    setIsCurrent(!project.endDate);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this work experience?")) {
+    if (!confirm("Are you sure you want to delete this project?")) {
       return;
     }
 
     try {
-      const { data, error } = await apiClient.api["work-experiences"]({
-        id,
-      }).delete();
+      const { data, error } = await apiClient.api
+        .projects({
+          id,
+        })
+        .delete();
 
       if (error) {
-        toast.error("Failed to delete work experience.");
+        toast.error("Failed to delete project.");
       } else if (data?.success) {
-        toast.success("Work experience deleted successfully!");
-        fetchExperiences();
+        toast.success("Project deleted successfully!");
+        fetchProjects();
         onDataChange?.();
         if (editingId === id) {
           resetForm();
@@ -196,46 +179,41 @@ export function WorkExperienceForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Work Experience</CardTitle>
+        <CardTitle>Projects</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Existing Experiences List */}
-        {!isLoading && experiences.length > 0 && (
+        {!isLoading && projects.length > 0 && (
           <div className="space-y-3">
-            <Label>Your Work Experience</Label>
-            {experiences.map((exp) => (
+            <Label>Your Projects</Label>
+            {projects.map((proj) => (
               <div
-                key={exp.id}
+                key={proj.id}
                 className="flex items-start justify-between rounded-lg border bg-muted/30 p-4"
               >
                 <div className="flex-1">
                   <div className="mb-2 flex items-center gap-2">
-                    <h4 className="font-semibold">
-                      {exp.jobTitle || "Position"}
-                    </h4>
-                    {exp.employer && (
-                      <>
-                        <span className="text-muted-foreground">@</span>
-                        <span className="font-medium text-sm">
-                          {exp.employer}
-                        </span>
-                      </>
-                    )}
+                    <h4 className="font-semibold">{proj.name || "Project"}</h4>
+                    {proj.role && <Badge variant="outline">{proj.role}</Badge>}
                   </div>
                   <div className="mb-2 flex flex-wrap gap-2">
-                    <Badge variant="outline">
-                      {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+                    <Badge variant="secondary">
+                      {formatDate(proj.startDate)} - {formatDate(proj.endDate)}
                     </Badge>
-                    {(exp.city || exp.country) && (
-                      <Badge variant="secondary">
-                        {[exp.city, exp.country].filter(Boolean).join(", ")}
-                      </Badge>
-                    )}
                   </div>
-                  {exp.description && (
+                  {proj.description && (
                     <p className="text-muted-foreground text-sm">
-                      {exp.description}
+                      {proj.description}
                     </p>
+                  )}
+                  {proj.referenceLink && (
+                    <a
+                      href={proj.referenceLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 block text-blue-600 text-sm hover:underline"
+                    >
+                      View Project
+                    </a>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -244,7 +222,7 @@ export function WorkExperienceForm({
                     variant="outline"
                     size="icon"
                     className="border-blue-500/20 bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white"
-                    onClick={() => handleEdit(exp)}
+                    onClick={() => handleEdit(proj)}
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -253,7 +231,7 @@ export function WorkExperienceForm({
                     variant="outline"
                     size="icon"
                     className="border-red-500/20 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white"
-                    onClick={() => handleDelete(exp.id)}
+                    onClick={() => handleDelete(proj.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -263,12 +241,9 @@ export function WorkExperienceForm({
           </div>
         )}
 
-        {/* Add/Edit Form */}
         <div className="rounded-lg border p-4">
           <div className="mb-4 flex items-center justify-between">
-            <Label>
-              {editingId ? "Edit Work Experience" : "Add Work Experience"}
-            </Label>
+            <Label>{editingId ? "Edit Project" : "Add Project"}</Label>
             {editingId && (
               <Button
                 type="button"
@@ -290,58 +265,50 @@ export function WorkExperienceForm({
             }}
             className="space-y-4"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <form.Field name="jobTitle">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="jobTitle">
-                      Job Title <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="jobTitle"
-                      placeholder="Software Engineer"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      required
-                    />
-                  </div>
-                )}
-              </form.Field>
+            <form.Field name="name">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    Project Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g. Portfolio Website"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    required
+                  />
+                </div>
+              )}
+            </form.Field>
 
-              <form.Field name="employer">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="employer">
-                      Employer <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="employer"
-                      placeholder="Company Name"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      required
-                    />
-                  </div>
-                )}
-              </form.Field>
-            </div>
+            <form.Field name="role">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Input
+                    id="role"
+                    placeholder="e.g. Lead Developer"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                </div>
+              )}
+            </form.Field>
 
             <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-2">
               <form.Field name="startDate">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">
-                      Start Date <span className="text-destructive">*</span>
-                    </Label>
+                    <Label htmlFor="startDate">Start Date</Label>
                     <Input
                       id="startDate"
                       type="month"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}
-                      required
                     />
                   </div>
                 )}
@@ -380,61 +347,34 @@ export function WorkExperienceForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <form.Field name="city">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="Kathmandu"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                    />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field name="country">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                    >
-                      <SelectTrigger id="country">
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </form.Field>
-            </div>
-
             <form.Field name="description">
               {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your responsibilities, achievements, and skills used..."
+                    placeholder="Describe the project, technologies used, and your contribution..."
                     className="min-h-32 resize-none"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
                   />
-                  <p className="text-muted-foreground text-xs">
-                    Focus on achievements and quantifiable results when possible
-                  </p>
+                </div>
+              )}
+            </form.Field>
+
+            <form.Field name="referenceLink">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="referenceLink">Project Link (Optional)</Label>
+                  <Input
+                    id="referenceLink"
+                    type="url"
+                    placeholder="https://github.com/username/project"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
                 </div>
               )}
             </form.Field>
@@ -459,11 +399,11 @@ export function WorkExperienceForm({
                         Saving...
                       </>
                     ) : editingId ? (
-                      "Update Experience"
+                      "Update Project"
                     ) : (
                       <>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Experience
+                        Add Project
                       </>
                     )}
                   </Button>
@@ -480,7 +420,7 @@ export function WorkExperienceForm({
                 type="button"
                 variant="outline"
                 onClick={onSave}
-                disabled={!canSubmit || experiences.length === 0}
+                disabled={!canSubmit && projects.length === 0}
               >
                 Save & Continue
               </Button>

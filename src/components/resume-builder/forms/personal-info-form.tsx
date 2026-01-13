@@ -34,13 +34,16 @@ interface PersonalInfoFormProps {
     web?: string;
   };
   onSave?: () => void;
+  onDataChange?: () => void;
 }
 
 export function PersonalInfoForm({
   initialData,
   onSave,
+  onDataChange,
 }: PersonalInfoFormProps) {
   const [_isSubmitting, setIsSubmitting] = useState(false);
+
   const [photoUrl, setPhotoUrl] = useState(initialData?.photoUrl ?? "");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -65,7 +68,7 @@ export function PersonalInfoForm({
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
-        const { data, error } = await apiClient.api.profiles.patch({
+        const payload = {
           firstName: value.firstName,
           lastName: value.lastName,
           email: value.email || undefined,
@@ -84,13 +87,18 @@ export function PersonalInfoForm({
           linkedIn: value.linkedIn || undefined,
           github: value.github || undefined,
           web: value.web || undefined,
-        });
+        };
+
+        const { data, error } = await (initialData
+          ? apiClient.api.profiles.patch(payload)
+          : apiClient.api.profiles.post(payload));
 
         if (error) {
           toast.error("Failed to save profile information.");
         } else if (data?.success) {
           toast.success("Profile information saved successfully!");
           onSave?.();
+          onDataChange?.();
         }
       } catch (err) {
         console.error("Submission Error:", err);
@@ -151,7 +159,7 @@ export function PersonalInfoForm({
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to upload photo: ${errorText || response.statusText}`
+          `Failed to upload photo: ${errorText || response.statusText}`,
         );
       }
 

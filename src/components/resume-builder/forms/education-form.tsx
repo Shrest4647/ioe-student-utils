@@ -33,6 +33,7 @@ interface EducationRecord {
 
 interface EducationFormProps {
   onSave?: () => void;
+  onDataChange?: () => void;
 }
 
 const DEGREE_LEVELS = [
@@ -46,7 +47,7 @@ const DEGREE_LEVELS = [
   "Other",
 ];
 
-export function EducationForm({ onSave }: EducationFormProps) {
+export function EducationForm({ onSave, onDataChange }: EducationFormProps) {
   const [educations, setEducations] = useState<EducationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [_isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +88,7 @@ export function EducationForm({ onSave }: EducationFormProps) {
           } else if (data?.success) {
             toast.success("Education record updated successfully!");
             fetchEducations();
+            onDataChange?.();
             resetForm();
           }
         } else {
@@ -106,6 +108,7 @@ export function EducationForm({ onSave }: EducationFormProps) {
           } else if (data?.success) {
             toast.success("Education record added successfully!");
             fetchEducations();
+            onDataChange?.();
             resetForm();
           }
         }
@@ -166,6 +169,7 @@ export function EducationForm({ onSave }: EducationFormProps) {
       } else if (data?.success) {
         toast.success("Education record deleted successfully!");
         fetchEducations();
+        onDataChange?.();
         if (editingId === id) {
           resetForm();
         }
@@ -343,7 +347,7 @@ export function EducationForm({ onSave }: EducationFormProps) {
               </form.Field>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <form.Field name="startDate">
                 {(field) => (
                   <div className="space-y-2">

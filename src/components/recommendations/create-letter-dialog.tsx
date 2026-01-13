@@ -75,7 +75,7 @@ export function CreateLetterDialog({
       const { data, error } = await apiClient.api.recommendations.templates.get(
         {
           query: Object.fromEntries(params),
-        }
+        },
       );
 
       if (error) {
@@ -100,7 +100,7 @@ export function CreateLetterDialog({
 
     // Navigate to the wizard page with the selected template
     router.push(
-      `/dashboard/recommendations/new?templateId=${selectedTemplate}`
+      `/dashboard/recommendations/new?templateId=${selectedTemplate}`,
     );
     onOpenChange(false);
   };
@@ -108,7 +108,7 @@ export function CreateLetterDialog({
   const filteredTemplates = (templates as Template[]).filter(
     (template) =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      template.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const getCategoryIcon = (category: string) => {

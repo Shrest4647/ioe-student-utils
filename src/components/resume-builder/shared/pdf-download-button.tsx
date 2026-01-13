@@ -13,6 +13,7 @@ interface PDFDownloadButtonProps {
   disabled?: boolean;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
+  template?: string;
 }
 
 export function PDFDownloadButton({
@@ -21,6 +22,7 @@ export function PDFDownloadButton({
   disabled = false,
   variant = "default",
   size = "default",
+  template = "classic",
 }: PDFDownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,7 +39,7 @@ export function PDFDownloadButton({
       const filename = `${resumeName}-${date}.pdf`;
 
       // Create PDF document
-      const doc = <ResumePDF data={resumeData} />;
+      const doc = <ResumePDF data={resumeData} template={template} />;
 
       // Generate PDF blob
       const asPdf = pdf(doc);

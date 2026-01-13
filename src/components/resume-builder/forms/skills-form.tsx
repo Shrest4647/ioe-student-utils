@@ -26,6 +26,7 @@ interface SkillRecord {
 
 interface SkillsFormProps {
   onSave?: () => void;
+  onDataChange?: () => void;
 }
 
 const SKILL_CATEGORIES = [
@@ -49,7 +50,7 @@ const PROFICIENCY_LEVELS = [
   { value: "expert", label: "Expert" },
 ];
 
-export function SkillsForm({ onSave }: SkillsFormProps) {
+export function SkillsForm({ onSave, onDataChange }: SkillsFormProps) {
   const [userSkills, setUserSkills] = useState<SkillRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [_isSubmitting, setIsSubmitting] = useState(false);
@@ -91,6 +92,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
           } else if (data?.success) {
             toast.success("Skills updated successfully!");
             fetchUserSkills();
+            onDataChange?.();
             resetForm();
           }
         } else {
@@ -103,6 +105,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
           } else if (data?.success) {
             toast.success("Skills added successfully!");
             fetchUserSkills();
+            onDataChange?.();
             resetForm();
           }
         }
@@ -160,6 +163,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
       } else if (data?.success) {
         toast.success("Skills deleted successfully!");
         fetchUserSkills();
+        onDataChange?.();
         if (editingId === id) {
           resetForm();
         }
@@ -223,7 +227,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {skillRecord.skills.map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-sm">
+                      <Badge key={idx} variant="secondary" className="text-xs">
                         {skill.name}
                         {skill.proficiency && (
                           <span className="ml-1 opacity-70">
