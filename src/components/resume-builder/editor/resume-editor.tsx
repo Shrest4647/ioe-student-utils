@@ -104,7 +104,7 @@ export function ResumeEditor({ resumeId, initialData, onSave }: ResumeEditorProp
         <div className="sticky top-4">
           <ResumePreview
             resumeData={initialData}
-            onDownloadPDF={handleDownloadPDF}
+            resumeName={initialData?.name}
           />
         </div>
       </div>

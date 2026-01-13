@@ -2,8 +2,7 @@
 
 import { FileText, Mail, MapPin, Phone, Globe } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { PDFDownloadButton } from "@/components/resume-builder/shared/pdf-download-button";
 
 interface ResumePreviewProps {
   resumeData?: {
@@ -56,10 +55,10 @@ interface ResumePreviewProps {
       skills: Array<{ name: string; proficiency?: string }>;
     }>;
   };
-  onDownloadPDF?: () => void;
+  resumeName?: string;
 }
 
-export function ResumePreview({ resumeData, onDownloadPDF }: ResumePreviewProps) {
+export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
   const profile = resumeData?.profile;
 
   const formatDate = (dateString?: string) => {
@@ -87,12 +86,11 @@ export function ResumePreview({ resumeData, onDownloadPDF }: ResumePreviewProps)
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">Live Preview</h3>
-        {onDownloadPDF && (
-          <Button size="sm" onClick={onDownloadPDF}>
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
-        )}
+        <PDFDownloadButton
+          resumeData={resumeData}
+          resumeName={resumeName || "resume"}
+          size="sm"
+        />
       </div>
 
       {/* A4 Preview Container */}

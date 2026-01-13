@@ -265,4 +265,56 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
         summary: "Delete resume",
       },
     },
+  )
+  .post(
+    "/:id/duplicate",
+    async ({ params: { id }, user, set }) => {
+      const existing = await db.query.resumes.findFirst({
+        where: { id },
+      });
+
+      if (!existing) {
+        set.status = 404;
+        return { success: false, error: "Resume not found" };
+      }
+
+      // Authorization check: Profile owner or Admin
+      const profile = await db.query.resumeProfiles.findFirst({
+        where: { id: existing.profileId },
+      });
+
+      if (!profile || (profile.userId !== user.id && user.role !== "admin")) {
+        set.status = 403;
+        return { success: false, error: "Unauthorized" };
+      }
+
+      const newId = crypto.randomUUID();
+
+      await db.insert(resumes).values({
+        id: newId,
+        profileId: profile.id,
+        name: `${existing.name} (Copy)`,
+        includedSections: existing.includedSections,
+        designTheme: existing.designTheme,
+      });
+
+      const duplicated = await db.query.resumes.findFirst({
+        where: { id: newId },
+      });
+
+      return {
+        success: true,
+        data: duplicated,
+      };
+    },
+    {
+      auth: true,
+      params: t.Object({
+        id: t.String(),
+      }),
+      detail: {
+        tags: ["Resumes"],
+        summary: "Duplicate resume",
+      },
+    },
   );

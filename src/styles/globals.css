@@ -124,3 +124,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Print styles for resume builder */
+@media print {
+  /* Hide editor panels and navigation */
+  .editor-panel,
+  .section-nav,
+  .form-panel,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show only preview */
+  .preview-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: static !important;
+  }
+
+  /* Resume preview styling */
+  .resume-preview > div {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Ensure proper page breaks */
+  .resume-section {
+    page-break-inside: avoid;
+  }
+
+  /* Hide backgrounds but keep colors for headings */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

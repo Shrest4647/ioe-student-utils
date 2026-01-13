@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Clock, Edit2, Eye, FileText, Plus, Trash2 } from "lucide-react";
+import { Clock, Copy, Edit2, FileText, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -36,6 +36,7 @@ export default function MyResumesPage() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const fetchResumes = useCallback(async () => {
     setIsLoading(true);
@@ -73,6 +74,25 @@ export default function MyResumesPage() {
     } catch (err) {
       console.error("Delete Error:", err);
       toast.error("An unexpected error occurred");
+    }
+  };
+
+  const handleDuplicate = async (id: string) => {
+    setDuplicatingId(id);
+    try {
+      const { data, error } = await apiClient.api.resumes({ id })["duplicate"].post();
+
+      if (error) {
+        toast.error("Failed to duplicate resume");
+      } else if (data?.success) {
+        toast.success("Resume duplicated successfully");
+        fetchResumes();
+      }
+    } catch (err) {
+      console.error("Duplicate Error:", err);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -183,6 +203,19 @@ export default function MyResumesPage() {
                             onClick={() => router.push(`/dashboard/resume-builder/edit/${resume.id}`)}
                           >
                             <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="border-blue-500/20 bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white"
+                            onClick={() => handleDuplicate(resume.id)}
+                            disabled={duplicatingId === resume.id}
+                          >
+                            {duplicatingId === resume.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             variant="outline"
