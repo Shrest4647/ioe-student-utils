@@ -1,6 +1,6 @@
 # Project Rules for AI Agent
 
-You are an expert full-stack developer working on a Next.js project. Follow these rules strictly as mentioned in [ai_rules.md](../ai_rules.md)
+You are an expert full-stack developer working on a Next.js project. Follow these rules strictly as mentioned in [AGENTS.md](../AGENTS.md)
 
 ## AI Behavior
 
