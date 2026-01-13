@@ -74,7 +74,7 @@ const dayEventVariants = cva("rounded border-l-4 p-0.5 font-bold text-xs", {
   },
 });
 
-type View = "day" | "week" | "month" | "year";
+type View = "day" | "week" | "month" | "year" | "schedule";
 
 type ContextType = {
   view: View;
@@ -144,6 +144,10 @@ const Calendar = ({
   });
 
   useHotkeys("d", () => changeView("day"), {
+    enabled: enableHotkeys,
+  });
+
+  useHotkeys("s", () => changeView("schedule"), {
     enabled: enableHotkeys,
   });
 
@@ -574,6 +578,238 @@ const CalendarYearView = () => {
   );
 };
 
+const CalendarScheduleView = () => {
+  const { view, date, locale, events, today, onEventClick } = useCalendar();
+
+  // Generate 3 days for schedule view (can be made configurable)
+  const scheduleDates = useMemo(() => {
+    const dates = [];
+    const startDay = date; // Start from current date
+
+    for (let i = 0; i < 3; i++) {
+      const day = addDays(startDay, i);
+      dates.push(day);
+    }
+
+    return dates;
+  }, [date]);
+
+  // Check if event is all-day (spans entire day or starts at midnight)
+  const isAllDayEvent = (event: CalendarEvent) => {
+    const eventStart = new Date(event.start);
+    const eventEnd = new Date(event.end);
+    const hoursDuration = differenceInMinutes(eventEnd, eventStart) / 60;
+
+    // Consider events longer than 23 hours as all-day
+    return hoursDuration >= 23;
+  };
+
+  if (view !== "schedule") return null;
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Day headers */}
+      <div className="flex border-b bg-card">
+        <div className="sticky left-0 z-20 w-16 shrink-0 border-r bg-background"></div>
+        <div className="flex flex-1">
+          {scheduleDates.map((dayDate, i) => {
+            const dayEvents = events.filter((event) =>
+              isSameDay(event.start, dayDate),
+            );
+            const allDayEvents = dayEvents.filter(isAllDayEvent);
+            const hasEvents = dayEvents.length > 0;
+
+            return (
+              <div
+                key={dayDate.toString()}
+                className={cn(
+                  "flex min-w-80 flex-1 flex-col border-r p-3",
+                  i === 0 && "border-l-0",
+                )}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-lg">
+                      {format(dayDate, "EEE")}
+                    </span>
+                    <span
+                      className={cn(
+                        "grid h-8 w-8 place-content-center rounded-full text-lg font-bold",
+                        isToday(dayDate)
+                          ? "bg-primary text-primary-foreground"
+                          : hasEvents
+                            ? "bg-primary/20 font-bold text-primary"
+                            : "",
+                      )}
+                    >
+                      {format(dayDate, "d")}
+                    </span>
+                  </div>
+                  {isToday(dayDate) && (
+                    <span className="text-muted-foreground text-xs font-medium">
+                      Today
+                    </span>
+                  )}
+                </div>
+
+                {/* All-day events section */}
+                {allDayEvents.length > 0 && (
+                  <div className="mb-2 space-y-1">
+                    {allDayEvents.map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        className={cn(
+                          "w-full rounded px-2 py-1 text-left text-xs font-medium",
+                          dayEventVariants({ variant: event.color }),
+                        )}
+                        onClick={() => onEventClick?.(event)}
+                      >
+                        {event.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Schedule grid */}
+      <div className="flex flex-1 overflow-y-auto">
+        {/* Time axis */}
+        <div className="sticky left-0 z-20 w-16 shrink-0 border-r bg-background">
+          <TimeTable />
+        </div>
+
+        {/* Day columns */}
+        <div className="flex flex-1">
+          {scheduleDates.map((dayDate, i) => {
+            const dayEvents = events.filter((event) =>
+              isSameDay(event.start, dayDate),
+            );
+            const timedEvents = dayEvents.filter(
+              (e) => !isAllDayEvent(e),
+            );
+
+            return (
+              <div
+                key={dayDate.toString()}
+                className={cn(
+                  "relative min-w-80 flex-1 border-r last:border-r-0",
+                  [0, 6].includes(i) && "bg-muted/30",
+                )}
+              >
+                {/* Current time indicator */}
+                {isToday(dayDate) && (
+                  <div
+                    className="absolute z-10 w-full border-t-2 border-red-500"
+                    style={{
+                      top: `${
+                        (today.getHours() * 60 + today.getMinutes()) / 1440
+                      }*100%`,
+                    }}
+                  >
+                    <div className="absolute top-1/2 left-0 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-red-500 bg-background"></div>
+                  </div>
+                )}
+
+                {/* Time slots */}
+                {Array.from({ length: 24 }).map((_, hour) => {
+                  const hourDate = setHours(dayDate, hour);
+                  const hourEvents = timedEvents.filter((event) =>
+                    isSameHour(event.start, hourDate),
+                  );
+
+                  return (
+                    <div
+                      key={hour}
+                      className="relative h-20 border-t last:border-b"
+                    >
+                      {hourEvents.map((event) => {
+                        const hoursDifference = Math.max(
+                          differenceInMinutes(event.end, event.start) / 60,
+                          0.25,
+                        );
+                        const startPosition =
+                          event.start.getMinutes() / 60;
+
+                        return (
+                          <HoverCard key={event.id} openDelay={300}>
+                            <HoverCardTrigger asChild>
+                              <button
+                                type="button"
+                                className={cn(
+                                  "absolute left-1 right-1 line-clamp-2 rounded px-2 py-1 text-left text-xs",
+                                  dayEventVariants({
+                                    variant: event.color,
+                                  }),
+                                )}
+                                style={{
+                                  top: `${startPosition * 100}%`,
+                                  height: `${hoursDifference * 100}%`,
+                                }}
+                                onClick={() => onEventClick?.(event)}
+                              >
+                                <div className="font-semibold">
+                                  {event.title}
+                                </div>
+                                {hoursDifference >= 1 && (
+                                  <div className="text-muted-foreground text-[10px]">
+                                    {format(event.start, "p")} -{" "}
+                                    {format(event.end, "p")}
+                                  </div>
+                                )}
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent
+                              side="right"
+                              align="start"
+                              className="w-72 text-sm"
+                            >
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={cn(
+                                      "size-2 rounded-full",
+                                      monthEventVariants({
+                                        variant: event.color,
+                                      }),
+                                    )}
+                                  ></div>
+                                </div>
+                                <div>
+                                  <p className="font-semibold">
+                                    {event.title}
+                                  </p>
+                                  <p className="text-muted-foreground text-xs">
+                                    {format(event.start, "PPP p")} –{" "}
+                                    {format(event.end, "p")}
+                                  </p>
+                                  {event.description && (
+                                    <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                                      {event.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CalendarNextTrigger = ({
   children,
   onClick,
@@ -593,6 +829,8 @@ const CalendarNextTrigger = ({
       setDate(addMonths(date, 1));
     } else if (view === "year") {
       setDate(addYears(date, 1));
+    } else if (view === "schedule") {
+      setDate(addDays(date, 3)); // Move 3 days forward in schedule view
     }
   }, [date, view, setDate]);
 
@@ -639,6 +877,8 @@ const CalendarPrevTrigger = ({
       setDate(subMonths(date, 1));
     } else if (view === "year") {
       setDate(subYears(date, 1));
+    } else if (view === "schedule") {
+      setDate(subDays(date, 3)); // Move 3 days backward in schedule view
     }
   }, [date, view, setDate]);
 
@@ -694,11 +934,18 @@ const CalendarTodayTrigger = ({
 const CalendarCurrentDate = () => {
   const { date, view } = useCalendar();
 
-  return (
-    <time className="tabular-nums">
-      {format(date, view === "day" ? "dd MMMM yyyy" : "MMMM yyyy")}
-    </time>
-  );
+  const formatRange = () => {
+    if (view === "schedule") {
+      const endDate = addDays(date, 2);
+      if (format(date, "MMM yyyy") === format(endDate, "MMM yyyy")) {
+        return `${format(date, "MMM d")} – ${format(endDate, "d, yyyy")}`;
+      }
+      return `${format(date, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
+    }
+    return format(date, view === "day" ? "dd MMMM yyyy" : "MMMM yyyy");
+  };
+
+  return <time className="tabular-nums">{formatRange()}</time>;
 };
 
 const TimeTable = () => {
@@ -765,6 +1012,7 @@ export {
   CalendarMonthView,
   CalendarNextTrigger,
   CalendarPrevTrigger,
+  CalendarScheduleView,
   CalendarTodayTrigger,
   CalendarViewTrigger,
   CalendarWeekView,

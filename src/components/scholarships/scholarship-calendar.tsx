@@ -78,6 +78,7 @@ import {
   CalendarMonthView,
   CalendarNextTrigger,
   CalendarPrevTrigger,
+  CalendarScheduleView,
   CalendarTodayTrigger,
   CalendarViewTrigger,
   CalendarWeekView,
@@ -105,17 +106,19 @@ function CalendarStandardLayout() {
         </div>
 
         <div className="flex items-center rounded-md bg-muted p-1">
-          <CalendarViewTrigger view="month">Month</CalendarViewTrigger>
-          <CalendarViewTrigger view="week">Week</CalendarViewTrigger>
+          <CalendarViewTrigger view="schedule">Schedule</CalendarViewTrigger>
           <CalendarViewTrigger view="day">Day</CalendarViewTrigger>
+          <CalendarViewTrigger view="week">Week</CalendarViewTrigger>
+          <CalendarViewTrigger view="month">Month</CalendarViewTrigger>
           <CalendarViewTrigger view="year">Year</CalendarViewTrigger>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <CalendarMonthView />
-        <CalendarWeekView />
+        <CalendarScheduleView />
         <CalendarDayView />
+        <CalendarWeekView />
+        <CalendarMonthView />
         <CalendarYearView />
       </div>
     </>
