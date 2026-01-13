@@ -603,80 +603,53 @@ export interface CollegeDepartmentProgramsFilters {
 export function useCollegeDepartmentPrograms(
   collegeId: string,
   departmentId: string,
-  filters: CollegeDepartmentProgramsFilters = {},
 ) {
-  return useInfiniteQuery({
-    queryKey: ["college-department-programs", collegeId, departmentId, filters],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.api.programs.get({
-        query: {
-          search: filters.search || undefined,
-          degreeLevel: filters.degreeLevel || undefined,
-          collegeId,
-          departmentId,
-          page: String(pageParam),
-          limit: filters.limit || "12",
-        },
-      });
+  return useQuery({
+    queryKey: ["college-department-programs", collegeId, departmentId],
+    queryFn: async () => {
+      const response = await apiClient.api
+        .colleges({
+          id: collegeId,
+        })
+        .departments({ departmentId })
+        .programs.get();
 
       if (response.data?.success) {
-        return response.data;
+        return response.data.data;
       }
       throw new Error("Failed to fetch programs");
     },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.metadata.hasMore) {
-        return lastPage.metadata.currentPage + 1;
-      }
-      return undefined;
-    },
-    initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
 
-export interface CollegeDepartmentProgramCoursesFilters {
-  search?: string;
-  page?: string;
-  limit?: string;
-}
-
 export function useCollegeDepartmentProgramCourses(
   collegeId: string,
   departmentId: string,
-  filters: CollegeDepartmentProgramCoursesFilters = {},
+  programId: string,
 ) {
-  return useInfiniteQuery({
+  return useQuery({
     queryKey: [
       "college-department-program-courses",
       collegeId,
       departmentId,
-      filters,
+      programId,
     ],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.api.courses.get({
-        query: {
-          search: filters.search || undefined,
-          collegeId,
-          departmentId,
-          page: String(pageParam),
-          limit: filters.limit || "12",
-        },
-      });
+    queryFn: async () => {
+      const response = await apiClient.api
+        .colleges({
+          id: collegeId,
+        })
+        .departments({ departmentId })
+        .programs({ programId })
+        .courses.get();
 
       if (response.data?.success) {
-        return response.data;
+        return response.data.data;
       }
       throw new Error("Failed to fetch courses");
     },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.metadata.hasMore) {
-        return lastPage.metadata.currentPage + 1;
-      }
-      return undefined;
-    },
-    initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
