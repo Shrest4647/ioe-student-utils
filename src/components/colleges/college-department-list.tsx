@@ -5,7 +5,13 @@ import { DepartmentCard } from "@/components/departments/department-card";
 import { useCollegeDepartmentFilters } from "@/hooks/use-college-department-filters";
 import { useDepartments } from "@/hooks/use-content";
 
-export function CollegeDepartmentList({ collegeId }: { collegeId?: string }) {
+export function CollegeDepartmentList({
+  collegeId,
+  entityType = "department",
+}: {
+  collegeId?: string;
+  entityType?: "department" | "collegeDepartment";
+}) {
   const { filters } = useCollegeDepartmentFilters(collegeId);
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
@@ -86,7 +92,7 @@ export function CollegeDepartmentList({ collegeId }: { collegeId?: string }) {
                 opacity: { duration: 0.2 },
               }}
             >
-              <DepartmentCard department={department} />
+              <DepartmentCard department={department} entityType={entityType} />
             </motion.div>
           ))}
         </AnimatePresence>

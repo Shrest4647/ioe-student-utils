@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 import { Suspense, use } from "react";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 
-import { CollegeDepartmentDetail } from "@/components/departments/college-department-detail";
+import { CollegeDepartmentDetail } from "@/components/colleges/college-department-detail";
 
 export const dynamic = "force-dynamic";
 

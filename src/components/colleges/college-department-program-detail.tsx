@@ -87,7 +87,13 @@ function ProgramDetailContent() {
     collegeDepartments: [],
   };
 
-  return <ProgramDetail program={programData} user={user} />;
+  return (
+    <ProgramDetail
+      program={programData}
+      user={user}
+      entityType="collegeDepartmentProgram"
+    />
+  );
 }
 
 export { BreadcrumbsContent, ProgramDetailContent };

@@ -17,7 +17,10 @@ export function CollegeDepartmentsContent({
     <>
       <CollegeDepartmentFilters collegeId={college?.id} />
       <div className="min-h-125">
-        <CollegeDepartmentList collegeId={college?.id} />
+        <CollegeDepartmentList
+          collegeId={college?.id}
+          entityType="collegeDepartment"
+        />
       </div>
     </>
   );

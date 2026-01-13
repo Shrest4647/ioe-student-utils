@@ -370,7 +370,7 @@ export function CollegeDetail({ college, user }: CollegeDetailProps) {
                       <CardHeader>
                         <CardTitle className="text-lg">
                           <Link
-                            href={`/departments/${department.department?.slug}`}
+                            href={`/colleges/${college.slug}/departments/${department.department?.slug}`}
                             className="hover:underline"
                           >
                             {department.department?.name}

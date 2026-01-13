@@ -1,5 +1,7 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+
 import { use } from "react";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import {
@@ -7,6 +9,7 @@ import {
   useCollegeDepartmentsBySlug,
   useDepartment,
 } from "@/hooks/use-content";
+import { ProgramCard } from "../programs/program-card";
 
 function BreadcrumbsContent({
   params,
@@ -56,39 +59,52 @@ function CollegeDepartmentProgramsContent({
   }
 
   return (
-    <ProgramListContent collegeId={college.id} departmentId={department.id} />
+    <CollegeProgramListContent
+      collegeId={college.id}
+      departmentId={department.id}
+    />
   );
 }
 
-function ProgramListContent({
+function CollegeProgramListContent({
   collegeId,
   departmentId,
 }: {
   collegeId: string;
   departmentId: string;
 }) {
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useCollegeDepartmentPrograms(collegeId, departmentId);
+  const { data: programs, isLoading } = useCollegeDepartmentPrograms(
+    collegeId,
+    departmentId,
+  );
 
-  const programs = data?.pages.flatMap((page) => page.data) || [];
-  const totalCount = data?.pages[0]?.metadata.totalCount || 0;
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
 
-  if (isLoading && programs.length === 0) {
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+    exit: { opacity: 0, scale: 0.95 },
+  };
+
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {Array(6)
-          .fill(0)
-          .map((v, i) => (
-            <div
-              key={`${v + i}`}
-              className="h-80 animate-pulse rounded-lg bg-muted"
-            />
-          ))}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-80 animate-pulse rounded-lg bg-muted" />
+        ))}
       </div>
     );
   }
 
-  if (programs.length === 0) {
+  if (!programs || programs.length === 0) {
     return (
       <div className="flex min-h-125 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20">
         <div className="text-center">
@@ -103,61 +119,51 @@ function ProgramListContent({
 
   return (
     <div className="space-y-6">
-      <div className="text-muted-foreground text-sm">
-        Showing {programs.length} of {totalCount} programs
-      </div>
+      <motion.div
+        className="text-muted-foreground text-sm"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        key={`count-${programs.length}`}
+      >
+        Showing {programs.length} programs
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {programs.map((program) => (
-          <ProgramListItem key={program.id} program={program} />
-        ))}
-      </div>
-
-      {hasNextPage && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="text-muted-foreground text-sm transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isFetchingNextPage ? "Loading more..." : "Load more programs"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ProgramListItem({ program }: { program: any }) {
-  return (
-    <div className="rounded-lg border bg-card p-6 transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 space-y-2">
-          <div>
-            <a
-              href={`/programs/${program.code}`}
-              className="text-foreground/90 decoration-primary underline-offset-4 hover:text-primary hover:underline"
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+      >
+        <AnimatePresence mode="popLayout">
+          {programs.map((program) => (
+            <motion.div
+              key={program.id}
+              variants={item}
+              layout
+              transition={{
+                layout: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
             >
-              <h3 className="line-clamp-1 font-semibold text-lg">
-                {program.name}
-              </h3>
-            </a>
-          </div>
-          <p className="line-clamp-2 text-muted-foreground text-sm">
-            {program.description || "No description available"}
-          </p>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="font-mono text-foreground/90">{program.code}</span>
-            {program.credits && <span>{program.credits} credits</span>}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-xs">
-            {program.isActive ? "Active" : "Inactive"}
-          </span>
-        </div>
-      </div>
+              <ProgramCard
+                program={{
+                  id: program.id,
+                  name: program.program?.name || "",
+                  code: program.program?.code || program?.code || "",
+                  description:
+                    program.description || program.program?.description || "",
+                  credits: program.credits || program.program?.credits || "",
+                  isActive:
+                    program.isActive || program.program?.isActive || false,
+                  createdAt: program.program?.createdAt || null,
+                  degreeLevels: program.program?.degreeLevels || null,
+                }}
+                entityType="collegeDepartmentProgram"
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

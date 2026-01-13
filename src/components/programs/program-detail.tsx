@@ -78,6 +78,7 @@ interface User {
 interface ProgramDetailProps {
   program: Program;
   user: User | null;
+  entityType?: "program" | "collegeDepartmentProgram";
 }
 
 const degreeLevelColors: Record<string, string> = {
@@ -90,7 +91,11 @@ const degreeLevelColors: Record<string, string> = {
   postdoctoral: "bg-pink-500/10 text-pink-500 border-pink-500/20",
 };
 
-export function ProgramDetail({ program, user }: ProgramDetailProps) {
+export function ProgramDetail({
+  program,
+  user,
+  entityType = "program",
+}: ProgramDetailProps) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "ratings" | "courses"
   >("overview");
@@ -118,7 +123,7 @@ export function ProgramDetail({ program, user }: ProgramDetailProps) {
     setIsSubmitting(true);
     try {
       const { data: response, error } = await apiClient.api.ratings.post({
-        entityType: "program",
+        entityType,
         entityId: program.id,
         categoryId: data.categoryId,
         rating: data.rating,

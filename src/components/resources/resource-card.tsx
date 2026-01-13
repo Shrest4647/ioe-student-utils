@@ -13,6 +13,7 @@ import {
   Paperclip,
   Wrench,
 } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,18 +111,20 @@ export function ResourceCard({ resource }: ResourceCardProps) {
       transition={{ duration: 0.2 }}
       className="h-full"
     >
-      <Card className="flex h-full flex-col overflow-hidden border-none p-0 shadow-md transition-shadow hover:shadow-xl">
+      <Card className="group flex h-full flex-col overflow-hidden border-none p-0 shadow-md transition-shadow hover:shadow-xl">
         {/* Top Visual Section */}
-        <div
-          className={`relative h-24 ${bgColor} flex items-center justify-center pt-2`}
-        >
-          <div className="rounded-lg bg-white/20 p-2 backdrop-blur-sm">
-            <ContentIcon className="h-8 w-8 text-white" />
+        <Link href={`/resources/${resource.id}`} className="block">
+          <div
+            className={`relative h-24 ${bgColor} flex items-center justify-center pt-2`}
+          >
+            <div className="rounded-lg bg-white/20 p-2 backdrop-blur-sm">
+              <ContentIcon className="h-8 w-8 text-white" />
+            </div>
+            <Badge className="absolute top-3 right-2 bg-white/90 text-[10px] text-black hover:bg-white">
+              {resource.contentType.name}
+            </Badge>
           </div>
-          <Badge className="absolute top-3 right-2 bg-white/90 text-[10px] text-black hover:bg-white">
-            {resource.contentType.name}
-          </Badge>
-        </div>
+        </Link>
 
         <CardHeader className="p-2 pb-0">
           <div className="mb-1 flex flex-wrap gap-1">
@@ -140,18 +143,22 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               </Badge>
             )}
           </div>
-          <h3 className="line-clamp-2 font-semibold text-sm leading-tight">
-            {resource.title}
-          </h3>
+          <Link href={`/resources/${resource.id}`}>
+            <h3 className="line-clamp-2 font-semibold text-sm leading-tight transition-colors hover:text-primary">
+              {resource.title}
+            </h3>
+          </Link>
         </CardHeader>
 
         <CardContent className="grow p-2 pt-0">
-          <p className="line-clamp-2 text-muted-foreground text-xs">
-            {resource.description || "No description provided."}
-          </p>
+          <Link href={`/resources/${resource.id}`}>
+            <p className="mb-2 line-clamp-2 text-muted-foreground text-xs transition-colors hover:text-foreground">
+              {resource.description || "No description provided."}
+            </p>
+          </Link>
           {/* Show attachment count if multiple */}
           {resource.attachments && resource.attachments.length > 1 && (
-            <div className="mt-2 flex items-center gap-1 text-muted-foreground text-xs">
+            <div className="flex items-center gap-1 text-muted-foreground text-xs">
               <Paperclip className="h-3 w-3" />
               <span>{resource.attachments.length} attachments</span>
             </div>
@@ -174,6 +181,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
+              onClick={(e) => e.stopPropagation()}
             >
               <span>Access</span>
               <ExternalLink className="h-3 w-3" />

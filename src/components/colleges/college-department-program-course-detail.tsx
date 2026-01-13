@@ -99,6 +99,7 @@ function CourseDetailContent({
         isActive: course.isActive || course.course?.isActive || false,
         createdAt: course.course?.createdAt || "",
       }}
+      entityType="collegeDepartmentProgramCourse"
     />
   );
 }
