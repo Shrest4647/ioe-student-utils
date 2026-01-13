@@ -19,6 +19,18 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.resources.uploaderId,
     }),
+    recommendationLetters: r.many.recommendationLetter({
+      from: r.user.id,
+      to: r.recommendationLetter.studentId,
+    }),
+    recommendationTemplates: r.many.recommendationTemplate({
+      from: r.user.id,
+      to: r.recommendationTemplate.createdById,
+    }),
+    studentProfileData: r.one.studentProfileData({
+      from: r.user.id,
+      to: r.studentProfileData.userId,
+    }),
   },
   account: {
     user: r.one.user({
@@ -379,6 +391,40 @@ export const relations = defineRelations(schema, (r) => ({
     ratings: r.many.ratings({
       from: r.ratingCategories.id,
       to: r.ratings.ratingCategoryId,
+    }),
+  },
+
+  // Recommendation Letter Generator Relations
+  recommendationTemplate: {
+    createdBy: r.one.user({
+      from: r.recommendationTemplate.createdById,
+      to: r.user.id,
+    }),
+    updatedBy: r.one.user({
+      from: r.recommendationTemplate.updatedById,
+      to: r.user.id,
+    }),
+    recommendationLetters: r.many.recommendationLetter({
+      from: r.recommendationTemplate.id,
+      to: r.recommendationLetter.templateId,
+    }),
+  },
+
+  recommendationLetter: {
+    student: r.one.user({
+      from: r.recommendationLetter.studentId,
+      to: r.user.id,
+    }),
+    template: r.one.recommendationTemplate({
+      from: r.recommendationLetter.templateId,
+      to: r.recommendationTemplate.id,
+    }),
+  },
+
+  studentProfileData: {
+    user: r.one.user({
+      from: r.studentProfileData.userId,
+      to: r.user.id,
     }),
   },
 }));

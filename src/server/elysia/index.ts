@@ -21,6 +21,7 @@ import { skillRoutes } from "./routes/skills";
 import { universityRoutes } from "./routes/universities";
 import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
+import { recommendationRoutes } from "./routes/recommendations";
 
 export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(corsPlugin)
@@ -46,6 +47,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(ratingRoutes)
   .use(programRoutes)
   .use(courseRoutes)
+  .use(recommendationRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],
