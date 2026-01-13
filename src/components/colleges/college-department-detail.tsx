@@ -11,7 +11,7 @@ export function CollegeDepartmentDetail() {
   const { user } = useAuth();
   const { data: collegeDepartment, isLoading } = useCollegeDepartment(
     collegeSlug as string,
-    departmentSlug as string
+    departmentSlug as string,
   );
 
   if (isLoading) {

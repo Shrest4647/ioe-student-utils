@@ -1,6 +1,7 @@
 "use client";
 
 import { addDays } from "date-fns";
+import { motion } from "framer-motion";
 import {
   AlertCircle,
   BookOpen,
@@ -84,40 +85,40 @@ export default function DashboardPage() {
       id: "browse-resources",
       title: "Browse Resources",
       icon: BookOpen,
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
+      color: "text-chart-3",
+      bg: "bg-chart-3/10",
       href: "/resources",
     },
     {
       id: "browse-scholarships",
       title: "Browse Scholarships",
       icon: GraduationCap,
-      color: "text-purple-500",
-      bg: "bg-purple-500/10",
+      color: "text-primary",
+      bg: "bg-primary/10",
       href: "/scholarships",
     },
     {
       id: "scholarship-calendar",
       title: "Scholarship Calendar",
       icon: Calendar,
-      color: "text-orange-500",
-      bg: "bg-orange-500/10",
+      color: "text-chart-3",
+      bg: "bg-chart-3/10",
       href: "/scholarships/calendar",
     },
     {
       id: "upload-resource",
       title: "Upload Resource",
       icon: Upload,
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
+      color: "text-chart-3",
+      bg: "bg-chart-3/10",
       href: "/dashboard/resources",
     },
     {
       id: "browse-universities",
       title: "Browse Universities",
       icon: MapPin,
-      color: "text-cyan-500",
-      bg: "bg-cyan-500/10",
+      color: "text-chart-3",
+      bg: "bg-chart-3/10",
       href: "/universities",
     },
     ...(isAdmin
@@ -126,24 +127,24 @@ export default function DashboardPage() {
             id: "manage-universities",
             title: "Manage Universities",
             icon: Building2,
-            color: "text-indigo-500",
-            bg: "bg-indigo-500/10",
+            color: "text-chart-3",
+            bg: "bg-chart-3/10",
             href: "/dashboard/universities",
           },
           {
             id: "manage-scholarships",
             title: "Manage Scholarships",
             icon: GraduationCap,
-            color: "text-pink-500",
-            bg: "bg-pink-500/10",
+            color: "text-chart-3",
+            bg: "bg-chart-3/10",
             href: "/dashboard/scholarships",
           },
           {
             id: "manage-resources",
             title: "Manage Resources",
             icon: FileText,
-            color: "text-amber-500",
-            bg: "bg-amber-500/10",
+            color: "text-chart-3",
+            bg: "bg-chart-3/10",
             href: "/dashboard/resources",
           },
         ]
@@ -151,8 +152,13 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="fade-in container mx-auto max-w-7xl animate-in space-y-6 p-4 duration-500 md:p-8">
-      <div className="flex flex-col gap-2">
+    <div className="container mx-auto max-w-7xl space-y-6 p-4 md:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col gap-2"
+      >
         <div className="flex items-center gap-2 text-muted-foreground">
           <LayoutDashboard className="h-4 w-4" />
           <span className="font-medium text-sm">Dashboard</span>
@@ -164,35 +170,46 @@ export default function DashboardPage() {
           "The beautiful thing about learning is that no one can take it away
           from you."
         </p>
-      </div>
+      </motion.div>
 
       {!isEmailVerified && (
-        <Alert variant="default" className="border-amber-200 bg-amber-50/50">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-900">
-            Email Verification Required
-          </AlertTitle>
-          <AlertDescription>
-            Please verify your email address to access all features.
-            <Button
-              variant="link"
-              className="h-auto p-0 text-amber-700 underline-offset-4 hover:text-amber-900"
-              onClick={() => router.push("/auth/verify-email")}
-            >
-              Verify Email
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <Alert variant="default" className="border-chart-3/30 bg-chart-3/10">
+            <AlertCircle className="h-4 w-4 text-chart-3" />
+            <AlertTitle className="text-chart-3">
+              Email Verification Required
+            </AlertTitle>
+            <AlertDescription>
+              Please verify your email address to access all features.
+              <Button
+                variant="link"
+                className="h-auto p-0 text-chart-3 underline-offset-4 hover:text-chart-3/80"
+                onClick={() => router.push("/auth/verify-email")}
+              >
+                Verify Email
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      >
         <StatCard
           title="Total Resources"
           value={totalResources}
           description="Notes, papers & books"
           icon={BookOpen}
-          color="text-blue-500"
-          bg="bg-blue-500/10"
+          color="text-chart-3"
+          bg="bg-chart-3/10"
           isLoading={resourcesQuery.isLoading}
         />
         <StatCard
@@ -200,8 +217,8 @@ export default function DashboardPage() {
           value={totalScholarships}
           description="Available opportunities"
           icon={GraduationCap}
-          color="text-purple-500"
-          bg="bg-purple-500/10"
+          color="text-primary"
+          bg="bg-primary/10"
           isLoading={scholarshipsQuery.isLoading}
         />
         <Card className="group relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50">
@@ -226,8 +243,8 @@ export default function DashboardPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-lg bg-orange-500/10 p-2">
-              <Calendar className="h-4 w-4 text-orange-500" />
+            <div className="rounded-lg bg-chart-3/10 p-2">
+              <Calendar className="h-4 w-4 text-chart-3" />
             </div>
           </CardHeader>
           <CardContent>
@@ -246,71 +263,82 @@ export default function DashboardPage() {
           value={myResourcesCount}
           description="Your contributions"
           icon={Upload}
-          color="text-emerald-500"
-          bg="bg-emerald-500/10"
+          color="text-chart-3"
+          bg="bg-chart-3/10"
           isLoading={myResourcesQuery.isLoading}
         />
-      </div>
+      </motion.div>
 
       {isAdmin && adminStatsQuery.data && (
-        <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-indigo-500" />
-              <CardTitle>Admin Overview</CardTitle>
-            </div>
-            <CardDescription>
-              Platform content management statistics
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
-              <StatCard
-                title="Universities"
-                value={adminStats?.universities ?? 0}
-                description="Institutions"
-                icon={Building2}
-                color="text-indigo-500"
-                bg="bg-indigo-500/10"
-                isLoading={adminStatsQuery.isLoading}
-                compact
-              />
-              <StatCard
-                title="Colleges"
-                value={adminStats?.colleges ?? 0}
-                description="Campuses"
-                icon={Building2}
-                color="text-cyan-500"
-                bg="bg-cyan-500/10"
-                isLoading={adminStatsQuery.isLoading}
-                compact
-              />
-              <StatCard
-                title="Programs"
-                value={adminStats?.programs ?? 0}
-                description="Degree programs"
-                icon={GraduationCap}
-                color="text-teal-500"
-                bg="bg-teal-500/10"
-                isLoading={adminStatsQuery.isLoading}
-                compact
-              />
-              <StatCard
-                title="Courses"
-                value={adminStats?.courses ?? 0}
-                description="Academic courses"
-                icon={BookOpen}
-                color="text-rose-500"
-                bg="bg-rose-500/10"
-                isLoading={adminStatsQuery.isLoading}
-                compact
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-chart-3" />
+                <CardTitle>Admin Overview</CardTitle>
+              </div>
+              <CardDescription>
+                Platform content management statistics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-4">
+                <StatCard
+                  title="Universities"
+                  value={adminStats?.universities ?? 0}
+                  description="Institutions"
+                  icon={Building2}
+                  color="text-chart-3"
+                  bg="bg-chart-3/10"
+                  isLoading={adminStatsQuery.isLoading}
+                  compact
+                />
+                <StatCard
+                  title="Colleges"
+                  value={adminStats?.colleges ?? 0}
+                  description="Campuses"
+                  icon={Building2}
+                  color="text-chart-3"
+                  bg="bg-chart-3/10"
+                  isLoading={adminStatsQuery.isLoading}
+                  compact
+                />
+                <StatCard
+                  title="Programs"
+                  value={adminStats?.programs ?? 0}
+                  description="Degree programs"
+                  icon={GraduationCap}
+                  color="text-chart-3"
+                  bg="bg-chart-3/10"
+                  isLoading={adminStatsQuery.isLoading}
+                  compact
+                />
+                <StatCard
+                  title="Courses"
+                  value={adminStats?.courses ?? 0}
+                  description="Academic courses"
+                  icon={BookOpen}
+                  color="text-chart-3"
+                  bg="bg-chart-3/10"
+                  isLoading={adminStatsQuery.isLoading}
+                  compact
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+        className="grid gap-8 md:grid-cols-2"
+      >
         <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Upcoming Scholarship Deadlines</CardTitle>
@@ -339,14 +367,17 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              eventsQuery.data?.map((event: any) => {
+              eventsQuery.data?.map((event: any, index: number) => {
                 const eventDate = new Date(event.date);
                 const isDeadline = event.type === "deadline";
                 const isResult = event.type === "result_announcement";
 
                 return (
-                  <div
+                  <motion.div
                     key={event.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
                     className="group flex items-center justify-between rounded-xl p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
@@ -354,20 +385,20 @@ export default function DashboardPage() {
                         className={cn(
                           "rounded-full p-2",
                           isDeadline
-                            ? "bg-red-500/10"
+                            ? "bg-destructive/10"
                             : isResult
-                              ? "bg-green-500/10"
-                              : "bg-blue-500/10",
+                              ? "bg-chart-3/10"
+                              : "bg-primary/10",
                         )}
                       >
                         <Calendar
                           className={cn(
                             "h-4 w-4",
                             isDeadline
-                              ? "text-red-500"
+                              ? "text-destructive"
                               : isResult
-                                ? "text-green-500"
-                                : "text-blue-500",
+                                ? "text-chart-3"
+                                : "text-primary",
                           )}
                         />
                       </div>
@@ -394,18 +425,24 @@ export default function DashboardPage() {
                         })}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })
             )}
-            <Button
-              variant="outline"
-              className="group mt-2 w-full border-dashed hover:border-solid"
-              onClick={() => router.push("/scholarships/calendar")}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.7 }}
             >
-              View Full Calendar
-              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+              <Button
+                variant="outline"
+                className="group mt-2 w-full border-dashed hover:border-solid"
+                onClick={() => router.push("/scholarships/calendar")}
+              >
+                View Full Calendar
+                <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </motion.div>
           </CardContent>
         </Card>
 
@@ -415,24 +452,30 @@ export default function DashboardPage() {
             <CardDescription>Most used features</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {quickActions.map((action) => (
-              <Button
+            {quickActions.map((action, index) => (
+              <motion.div
                 key={action.id}
-                className="h-12 w-full justify-start gap-3"
-                variant="outline"
-                onClick={() => router.push(action.href)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
               >
-                <div
-                  className={cn("rounded-md p-1.5", action.bg, action.color)}
+                <Button
+                  className="h-12 w-full justify-start gap-3"
+                  variant="outline"
+                  onClick={() => router.push(action.href)}
                 >
-                  <action.icon className="h-4 w-4" />
-                </div>
-                {action.title}
-              </Button>
+                  <div
+                    className={cn("rounded-md p-1.5", action.bg, action.color)}
+                  >
+                    <action.icon className="h-4 w-4" />
+                  </div>
+                  {action.title}
+                </Button>
+              </motion.div>
             ))}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { BookOpen, GraduationCap, Star } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,6 @@ import { RateButton } from "@/components/ui/rate-button";
 import { useAuth } from "@/hooks/use-auth";
 import { useRatingCategories } from "@/hooks/use-universities";
 import { apiClient } from "@/lib/eden";
-import { useParams } from "next/navigation";
 
 export interface Program {
   id: string;
@@ -76,14 +76,14 @@ export function ProgramCard({
         throw new Error(
           (typeof error?.value === "object"
             ? (error.value as any)?.message || (error.value as any)?.error
-            : error?.value) || "Failed to submit review"
+            : error?.value) || "Failed to submit review",
         );
       }
 
       toast.success("Review submitted successfully!");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit review"
+        error instanceof Error ? error.message : "Failed to submit review",
       );
     } finally {
       setIsSubmitting(false);

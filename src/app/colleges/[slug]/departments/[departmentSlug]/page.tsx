@@ -1,8 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { Suspense, use } from "react";
-import { Breadcrumbs } from "@/components/common/breadcrumbs";
-
 import { CollegeDepartmentDetail } from "@/components/colleges/college-department-detail";
+import { Breadcrumbs } from "@/components/common/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 

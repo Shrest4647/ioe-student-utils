@@ -90,10 +90,10 @@ export function DepartmentDetail({
   } = useDepartmentRatings(department.id);
   const { data: categories } = useRatingCategories("department");
   const { data: colleges, isLoading: collegesLoading } = useDepartmentColleges(
-    department.id
+    department.id,
   );
   const { data: programs, isLoading: programsLoading } = useDepartmentPrograms(
-    department.id
+    department.id,
   );
 
   const handleRatingSubmit = async (data: {
@@ -120,7 +120,7 @@ export function DepartmentDetail({
         throw new Error(
           (typeof error?.value === "object"
             ? (error.value as any)?.message || (error.value as any)?.error
-            : error?.value) || "Failed to submit review"
+            : error?.value) || "Failed to submit review",
         );
       }
 
@@ -128,7 +128,7 @@ export function DepartmentDetail({
       refetch();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit review"
+        error instanceof Error ? error.message : "Failed to submit review",
       );
     } finally {
       setIsSubmitting(false);
