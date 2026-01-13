@@ -4,6 +4,7 @@ import {
   Award,
   BookOpen,
   Building2,
+  Calculator,
   FileText,
   Folder,
   GraduationCap,
@@ -114,6 +115,16 @@ export function Navbar() {
                   >
                     <Link href="/scholarships">
                       <span className="text-sm">Scholarships</span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    <Link href="/gpa-converter">
+                      <span className="text-sm">GPA Converter</span>
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -238,6 +249,13 @@ export function Navbar() {
                 icon={<FileText className="h-4 w-4" />}
               >
                 Resources
+              </MobileLink>
+
+              <MobileLink
+                href="/gpa-converter"
+                icon={<Calculator className="h-4 w-4" />}
+              >
+                GPA Converter
               </MobileLink>
 
               {isAuthenticated && (
