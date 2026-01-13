@@ -1,4 +1,4 @@
-import { db } from "./index";
+import { db } from "../index";
 import {
   countries,
   degreeLevels,
@@ -16,7 +16,7 @@ import {
   scholarshipsToCountries,
   scholarshipsToDegrees,
   scholarshipsToFields,
-} from "./schema";
+} from "../schema";
 
 const categories = [
   {

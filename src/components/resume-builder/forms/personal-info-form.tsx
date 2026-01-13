@@ -54,8 +54,8 @@ export function PersonalInfoForm({
       city: initialData?.address?.city ?? "",
       state: initialData?.address?.state ?? "",
       postalCode: initialData?.address?.postalCode ?? "",
-      country: initialData?.address?.country ?? "",
-      nationality: initialData?.nationality ?? "",
+      country: initialData?.address?.country ?? "Nepal",
+      nationality: initialData?.nationality ?? "Nepali",
       dateOfBirth: initialData?.dateOfBirth ?? "",
       summary: initialData?.summary ?? "",
       linkedIn: initialData?.linkedIn ?? "",
@@ -151,7 +151,7 @@ export function PersonalInfoForm({
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to upload photo: ${errorText || response.statusText}`,
+          `Failed to upload photo: ${errorText || response.statusText}`
         );
       }
 

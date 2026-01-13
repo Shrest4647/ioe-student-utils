@@ -907,7 +907,7 @@ export const recommendationLetter = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     templateId: text("template_id")
       .notNull()
-      .references(() => recommendationTemplate.id, { onDelete: "restrict" }),
+      .references(() => recommendationTemplate.id, { onDelete: "set null" }),
 
     // Recommender Information
     recommenderName: text("recommender_name").notNull(),

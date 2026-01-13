@@ -1,5 +1,5 @@
-import { db } from "./index";
-import { recommendationTemplate } from "./schema";
+import { db } from "../index";
+import { recommendationTemplate } from "../schema";
 
 export const recommendationTemplates = [
   {

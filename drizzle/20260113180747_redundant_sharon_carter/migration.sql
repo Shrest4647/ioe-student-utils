@@ -48,4 +48,5 @@ ALTER TABLE "gpa_conversion_range" ADD CONSTRAINT "gpa_conversion_range_updated_
 ALTER TABLE "gpa_conversion_standard" ADD CONSTRAINT "gpa_conversion_standard_created_by_id_user_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "gpa_conversion_standard" ADD CONSTRAINT "gpa_conversion_standard_updated_by_id_user_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "gpa_conversion" ADD CONSTRAINT "gpa_conversion_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
-ALTER TABLE "gpa_conversion" ADD CONSTRAINT "gpa_conversion_standard_id_gpa_conversion_standard_id_fkey" FOREIGN KEY ("standard_id") REFERENCES "gpa_conversion_standard"("id") ON DELETE CASCADE;
+ALTER TABLE "gpa_conversion" ADD CONSTRAINT "gpa_conversion_standard_id_gpa_conversion_standard_id_fkey" FOREIGN KEY ("standard_id") REFERENCES "gpa_conversion_standard"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "recommendation_letter" DROP CONSTRAINT "recommendation_letter_MEodNtK0EIfW_fkey", ADD CONSTRAINT "recommendation_letter_MEodNtK0EIfW_fkey" FOREIGN KEY ("template_id") REFERENCES "recommendation_template"("id") ON DELETE SET NULL;

@@ -1,5 +1,5 @@
-import { _TU_IOE_DATA } from "../../data/tu-ioe";
-import { db } from "./index";
+import { _TU_IOE_DATA } from "@/data/tu-ioe";
+import { db } from "../index";
 import {
   academicPrograms,
   collegeDepartments,
@@ -7,7 +7,7 @@ import {
   colleges,
   departments,
   universities,
-} from "./schema";
+} from "../schema";
 
 function slugify(text: string): string {
   return text
