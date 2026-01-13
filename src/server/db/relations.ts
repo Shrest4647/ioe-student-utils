@@ -381,4 +381,35 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.ratings.ratingCategoryId,
     }),
   },
+
+  // --- GPA Converter Relations ---
+
+  gpaConversionStandards: {
+    ranges: r.many.gpaConversionRanges({
+      from: r.gpaConversionStandards.id,
+      to: r.gpaConversionRanges.standardId,
+    }),
+    conversions: r.many.gpaConversions({
+      from: r.gpaConversionStandards.id,
+      to: r.gpaConversions.standardId,
+    }),
+  },
+
+  gpaConversionRanges: {
+    standard: r.one.gpaConversionStandards({
+      from: r.gpaConversionRanges.standardId,
+      to: r.gpaConversionStandards.id,
+    }),
+  },
+
+  gpaConversions: {
+    user: r.one.user({
+      from: r.gpaConversions.userId,
+      to: r.user.id,
+    }),
+    standard: r.one.gpaConversionStandards({
+      from: r.gpaConversions.standardId,
+      to: r.gpaConversionStandards.id,
+    }),
+  },
 }));

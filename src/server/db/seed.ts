@@ -14,6 +14,8 @@ import {
   scholarshipsToCountries,
   scholarshipsToDegrees,
   scholarshipsToFields,
+  gpaConversionStandards,
+  gpaConversionRanges,
 } from "./schema";
 
 const categories = [
@@ -521,6 +523,193 @@ async function seed() {
       console.log("✅ Inserted sample scholarships.");
     } else {
       console.log("⏭️ Scholarships already seeded.");
+    }
+
+    // --- Seeding GPA Converter Data ---
+
+    const existingGPAStandards = await db.query.gpaConversionStandards.findMany();
+    if (existingGPAStandards.length === 0) {
+      // 1. WES Standard
+      const wesStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: wesStandardId,
+        name: "WES",
+        description:
+          "World Education Services conversion standard for Nepal/Tribhuvan University. Most widely used credential evaluation service for US university applications.",
+        isActive: true,
+      });
+
+      // WES conversion ranges
+      const wesRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "80",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "A",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "75",
+          maxPercentage: "79",
+          gpaValue: "3.7",
+          gradeLabel: "A-",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "70",
+          maxPercentage: "74",
+          gpaValue: "3.3",
+          gradeLabel: "B+",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "65",
+          maxPercentage: "69",
+          gpaValue: "3.0",
+          gradeLabel: "B",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "60",
+          maxPercentage: "64",
+          gpaValue: "2.7",
+          gradeLabel: "B-",
+          sortOrder: "5",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "55",
+          maxPercentage: "59",
+          gpaValue: "2.3",
+          gradeLabel: "C+",
+          sortOrder: "6",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "50",
+          maxPercentage: "54",
+          gpaValue: "2.0",
+          gradeLabel: "C",
+          sortOrder: "7",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: wesStandardId,
+          minPercentage: "0",
+          maxPercentage: "49",
+          gpaValue: "0.0",
+          gradeLabel: "F",
+          sortOrder: "8",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(wesRanges);
+      console.log(`✅ Inserted WES standard with ${wesRanges.length} ranges.`);
+
+      // 2. Scholaro Standard
+      const scholaroStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: scholaroStandardId,
+        name: "Scholaro",
+        description:
+          "Scholaro GPA conversion standard for Nepal/Tribhuvan University. Alternative credential evaluation service accepted by many European and international universities.",
+        isActive: true,
+      });
+
+      // Scholaro conversion ranges
+      const scholaroRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "90",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "A",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "85",
+          maxPercentage: "89",
+          gpaValue: "3.7",
+          gradeLabel: "A-",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "80",
+          maxPercentage: "84",
+          gpaValue: "3.3",
+          gradeLabel: "B+",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "75",
+          maxPercentage: "79",
+          gpaValue: "3.0",
+          gradeLabel: "B",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "70",
+          maxPercentage: "74",
+          gpaValue: "2.7",
+          gradeLabel: "B-",
+          sortOrder: "5",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "65",
+          maxPercentage: "69",
+          gpaValue: "2.3",
+          gradeLabel: "C+",
+          sortOrder: "6",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "60",
+          maxPercentage: "64",
+          gpaValue: "2.0",
+          gradeLabel: "C",
+          sortOrder: "7",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: scholaroStandardId,
+          minPercentage: "0",
+          maxPercentage: "59",
+          gpaValue: "0.0",
+          gradeLabel: "F",
+          sortOrder: "8",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(scholaroRanges);
+      console.log(
+        `✅ Inserted Scholaro standard with ${scholaroRanges.length} ranges.`,
+      );
+    } else {
+      console.log("⏭️ GPA conversion standards already seeded.");
     }
 
     console.log("✨ Seeding completed!");
