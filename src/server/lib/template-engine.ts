@@ -10,7 +10,7 @@ export interface TemplateContext {
   current_year?: string;
 
   // All other variables from the template
-  [key: string]: string | undefined;
+  [key: string]: string | { name?: string; email?: string } | undefined;
 }
 
 /**
@@ -49,16 +49,20 @@ export function replaceTemplateVariables(
       const parts = variableName.split("_");
       if (parts[0] === "user" && parts.length > 1) {
         const userKey = parts.slice(1).join("_");
-        return (
-          defaultContext.user?.[userKey as keyof typeof defaultContext.user] ||
-          match
+        const userValue =
+          (
+          defaultContext.user?.[userKey as keyof typeof defaultContext.user];
+        if (typeof userValue === "string") {
+          return userValue;
+        }
+        return match
         );
       }
     }
 
     // Handle simple variables
     const value = defaultContext[variableName];
-    if (value !== undefined && value !== null) {
+    if (typeof value === "string") {
       return value;
     }
 
@@ -87,7 +91,7 @@ export function validateRequiredVariables(
 
     // Check if variable has a value
     const value = context[variable.name];
-    if (!value || value.trim() === "") {
+    if (!value || (typeof value === "string" && value.trim() === "")) {
       // Check if there's a default value
       if (variable.defaultValue && variable.defaultValue.trim() !== "") {
         continue;
@@ -106,7 +110,7 @@ export function validateRequiredVariables(
  * @returns Array of unique variable names found in the template
  */
 export function extractVariablesFromTemplate(template: string): string[] {
-  const matches = template.matchAll(/\{\{(\w+)\}\}/g);
+  const matches = Array.from(template.matchAll(/\{\{(\w+)\}\}/g));
   const variables = new Set<string>();
 
   for (const match of matches) {

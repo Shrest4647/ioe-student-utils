@@ -14,6 +14,7 @@ import { profileRoutes } from "./routes/profiles";
 import { courseRoutes, programRoutes } from "./routes/programs";
 import { projectRoutes } from "./routes/projects";
 import { ratingRoutes } from "./routes/ratings";
+import { recommendationRoutes } from "./routes/recommendations";
 import { referenceRoutes } from "./routes/references";
 import { resourceRoutes } from "./routes/resources";
 import { resumeRoutes } from "./routes/resumes";
@@ -47,7 +48,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(ratingRoutes)
   .use(programRoutes)
   .use(courseRoutes)
-  .use(gpaConverterRoutes)
+  .use(recommendationRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],
