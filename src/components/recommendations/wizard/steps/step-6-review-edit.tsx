@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { EyeIcon, FileTextIcon, LoaderIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { EyeIcon, FileTextIcon, LoaderIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Step6ReviewEditProps {
   data: Record<string, string | undefined>;
@@ -16,15 +16,16 @@ interface Step6ReviewEditProps {
   isSubmitting: boolean;
 }
 
-export function Step6ReviewEdit({ data, updateData, onSubmit, isSubmitting }: Step6ReviewEditProps) {
+export function Step6ReviewEdit({
+  data,
+  updateData,
+  onSubmit,
+  isSubmitting,
+}: Step6ReviewEditProps) {
   const [previewContent, setPreviewContent] = useState<string>("");
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(true);
 
-  useEffect(() => {
-    generatePreview();
-  }, [data]);
-
-  const generatePreview = async () => {
+  const generatePreview = useCallback(() => {
     setIsGeneratingPreview(true);
     try {
       // For now, we'll show a simple preview
@@ -33,7 +34,7 @@ export function Step6ReviewEdit({ data, updateData, onSubmit, isSubmitting }: St
 [Date]
 
 ${data.targetInstitution}
-${data.targetDepartment ? data.targetDepartment + "\n" : ""}${data.targetProgram}
+${data.targetDepartment ? `${data.targetDepartment}\n` : ""}${data.targetProgram}
 
 Dear Admissions Committee,
 
@@ -58,7 +59,11 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
     } finally {
       setIsGeneratingPreview(false);
     }
-  };
+  }, [data]);
+
+  useEffect(() => {
+    generatePreview();
+  }, [generatePreview]);
 
   return (
     <div className="space-y-6">
@@ -82,26 +87,36 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <h4 className="font-medium mb-2">Recommender</h4>
+                  <h4 className="mb-2 font-medium">Recommender</h4>
                   <div className="space-y-1 text-sm">
                     <p>{data.recommenderName}</p>
-                    <p className="text-muted-foreground">{data.recommenderTitle}</p>
-                    <p className="text-muted-foreground">{data.recommenderInstitution}</p>
+                    <p className="text-muted-foreground">
+                      {data.recommenderTitle}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {data.recommenderInstitution}
+                    </p>
                     {data.recommenderDepartment && (
-                      <p className="text-muted-foreground">{data.recommenderDepartment}</p>
+                      <p className="text-muted-foreground">
+                        {data.recommenderDepartment}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">Target</h4>
+                  <h4 className="mb-2 font-medium">Target</h4>
                   <div className="space-y-1 text-sm">
                     <p>{data.targetInstitution}</p>
-                    <p className="text-muted-foreground">{data.targetProgram}</p>
+                    <p className="text-muted-foreground">
+                      {data.targetProgram}
+                    </p>
                     {data.targetDepartment && (
-                      <p className="text-muted-foreground">{data.targetDepartment}</p>
+                      <p className="text-muted-foreground">
+                        {data.targetDepartment}
+                      </p>
                     )}
-                    <div className="flex gap-2 mt-2">
+                    <div className="mt-2 flex gap-2">
                       <Badge variant="outline">{data.targetCountry}</Badge>
                       <Badge variant="secondary">{data.purpose}</Badge>
                     </div>
@@ -110,39 +125,52 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Relationship</h4>
+                <h4 className="mb-2 font-medium">Relationship</h4>
                 <p className="text-sm">{data.relationship}</p>
                 {data.contextOfMeeting && (
-                  <p className="text-sm text-muted-foreground mt-1">{data.contextOfMeeting}</p>
+                  <p className="mt-1 text-muted-foreground text-sm">
+                    {data.contextOfMeeting}
+                  </p>
                 )}
               </div>
 
-              {(data.studentAchievements || data.researchExperience || data.academicPerformance || data.personalQualities) && (
+              {(data.studentAchievements ||
+                data.researchExperience ||
+                data.academicPerformance ||
+                data.personalQualities) && (
                 <div>
-                  <h4 className="font-medium mb-2">Student Highlights</h4>
+                  <h4 className="mb-2 font-medium">Student Highlights</h4>
                   <div className="space-y-2 text-sm">
                     {data.studentAchievements && (
                       <div>
                         <p className="font-medium">Achievements:</p>
-                        <p className="text-muted-foreground">{data.studentAchievements}</p>
+                        <p className="text-muted-foreground">
+                          {data.studentAchievements}
+                        </p>
                       </div>
                     )}
                     {data.researchExperience && (
                       <div>
                         <p className="font-medium">Research:</p>
-                        <p className="text-muted-foreground">{data.researchExperience}</p>
+                        <p className="text-muted-foreground">
+                          {data.researchExperience}
+                        </p>
                       </div>
                     )}
                     {data.academicPerformance && (
                       <div>
                         <p className="font-medium">Academic:</p>
-                        <p className="text-muted-foreground">{data.academicPerformance}</p>
+                        <p className="text-muted-foreground">
+                          {data.academicPerformance}
+                        </p>
                       </div>
                     )}
                     {data.personalQualities && (
                       <div>
                         <p className="font-medium">Qualities:</p>
-                        <p className="text-muted-foreground">{data.personalQualities}</p>
+                        <p className="text-muted-foreground">
+                          {data.personalQualities}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -151,8 +179,10 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
 
               {data.customContent && (
                 <div>
-                  <h4 className="font-medium mb-2">Additional Content</h4>
-                  <p className="text-sm text-muted-foreground">{data.customContent}</p>
+                  <h4 className="mb-2 font-medium">Additional Content</h4>
+                  <p className="text-muted-foreground text-sm">
+                    {data.customContent}
+                  </p>
                 </div>
               )}
             </CardContent>

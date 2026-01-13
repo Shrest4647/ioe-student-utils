@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { LoaderIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 interface LetterPreviewProps {
   letterId: string;
@@ -12,11 +11,7 @@ export function LetterPreview({ letterId }: LetterPreviewProps) {
   const [letter, setLetter] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLetter();
-  }, [letterId]);
-
-  const fetchLetter = async () => {
+  const fetchLetter = useCallback(async () => {
     try {
       const response = await fetch(`/api/recommendations/letters/${letterId}`);
       if (!response.ok) throw new Error("Failed to fetch letter");
@@ -27,7 +22,11 @@ export function LetterPreview({ letterId }: LetterPreviewProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [letterId]);
+
+  useEffect(() => {
+    fetchLetter();
+  }, [fetchLetter]);
 
   if (isLoading) {
     return (
@@ -42,7 +41,7 @@ export function LetterPreview({ letterId }: LetterPreviewProps) {
   }
 
   return (
-    <div className="border rounded-lg p-8 bg-white">
+    <div className="rounded-lg border bg-white p-8">
       <div className="prose max-w-none">
         <pre className="whitespace-pre-wrap font-serif text-base leading-relaxed">
           {letter.finalContent}

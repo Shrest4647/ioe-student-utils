@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { UserIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserIcon, TrophyIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface Step4StudentInfoProps {
   data: {
@@ -20,11 +20,7 @@ interface Step4StudentInfoProps {
 export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
   const [profileData, setProfileData] = useState<any>(null);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     try {
       const response = await fetch("/api/recommendations/profile");
       if (response.ok) {
@@ -34,9 +30,13 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
-  };
+  }, []);
 
-  const useProfileData = (field: string, profileField: string) => {
+  useEffect(() => {
+    fetchProfileData();
+  }, [fetchProfileData]);
+
+  const fillFromProfile = (field: string, profileField: string) => {
     if (profileData?.[profileField] && !data[field as keyof typeof data]) {
       updateData(field, profileData[profileField]);
     }
@@ -53,15 +53,17 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {profileData && (
-            <div className="mb-4 p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-2">
+            <div className="mb-4 rounded-lg bg-muted p-3">
+              <p className="mb-2 font-medium text-sm">
                 Profile data available for pre-filling
               </p>
               <div className="flex flex-wrap gap-2">
                 {profileData.achievements && (
                   <Badge variant="secondary">Achievements</Badge>
                 )}
-                {profileData.skills && <Badge variant="secondary">Skills</Badge>}
+                {profileData.skills && (
+                  <Badge variant="secondary">Skills</Badge>
+                )}
                 {profileData.projects && (
                   <Badge variant="secondary">Projects</Badge>
                 )}
@@ -78,8 +80,10 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               {profileData?.achievements && (
                 <button
                   type="button"
-                  onClick={() => useProfileData("studentAchievements", "achievements")}
-                  className="text-xs text-primary hover:underline"
+                  onClick={() =>
+                    fillFromProfile("studentAchievements", "achievements")
+                  }
+                  className="text-primary text-xs hover:underline"
                 >
                   Use profile data
                 </button>
@@ -89,7 +93,9 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               id="studentAchievements"
               placeholder="e.g., Dean's list for 6 semesters, Best project award, Hackathon winner"
               value={data.studentAchievements || ""}
-              onChange={(e) => updateData("studentAchievements", e.target.value)}
+              onChange={(e) =>
+                updateData("studentAchievements", e.target.value)
+              }
               rows={3}
             />
           </div>
@@ -100,8 +106,10 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               {profileData?.projects && (
                 <button
                   type="button"
-                  onClick={() => useProfileData("researchExperience", "projects")}
-                  className="text-xs text-primary hover:underline"
+                  onClick={() =>
+                    fillFromProfile("researchExperience", "projects")
+                  }
+                  className="text-primary text-xs hover:underline"
                 >
                   Use profile data
                 </button>
@@ -122,8 +130,8 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               {profileData?.gpa && (
                 <button
                   type="button"
-                  onClick={() => useProfileData("academicPerformance", "gpa")}
-                  className="text-xs text-primary hover:underline"
+                  onClick={() => fillFromProfile("academicPerformance", "gpa")}
+                  className="text-primary text-xs hover:underline"
                 >
                   Use profile data
                 </button>
@@ -133,7 +141,9 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               id="academicPerformance"
               placeholder="e.g., GPA 3.8/4.0, consistently in top 5% of class, strong foundation in algorithms and data structures"
               value={data.academicPerformance || ""}
-              onChange={(e) => updateData("academicPerformance", e.target.value)}
+              onChange={(e) =>
+                updateData("academicPerformance", e.target.value)
+              }
               rows={3}
             />
           </div>
@@ -144,8 +154,8 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
               {profileData?.skills && (
                 <button
                   type="button"
-                  onClick={() => useProfileData("personalQualities", "skills")}
-                  className="text-xs text-primary hover:underline"
+                  onClick={() => fillFromProfile("personalQualities", "skills")}
+                  className="text-primary text-xs hover:underline"
                 >
                   Use profile data
                 </button>
@@ -162,9 +172,9 @@ export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
         </CardContent>
       </Card>
 
-      <p className="text-sm text-muted-foreground">
-        These details help personalize your recommendation letter. All fields are
-        optional - you can also customize these in the final review step.
+      <p className="text-muted-foreground text-sm">
+        These details help personalize your recommendation letter. All fields
+        are optional - you can also customize these in the final review step.
       </p>
     </div>
   );

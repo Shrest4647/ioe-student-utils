@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { BriefcaseIcon, GraduationCapIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,8 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -26,9 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { SearchIcon, GraduationCapIcon, BriefcaseIcon } from "lucide-react";
-import { toast } from "sonner";
 
 interface Template {
   id: string;
@@ -42,13 +42,11 @@ interface Template {
 interface CreateLetterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLetterCreated?: () => void;
 }
 
 export function CreateLetterDialog({
   open,
   onOpenChange,
-  onLetterCreated,
 }: CreateLetterDialogProps) {
   const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -58,13 +56,7 @@ export function CreateLetterDialog({
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [programTypeFilter, setProgramTypeFilter] = useState<string>("all");
 
-  useEffect(() => {
-    if (open) {
-      fetchTemplates();
-    }
-  }, [open, categoryFilter, programTypeFilter]);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -90,13 +82,21 @@ export function CreateLetterDialog({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [categoryFilter, programTypeFilter]);
+
+  useEffect(() => {
+    if (open) {
+      fetchTemplates();
+    }
+  }, [open, fetchTemplates]);
 
   const handleSelectTemplate = () => {
     if (!selectedTemplate) return;
 
     // Navigate to the wizard page with the selected template
-    router.push(`/dashboard/recommendations/new?templateId=${selectedTemplate}`);
+    router.push(
+      `/dashboard/recommendations/new?templateId=${selectedTemplate}`,
+    );
     onOpenChange(false);
   };
 
@@ -137,7 +137,7 @@ export function CreateLetterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Create New Recommendation Letter</DialogTitle>
           <DialogDescription>
@@ -145,11 +145,11 @@ export function CreateLetterDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto">
           {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search templates..."
                 value={searchQuery}
@@ -167,10 +167,15 @@ export function CreateLetterDialog({
                 <SelectItem value="academic">Academic</SelectItem>
                 <SelectItem value="industry">Industry</SelectItem>
                 <SelectItem value="general">General</SelectItem>
-                <SelectItem value="country_specific">Country-Specific</SelectItem>
+                <SelectItem value="country_specific">
+                  Country-Specific
+                </SelectItem>
               </SelectContent>
             </Select>
-            <Select value={programTypeFilter} onValueChange={setProgramTypeFilter}>
+            <Select
+              value={programTypeFilter}
+              onValueChange={setProgramTypeFilter}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Program Type" />
               </SelectTrigger>
@@ -201,7 +206,7 @@ export function CreateLetterDialog({
               ))}
             </div>
           ) : filteredTemplates.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="py-8 text-center">
               <p className="text-muted-foreground">No templates found</p>
             </div>
           ) : (
@@ -219,7 +224,7 @@ export function CreateLetterDialog({
                   <CardHeader className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="mb-1 flex items-center gap-2">
                           {getCategoryIcon(template.category)}
                           <CardTitle className="text-base">
                             {template.name}
@@ -252,7 +257,7 @@ export function CreateLetterDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t pt-4 flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

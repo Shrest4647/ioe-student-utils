@@ -1,18 +1,13 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
+import { recommendationLetter, studentProfileData } from "@/server/db/schema";
 import {
-  recommendationTemplate,
-  recommendationLetter,
-  studentProfileData,
-} from "@/server/db/schema";
-import { authorizationPlugin } from "../plugins/authorization";
-import {
-  replaceTemplateVariables,
   generateDefaultContext,
   preFillWithProfileData,
-} from "../lib/template-engine";
-import type { CreateLetterRequest, UpdateLetterRequest } from "@/server/db/types/recommendation";
+  replaceTemplateVariables,
+} from "@/server/lib/template-engine";
+import { authorizationPlugin } from "../plugins/authorization";
 
 export const recommendationRoutes = new Elysia({
   prefix: "/recommendations",
@@ -24,28 +19,28 @@ export const recommendationRoutes = new Elysia({
 
   .get(
     "/templates",
-    async ({ user, query }) => {
+    async ({ query }) => {
       const { category, targetProgramType, targetRegion, isActive } = query;
 
       const conditions = [];
 
       if (category) {
-        conditions.push(eq(recommendationTemplate.category, category));
+        conditions.push({ category: category });
       }
       if (targetProgramType) {
-        conditions.push(
-          eq(recommendationTemplate.targetProgramType, targetProgramType),
-        );
+        conditions.push({ targetProgramType: targetProgramType });
       }
       if (targetRegion) {
-        conditions.push(eq(recommendationTemplate.targetRegion, targetRegion));
+        conditions.push({ targetRegion: targetRegion });
       }
       if (isActive !== undefined) {
-        conditions.push(eq(recommendationTemplate.isActive, isActive));
+        conditions.push({ isActive: isActive });
       }
 
       const templates = await db.query.recommendationTemplate.findMany({
-        where: conditions.length > 0 ? and(...conditions) : undefined,
+        where: {
+          AND: [...conditions],
+        },
         orderBy: { createdAt: "desc" },
       });
 
@@ -96,7 +91,7 @@ export const recommendationRoutes = new Elysia({
     "/templates/:id",
     async ({ params, set }) => {
       const template = await db.query.recommendationTemplate.findFirst({
-        where: eq(recommendationTemplate.id, params.id),
+        where: { id: params.id },
       });
 
       if (!template) {
@@ -129,17 +124,14 @@ export const recommendationRoutes = new Elysia({
     async ({ user, query }) => {
       const { status, templateId, page = 1, limit = 20 } = query;
 
-      const conditions = [eq(recommendationLetter.studentId, user.id)];
-
-      if (status) {
-        conditions.push(eq(recommendationLetter.status, status));
-      }
-      if (templateId) {
-        conditions.push(eq(recommendationLetter.templateId, templateId));
-      }
-
       const letters = await db.query.recommendationLetter.findMany({
-        where: and(...conditions),
+        where: {
+          AND: [
+            { studentId: user.id },
+            status ? { status } : {},
+            templateId ? { templateId } : {},
+          ],
+        },
         orderBy: { createdAt: "desc" },
         limit,
         offset: (page - 1) * limit,
@@ -180,10 +172,7 @@ export const recommendationRoutes = new Elysia({
     "/letters/:id",
     async ({ user, params, set }) => {
       const letter = await db.query.recommendationLetter.findFirst({
-        where: eq(recommendationLetter.id, params.id),
-        with: {
-          template: true,
-        },
+        where: { id: params.id },
       });
 
       if (!letter) {
@@ -222,7 +211,7 @@ export const recommendationRoutes = new Elysia({
     async ({ user, body, set }) => {
       // 1. Validate template exists
       const template = await db.query.recommendationTemplate.findFirst({
-        where: eq(recommendationTemplate.id, body.templateId),
+        where: { id: body.templateId },
       });
 
       if (!template) {
@@ -235,7 +224,7 @@ export const recommendationRoutes = new Elysia({
 
       // 2. Get user's profile data for smart pre-filling
       const profileData = await db.query.studentProfileData.findFirst({
-        where: eq(studentProfileData.userId, user.id),
+        where: { userId: user.id },
       });
 
       // 3. Build context from form data
@@ -327,10 +316,7 @@ export const recommendationRoutes = new Elysia({
 
       // 9. Fetch and return the created letter
       const letter = await db.query.recommendationLetter.findFirst({
-        where: eq(recommendationLetter.id, id),
-        with: {
-          template: true,
-        },
+        where: { id: id },
       });
 
       return {
@@ -373,7 +359,7 @@ export const recommendationRoutes = new Elysia({
     async ({ user, params, body, set }) => {
       // 1. Check if letter exists and belongs to user
       const existingLetter = await db.query.recommendationLetter.findFirst({
-        where: eq(recommendationLetter.id, params.id),
+        where: { id: params.id },
       });
 
       if (!existingLetter) {
@@ -403,10 +389,7 @@ export const recommendationRoutes = new Elysia({
 
       // 3. Fetch and return the updated letter
       const letter = await db.query.recommendationLetter.findFirst({
-        where: eq(recommendationLetter.id, params.id),
-        with: {
-          template: true,
-        },
+        where: { id: params.id },
       });
 
       return {
@@ -460,7 +443,7 @@ export const recommendationRoutes = new Elysia({
     async ({ user, params, set }) => {
       // 1. Check if letter exists and belongs to user
       const existingLetter = await db.query.recommendationLetter.findFirst({
-        where: eq(recommendationLetter.id, params.id),
+        where: { id: params.id },
       });
 
       if (!existingLetter) {
@@ -506,7 +489,7 @@ export const recommendationRoutes = new Elysia({
     "/profile",
     async ({ user }) => {
       const profile = await db.query.studentProfileData.findFirst({
-        where: eq(studentProfileData.userId, user.id),
+        where: { userId: user.id },
       });
 
       return {
@@ -527,7 +510,7 @@ export const recommendationRoutes = new Elysia({
     "/profile",
     async ({ user, body }) => {
       const existing = await db.query.studentProfileData.findFirst({
-        where: eq(studentProfileData.userId, user.id),
+        where: { userId: user.id },
       });
 
       if (existing) {
@@ -541,7 +524,7 @@ export const recommendationRoutes = new Elysia({
           .where(eq(studentProfileData.id, existing.id));
 
         const profile = await db.query.studentProfileData.findFirst({
-          where: eq(studentProfileData.id, existing.id),
+          where: { id: existing.id },
         });
 
         return {
@@ -559,7 +542,7 @@ export const recommendationRoutes = new Elysia({
         });
 
         const profile = await db.query.studentProfileData.findFirst({
-          where: eq(studentProfileData.id, id),
+          where: { id: id },
         });
 
         return {

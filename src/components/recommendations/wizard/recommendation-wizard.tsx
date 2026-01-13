@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { toast } from "sonner";
 import { Step1TemplateInfo } from "./steps/step-1-template-info";
 import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
 import { Step3TargetInfo } from "./steps/step-3-target-info";
@@ -73,7 +73,7 @@ export function RecommendationWizard() {
     }
   }, [templateId, router]);
 
-  const updateData = (field: keyof WizardData, value: string) => {
+  const updateData = (field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -151,24 +151,23 @@ export function RecommendationWizard() {
   const progress = (currentStep / 6) * 100;
 
   const renderStep = () => {
+    if (!wizardData.templateId) {
+      return null;
+    }
+
     switch (currentStep) {
       case 1:
-        return <Step1TemplateInfo templateId={wizardData.templateId!} />;
+        return <Step1TemplateInfo templateId={wizardData.templateId} />;
       case 2:
         return (
-          <Step2RecommenderInfo
-            data={wizardData}
-            updateData={updateData}
-          />
+          <Step2RecommenderInfo data={wizardData} updateData={updateData} />
         );
       case 3:
         return <Step3TargetInfo data={wizardData} updateData={updateData} />;
       case 4:
         return <Step4StudentInfo data={wizardData} updateData={updateData} />;
       case 5:
-        return (
-          <Step5CustomContent data={wizardData} updateData={updateData} />
-        );
+        return <Step5CustomContent data={wizardData} updateData={updateData} />;
       case 6:
         return (
           <Step6ReviewEdit
@@ -187,7 +186,7 @@ export function RecommendationWizard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="font-bold text-3xl tracking-tight">
           Create Recommendation Letter
         </h1>
         <p className="text-muted-foreground">
@@ -206,7 +205,7 @@ export function RecommendationWizard() {
               </span>
             </div>
             <Progress value={progress} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-muted-foreground text-xs">
               {steps.map((step) => (
                 <span
                   key={step.id}

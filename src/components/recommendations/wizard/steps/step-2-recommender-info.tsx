@@ -1,10 +1,9 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { UserIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserIcon, BuildingIcon, MailIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Step2RecommenderInfoProps {
   data: {
@@ -17,7 +16,10 @@ interface Step2RecommenderInfoProps {
   updateData: (field: string, value: string) => void;
 }
 
-export function Step2RecommenderInfo({ data, updateData }: Step2RecommenderInfoProps) {
+export function Step2RecommenderInfo({
+  data,
+  updateData,
+}: Step2RecommenderInfoProps) {
   return (
     <div className="space-y-6">
       <Card>
@@ -60,7 +62,9 @@ export function Step2RecommenderInfo({ data, updateData }: Step2RecommenderInfoP
               id="recommenderInstitution"
               placeholder="Institute of Engineering, Tribhuvan University"
               value={data.recommenderInstitution || ""}
-              onChange={(e) => updateData("recommenderInstitution", e.target.value)}
+              onChange={(e) =>
+                updateData("recommenderInstitution", e.target.value)
+              }
             />
           </div>
 
@@ -70,7 +74,9 @@ export function Step2RecommenderInfo({ data, updateData }: Step2RecommenderInfoP
               id="recommenderDepartment"
               placeholder="Department of Computer Engineering"
               value={data.recommenderDepartment || ""}
-              onChange={(e) => updateData("recommenderDepartment", e.target.value)}
+              onChange={(e) =>
+                updateData("recommenderDepartment", e.target.value)
+              }
             />
           </div>
 
@@ -87,7 +93,7 @@ export function Step2RecommenderInfo({ data, updateData }: Step2RecommenderInfoP
         </CardContent>
       </Card>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Enter the details of the person who will be recommending you. This
         information will be used in the letter header and signature.
       </p>

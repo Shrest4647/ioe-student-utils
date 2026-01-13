@@ -1,9 +1,10 @@
 "use client";
 
-import { notFound } from "next/navigation";
-import { use } from "react";
 import { ArrowLeftIcon, DownloadIcon, EditIcon } from "lucide-react";
 import Link from "next/link";
+import { use } from "react";
+import { LetterPreview } from "@/components/recommendations/letter-preview";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,8 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LetterPreview } from "@/components/recommendations/letter-preview";
-import { Badge } from "@/components/ui/badge";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -44,12 +43,12 @@ export default function LetterDetailPage({ params }: PageProps) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="font-bold text-3xl tracking-tight">
               PhD Recommendation - Stanford
             </h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex items-center gap-2">
               <Badge variant="outline">Draft</Badge>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Created on Jan 13, 2025
               </p>
             </div>
@@ -91,8 +90,8 @@ export default function LetterDetailPage({ params }: PageProps) {
               <span className="font-medium">Name:</span> Dr. John Smith
             </div>
             <div>
-              <span className="font-medium">Title:</span> Professor of
-              Computer Science
+              <span className="font-medium">Title:</span> Professor of Computer
+              Science
             </div>
             <div>
               <span className="font-medium">Institution:</span> IOE
@@ -102,8 +101,7 @@ export default function LetterDetailPage({ params }: PageProps) {
               Engineering
             </div>
             <div>
-              <span className="font-medium">Email:</span>{" "}
-              john.smith@ioe.edu.np
+              <span className="font-medium">Email:</span> john.smith@ioe.edu.np
             </div>
           </CardContent>
         </Card>

@@ -3,25 +3,25 @@ import { authorizationPlugin } from "./plugins/authorization";
 import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
+import { certificationRoutes } from "./routes/certifications";
 import { collegeRoutes } from "./routes/colleges";
 import { departmentRoutes } from "./routes/departments";
-import { courseRoutes, programRoutes } from "./routes/programs";
-import { ratingRoutes } from "./routes/ratings";
-import { resourceRoutes } from "./routes/resources";
-import { certificationRoutes } from "./routes/certifications";
 import { educationRoutes } from "./routes/education";
 import { languageSkillRoutes } from "./routes/language-skills";
 import { positionRoutes } from "./routes/positions";
 import { profileRoutes } from "./routes/profiles";
+import { courseRoutes, programRoutes } from "./routes/programs";
 import { projectRoutes } from "./routes/projects";
+import { ratingRoutes } from "./routes/ratings";
+import { recommendationRoutes } from "./routes/recommendations";
 import { referenceRoutes } from "./routes/references";
+import { resourceRoutes } from "./routes/resources";
 import { resumeRoutes } from "./routes/resumes";
 import { scholarshipRoutes } from "./routes/scholarships";
 import { skillRoutes } from "./routes/skills";
 import { universityRoutes } from "./routes/universities";
 import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
-import { recommendationRoutes } from "./routes/recommendations";
 
 export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(corsPlugin)

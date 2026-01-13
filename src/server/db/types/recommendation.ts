@@ -5,8 +5,7 @@ import type {
 } from "../schema";
 
 // Template types
-export type RecommendationTemplate =
-  typeof recommendationTemplate.$inferSelect;
+export type RecommendationTemplate = typeof recommendationTemplate.$inferSelect;
 export type NewRecommendationTemplate =
   typeof recommendationTemplate.$inferInsert;
 

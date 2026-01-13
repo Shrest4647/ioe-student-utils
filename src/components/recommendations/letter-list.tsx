@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { format } from "date-fns";
 import {
+  DownloadIcon,
+  EditIcon,
   FileTextIcon,
   MoreVerticalIcon,
   TrashIcon,
-  EditIcon,
-  DownloadIcon,
 } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,14 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -33,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 
 type LetterStatus = "draft" | "completed" | "exported";
 
@@ -53,11 +53,7 @@ export function LetterList() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  useEffect(() => {
-    fetchLetters();
-  }, [statusFilter]);
-
-  const fetchLetters = async () => {
+  const fetchLetters = useCallback(async () => {
     try {
       setIsLoading(true);
       const query = new URLSearchParams();
@@ -79,7 +75,11 @@ export function LetterList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchLetters();
+  }, [fetchLetters]);
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
@@ -134,9 +134,9 @@ export function LetterList() {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <FileTextIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No letters yet</h3>
-          <p className="text-muted-foreground text-center mb-4">
+          <FileTextIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 font-semibold text-lg">No letters yet</h3>
+          <p className="mb-4 text-center text-muted-foreground">
             Create your first recommendation letter to get started
           </p>
           <Link href="/dashboard/recommendations/new">
@@ -167,7 +167,7 @@ export function LetterList() {
       {/* Letters Grid */}
       <div className="grid gap-4">
         {letters.map((letter) => (
-          <Card key={letter.id} className="hover:shadow-md transition-shadow">
+          <Card key={letter.id} className="transition-shadow hover:shadow-md">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">

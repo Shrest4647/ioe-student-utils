@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { educationRecords, resumeProfiles } from "@/server/db/schema";
+import { educationRecords } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const educationRoutes = new Elysia({ prefix: "/education" })
@@ -122,7 +122,9 @@ export const educationRoutes = new Elysia({ prefix: "/education" })
       await db
         .update(educationRecords)
         .set({
-          ...(body.institution !== undefined && { institution: body.institution }),
+          ...(body.institution !== undefined && {
+            institution: body.institution,
+          }),
           ...(body.qualification !== undefined && {
             qualification: body.qualification,
           }),
@@ -136,7 +138,9 @@ export const educationRoutes = new Elysia({ prefix: "/education" })
           }),
           ...(body.grade !== undefined && { grade: body.grade }),
           ...(body.gradeType !== undefined && { gradeType: body.gradeType }),
-          ...(body.description !== undefined && { description: body.description }),
+          ...(body.description !== undefined && {
+            description: body.description,
+          }),
           ...(body.city !== undefined && { city: body.city }),
           ...(body.country !== undefined && { country: body.country }),
           ...(body.referenceLink !== undefined && {
@@ -200,7 +204,9 @@ export const educationRoutes = new Elysia({ prefix: "/education" })
         return { success: false, error: "Education record not found" };
       }
 
-      await db.delete(educationRecords).where(eq(educationRecords.id, params.id));
+      await db
+        .delete(educationRecords)
+        .where(eq(educationRecords.id, params.id));
 
       return {
         success: true,

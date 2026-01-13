@@ -850,17 +850,19 @@ export const recommendationTemplate = pgTable(
       enum: ["research", "academic", "industry", "general", "country_specific"],
     }).notNull(),
     content: text("content").notNull(), // Template with placeholders like {{student_name}}
-    variables: jsonb("variables").$type<
-      Array<{
-        name: string;
-        label: string;
-        type: "text" | "textarea" | "date" | "select" | "multiselect";
-        required: boolean;
-        defaultValue?: string;
-        description?: string;
-        options?: string[];
-      }>
-    >().notNull(),
+    variables: jsonb("variables")
+      .$type<
+        Array<{
+          name: string;
+          label: string;
+          type: "text" | "textarea" | "date" | "select" | "multiselect";
+          required: boolean;
+          defaultValue?: string;
+          description?: string;
+          options?: string[];
+        }>
+      >()
+      .notNull(),
     targetProgramType: text("target_program_type", {
       enum: ["phd", "masters", "job", "funding", "any"],
     }).notNull(),
@@ -875,8 +877,12 @@ export const recommendationTemplate = pgTable(
     updatedById: text("updated_by_id").references(() => user.id, {
       onDelete: "set null",
     }),
-    createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
-    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
   },
   (t) => [
     index("idx_recommendation_template_category").on(t.category),
@@ -935,10 +941,16 @@ export const recommendationLetter = pgTable(
 
     status: text("status", {
       enum: ["draft", "completed", "exported"],
-    }).default("draft").notNull(),
+    })
+      .default("draft")
+      .notNull(),
 
-    createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
-    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
   },
   (t) => [
     index("idx_recommendation_letter_student_id").on(t.studentId),
@@ -976,8 +988,12 @@ export const studentProfileData = pgTable(
     // Goals
     careerGoals: text("career_goals"),
 
-    createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
-    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
   },
   (t) => [index("idx_student_profile_data_user_id").on(t.userId)],
 );

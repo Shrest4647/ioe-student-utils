@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { positionsOfResponsibilityRecords, resumeProfiles } from "@/server/db/schema";
+import { positionsOfResponsibilityRecords } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const positionRoutes = new Elysia({ prefix: "/positions" })
@@ -18,10 +18,11 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         return { success: false, error: "Profile not found" };
       }
 
-      const positions = await db.query.positionsOfResponsibilityRecords.findMany({
-        where: { profileId: profile.id },
-        orderBy: { startDate: "desc" },
-      });
+      const positions =
+        await db.query.positionsOfResponsibilityRecords.findMany({
+          where: { profileId: profile.id },
+          orderBy: { startDate: "desc" },
+        });
 
       return {
         success: true,
@@ -60,9 +61,10 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         referenceLink: body.referenceLink ?? null,
       });
 
-      const position = await db.query.positionsOfResponsibilityRecords.findFirst({
-        where: { id },
-      });
+      const position =
+        await db.query.positionsOfResponsibilityRecords.findFirst({
+          where: { id },
+        });
 
       return {
         success: true,
@@ -96,9 +98,10 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         return { success: false, error: "Profile not found" };
       }
 
-      const existing = await db.query.positionsOfResponsibilityRecords.findFirst({
-        where: { id: params.id },
-      });
+      const existing =
+        await db.query.positionsOfResponsibilityRecords.findFirst({
+          where: { id: params.id },
+        });
 
       if (!existing || existing.profileId !== profile.id) {
         set.status = 404;
@@ -109,7 +112,9 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         .update(positionsOfResponsibilityRecords)
         .set({
           ...(body.name !== undefined && { name: body.name }),
-          ...(body.description !== undefined && { description: body.description }),
+          ...(body.description !== undefined && {
+            description: body.description,
+          }),
           ...(body.startDate !== undefined && { startDate: body.startDate }),
           ...(body.endDate !== undefined && { endDate: body.endDate }),
           ...(body.referenceLink !== undefined && {
@@ -118,9 +123,11 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         })
         .where(eq(positionsOfResponsibilityRecords.id, params.id));
 
-      const updated = await db.query.positionsOfResponsibilityRecords.findFirst({
-        where: { id: params.id },
-      });
+      const updated = await db.query.positionsOfResponsibilityRecords.findFirst(
+        {
+          where: { id: params.id },
+        },
+      );
 
       return {
         success: true,
@@ -157,9 +164,10 @@ export const positionRoutes = new Elysia({ prefix: "/positions" })
         return { success: false, error: "Profile not found" };
       }
 
-      const existing = await db.query.positionsOfResponsibilityRecords.findFirst({
-        where: { id: params.id },
-      });
+      const existing =
+        await db.query.positionsOfResponsibilityRecords.findFirst({
+          where: { id: params.id },
+        });
 
       if (!existing || existing.profileId !== profile.id) {
         set.status = 404;

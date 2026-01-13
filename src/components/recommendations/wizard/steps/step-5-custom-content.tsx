@@ -1,9 +1,9 @@
 "use client";
 
+import { FileTextIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileTextIcon } from "lucide-react";
 
 interface Step5CustomContentProps {
   data: {
@@ -12,7 +12,10 @@ interface Step5CustomContentProps {
   updateData: (field: string, value: string) => void;
 }
 
-export function Step5CustomContent({ data, updateData }: Step5CustomContentProps) {
+export function Step5CustomContent({
+  data,
+  updateData,
+}: Step5CustomContentProps) {
   return (
     <div className="space-y-6">
       <Card>
@@ -37,9 +40,9 @@ export function Step5CustomContent({ data, updateData }: Step5CustomContentProps
             />
           </div>
 
-          <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
+          <div className="space-y-2 rounded-lg bg-muted p-4 text-sm">
             <p className="font-medium">Tips for custom content:</p>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+            <ul className="list-inside list-disc space-y-1 text-muted-foreground">
               <li>Include specific examples of your work or achievements</li>
               <li>Mention challenges you overcame together</li>
               <li>Highlight moments where you demonstrated leadership</li>
@@ -50,7 +53,7 @@ export function Step5CustomContent({ data, updateData }: Step5CustomContentProps
         </CardContent>
       </Card>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         This field is completely optional. Use it to add any additional context
         or stories that you want your recommender to highlight in the letter.
       </p>
