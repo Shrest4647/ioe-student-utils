@@ -1,8 +1,9 @@
 "use client";
 
-import { FileText, Mail, MapPin, Phone, Globe } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { FileText, Globe, Mail, MapPin, Phone } from "lucide-react";
+import Image from "next/image";
 import { PDFDownloadButton } from "@/components/resume-builder/shared/pdf-download-button";
+import { Card } from "@/components/ui/card";
 
 interface ResumePreviewProps {
   resumeData?: {
@@ -112,10 +113,7 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h1
-                  className="mb-2 font-bold"
-                  style={{ fontSize: "24pt" }}
-                >
+                <h1 className="mb-2 font-bold" style={{ fontSize: "24pt" }}>
                   {profile?.firstName} {profile?.lastName}
                 </h1>
 
@@ -182,7 +180,9 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
               {/* Photo */}
               {profile?.photoUrl && (
                 <div className="ml-4">
-                  <img
+                  <Image
+                    width={200}
+                    height={200}
                     src={profile.photoUrl}
                     alt="Profile"
                     className="h-24 w-24 rounded-lg border-2 border-white object-cover"
@@ -200,111 +200,159 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
           </div>
 
           {/* Work Experience */}
-          {resumeData?.workExperiences && resumeData.workExperiences.length > 0 && (
-            <div className="mb-4">
-              <div
-                className="mb-3 rounded px-3 py-2 font-semibold text-white"
-                style={{ backgroundColor: "#004494", fontSize: "12pt" }}
-              >
-                Work Experience
-              </div>
-              <div className="space-y-3">
-                {resumeData.workExperiences.map((exp, index) => (
-                  <div key={index} className="border-l-2 pl-3" style={{ borderColor: "#004494" }}>
-                    <div className="mb-1 flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold">{exp.jobTitle || "Position"}</h3>
-                        <p className="text-sm">{exp.employer || "Employer"}</p>
+          {resumeData?.workExperiences &&
+            resumeData.workExperiences.length > 0 && (
+              <div className="mb-4">
+                <div
+                  className="mb-3 rounded px-3 py-2 font-semibold text-white"
+                  style={{ backgroundColor: "#004494", fontSize: "12pt" }}
+                >
+                  Work Experience
+                </div>
+                <div className="space-y-3">
+                  {resumeData.workExperiences.map((exp, index) => (
+                    <div
+                      key={index}
+                      className="border-l-2 pl-3"
+                      style={{ borderColor: "#004494" }}
+                    >
+                      <div className="mb-1 flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold">
+                            {exp.jobTitle || "Position"}
+                          </h3>
+                          <p className="text-sm">
+                            {exp.employer || "Employer"}
+                          </p>
+                        </div>
+                        <span className="whitespace-nowrap text-muted-foreground text-sm">
+                          {formatDate(exp.startDate)} -{" "}
+                          {formatDate(exp.endDate)}
+                        </span>
                       </div>
-                      <span className="whitespace-nowrap text-sm text-muted-foreground">
-                        {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
-                      </span>
+                      {(exp.city || exp.country) && (
+                        <p className="mb-1 text-muted-foreground text-sm">
+                          {[exp.city, exp.country].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                      {exp.description && (
+                        <p className="whitespace-pre-line text-sm">
+                          {exp.description}
+                        </p>
+                      )}
                     </div>
-                    {(exp.city || exp.country) && (
-                      <p className="mb-1 text-sm text-muted-foreground">
-                        {[exp.city, exp.country].filter(Boolean).join(", ")}
-                      </p>
-                    )}
-                    {exp.description && (
-                      <p className="text-sm whitespace-pre-line">{exp.description}</p>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Education */}
-          {resumeData?.educationRecords && resumeData.educationRecords.length > 0 && (
-            <div className="mb-4">
-              <div
-                className="mb-3 rounded px-3 py-2 font-semibold text-white"
-                style={{ backgroundColor: "#004494", fontSize: "12pt" }}
-              >
-                Education and Training
-              </div>
-              <div className="space-y-3">
-                {resumeData.educationRecords.map((edu, index) => (
-                  <div key={index} className="border-l-2 pl-3" style={{ borderColor: "#004494" }}>
-                    <div className="mb-1 flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold">{edu.qualification || "Qualification"}</h3>
-                        <p className="text-sm">{edu.institution || "Institution"}</p>
+          {resumeData?.educationRecords &&
+            resumeData.educationRecords.length > 0 && (
+              <div className="mb-4">
+                <div
+                  className="mb-3 rounded px-3 py-2 font-semibold text-white"
+                  style={{ backgroundColor: "#004494", fontSize: "12pt" }}
+                >
+                  Education and Training
+                </div>
+                <div className="space-y-3">
+                  {resumeData.educationRecords.map((edu, index) => (
+                    <div
+                      key={index}
+                      className="border-l-2 pl-3"
+                      style={{ borderColor: "#004494" }}
+                    >
+                      <div className="mb-1 flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold">
+                            {edu.qualification || "Qualification"}
+                          </h3>
+                          <p className="text-sm">
+                            {edu.institution || "Institution"}
+                          </p>
+                        </div>
+                        <span className="whitespace-nowrap text-muted-foreground text-sm">
+                          {formatDate(edu.startDate)} -{" "}
+                          {formatDate(edu.endDate)}
+                        </span>
                       </div>
-                      <span className="whitespace-nowrap text-sm text-muted-foreground">
-                        {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
-                      </span>
+                      {(edu.grade || edu.gradeType) && (
+                        <p className="text-muted-foreground text-sm">
+                          Grade: {edu.grade}
+                          {edu.gradeType && ` (${edu.gradeType})`}
+                        </p>
+                      )}
+                      {edu.description && (
+                        <p className="whitespace-pre-line text-sm">
+                          {edu.description}
+                        </p>
+                      )}
                     </div>
-                    {(edu.grade || edu.gradeType) && (
-                      <p className="text-sm text-muted-foreground">
-                        Grade: {edu.grade}
-                        {edu.gradeType && ` (${edu.gradeType})`}
-                      </p>
-                    )}
-                    {edu.description && (
-                      <p className="text-sm whitespace-pre-line">{edu.description}</p>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Language Skills */}
-          {resumeData?.languageSkills && resumeData.languageSkills.length > 0 && (
-            <div className="mb-4">
-              <div
-                className="mb-3 rounded px-3 py-2 font-semibold text-white"
-                style={{ backgroundColor: "#004494", fontSize: "12pt" }}
-              >
-                Language Skills
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b" style={{ borderColor: "#004494" }}>
-                      <th className="px-2 py-1 text-left font-semibold">Language</th>
-                      <th className="px-2 py-1 text-left font-semibold">Listening</th>
-                      <th className="px-2 py-1 text-left font-semibold">Reading</th>
-                      <th className="px-2 py-1 text-left font-semibold">Speaking</th>
-                      <th className="px-2 py-1 text-left font-semibold">Writing</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {resumeData.languageSkills.map((lang, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="px-2 py-1 font-medium">{lang.language}</td>
-                        <td className="px-2 py-1">{getCefrLabel(lang.listening)}</td>
-                        <td className="px-2 py-1">{getCefrLabel(lang.reading)}</td>
-                        <td className="px-2 py-1">{getCefrLabel(lang.speaking)}</td>
-                        <td className="px-2 py-1">{getCefrLabel(lang.writing)}</td>
+          {resumeData?.languageSkills &&
+            resumeData.languageSkills.length > 0 && (
+              <div className="mb-4">
+                <div
+                  className="mb-3 rounded px-3 py-2 font-semibold text-white"
+                  style={{ backgroundColor: "#004494", fontSize: "12pt" }}
+                >
+                  Language Skills
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr
+                        className="border-b"
+                        style={{ borderColor: "#004494" }}
+                      >
+                        <th className="px-2 py-1 text-left font-semibold">
+                          Language
+                        </th>
+                        <th className="px-2 py-1 text-left font-semibold">
+                          Listening
+                        </th>
+                        <th className="px-2 py-1 text-left font-semibold">
+                          Reading
+                        </th>
+                        <th className="px-2 py-1 text-left font-semibold">
+                          Speaking
+                        </th>
+                        <th className="px-2 py-1 text-left font-semibold">
+                          Writing
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {resumeData.languageSkills.map((lang, index) => (
+                        <tr key={index} className="border-gray-200 border-b">
+                          <td className="px-2 py-1 font-medium">
+                            {lang.language}
+                          </td>
+                          <td className="px-2 py-1">
+                            {getCefrLabel(lang.listening)}
+                          </td>
+                          <td className="px-2 py-1">
+                            {getCefrLabel(lang.reading)}
+                          </td>
+                          <td className="px-2 py-1">
+                            {getCefrLabel(lang.speaking)}
+                          </td>
+                          <td className="px-2 py-1">
+                            {getCefrLabel(lang.writing)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Skills */}
           {resumeData?.userSkills && resumeData.userSkills.length > 0 && (
@@ -318,7 +366,10 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
               <div className="space-y-2">
                 {resumeData.userSkills.map((skillGroup, index) => (
                   <div key={index}>
-                    <h4 className="mb-1 font-semibold text-sm" style={{ color: "#004494" }}>
+                    <h4
+                      className="mb-1 font-semibold text-sm"
+                      style={{ color: "#004494" }}
+                    >
                       {skillGroup.category}
                     </h4>
                     <div className="flex flex-wrap gap-1">
@@ -334,7 +385,9 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
                         >
                           {skill.name}
                           {skill.proficiency && (
-                            <span className="ml-1 opacity-70">({skill.proficiency})</span>
+                            <span className="ml-1 opacity-70">
+                              ({skill.proficiency})
+                            </span>
                           )}
                         </span>
                       ))}
@@ -351,7 +404,9 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
               <div className="text-center">
                 <FileText className="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p>No profile data yet.</p>
-                <p className="text-sm">Complete your profile to see the preview.</p>
+                <p className="text-sm">
+                  Complete your profile to see the preview.
+                </p>
               </div>
             </div>
           )}

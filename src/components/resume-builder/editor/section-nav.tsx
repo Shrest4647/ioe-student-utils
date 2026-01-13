@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Circle, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ChevronRight, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -56,9 +56,29 @@ export function SectionNav({
 }
 
 export const DEFAULT_SECTIONS: Section[] = [
-  { id: "personal-info", label: "Personal Information", isCompleted: false, isRequired: true },
-  { id: "work-experience", label: "Work Experience", isCompleted: false, isRequired: false },
-  { id: "education", label: "Education", isCompleted: false, isRequired: false },
-  { id: "language-skills", label: "Language Skills", isCompleted: false, isRequired: false },
+  {
+    id: "personal-info",
+    label: "Personal Information",
+    isCompleted: false,
+    isRequired: true,
+  },
+  {
+    id: "work-experience",
+    label: "Work Experience",
+    isCompleted: false,
+    isRequired: false,
+  },
+  {
+    id: "education",
+    label: "Education",
+    isCompleted: false,
+    isRequired: false,
+  },
+  {
+    id: "language-skills",
+    label: "Language Skills",
+    isCompleted: false,
+    isRequired: false,
+  },
   { id: "skills", label: "Skills", isCompleted: false, isRequired: false },
 ];

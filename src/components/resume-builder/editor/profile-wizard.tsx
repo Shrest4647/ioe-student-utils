@@ -54,10 +54,9 @@ const STEPS: Step[] = [
   },
 ];
 
-export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
+export function ProfileWizard({ onComplete }: ProfileWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [profileData, setProfileData] = useState(initialData);
 
   const handleStepChange = (stepIndex: number) => {
     setCurrentStep(stepIndex);

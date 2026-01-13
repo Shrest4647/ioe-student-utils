@@ -1,23 +1,29 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import {
+  DEFAULT_SECTION_CONFIGS,
+  type SectionConfig,
+  SectionSelector,
+} from "@/components/resume-builder/shared/section-selector";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionSelector, DEFAULT_SECTION_CONFIGS, SectionConfig } from "@/components/resume-builder/shared/section-selector";
 import { apiClient } from "@/lib/eden";
 
 export default function CreateResumePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
+  const [_hasProfile, setHasProfile] = useState(false);
   const [resumeName, setResumeName] = useState("");
-  const [sections, setSections] = useState<SectionConfig[]>(DEFAULT_SECTION_CONFIGS);
+  const [sections, setSections] = useState<SectionConfig[]>(
+    DEFAULT_SECTION_CONFIGS,
+  );
 
   const checkProfile = useCallback(async () => {
     setIsLoading(true);
@@ -94,11 +100,14 @@ export default function CreateResumePage() {
   }
 
   return (
-    <div className="fade-in container mx-auto max-w-3xl p-4 md:p-8 animate-in duration-500">
+    <div className="fade-in container mx-auto max-w-3xl animate-in p-4 duration-500 md:p-8">
       <div className="mb-8">
-        <h1 className="mb-2 font-bold text-3xl tracking-tight">Create New Resume</h1>
+        <h1 className="mb-2 font-bold text-3xl tracking-tight">
+          Create New Resume
+        </h1>
         <p className="text-muted-foreground">
-          Create a new resume from your profile data. You can customize which sections to include.
+          Create a new resume from your profile data. You can customize which
+          sections to include.
         </p>
       </div>
 

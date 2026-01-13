@@ -133,20 +133,20 @@
   .form-panel,
   button,
   .no-print {
-    display: none !important;
+    display: none;
   }
 
   /* Show only preview */
   .preview-panel {
-    width: 100% !important;
-    max-width: 100% !important;
-    position: static !important;
+    width: 100%;
+    max-width: 100%;
+    position: static;
   }
 
   /* Resume preview styling */
   .resume-preview > div {
-    box-shadow: none !important;
-    border: none !important;
+    box-shadow: none;
+    border: none;
   }
 
   /* Page setup */
@@ -162,7 +162,7 @@
 
   /* Hide backgrounds but keep colors for headings */
   * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

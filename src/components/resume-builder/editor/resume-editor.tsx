@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { SectionNav, DEFAULT_SECTIONS, Section } from "@/components/resume-builder/editor/section-nav";
-import { ResumePreview } from "@/components/resume-builder/preview/resume-preview";
-import { PersonalInfoForm } from "@/components/resume-builder/forms/personal-info-form";
-import { WorkExperienceForm } from "@/components/resume-builder/forms/work-experience-form";
+import {
+  DEFAULT_SECTIONS,
+  type Section,
+  SectionNav,
+} from "@/components/resume-builder/editor/section-nav";
 import { EducationForm } from "@/components/resume-builder/forms/education-form";
 import { LanguageSkillsForm } from "@/components/resume-builder/forms/language-skills-form";
+import { PersonalInfoForm } from "@/components/resume-builder/forms/personal-info-form";
 import { SkillsForm } from "@/components/resume-builder/forms/skills-form";
+import { WorkExperienceForm } from "@/components/resume-builder/forms/work-experience-form";
+import { ResumePreview } from "@/components/resume-builder/preview/resume-preview";
+import { Card } from "@/components/ui/card";
 
 interface ResumeEditorProps {
   resumeId: string;
@@ -16,17 +20,12 @@ interface ResumeEditorProps {
   onSave?: () => void;
 }
 
-export function ResumeEditor({ resumeId, initialData, onSave }: ResumeEditorProps) {
+export function ResumeEditor({ initialData, onSave }: ResumeEditorProps) {
   const [activeSection, setActiveSection] = useState("personal-info");
-  const [sections, setSections] = useState<Section[]>(DEFAULT_SECTIONS);
+  const [sections] = useState<Section[]>(DEFAULT_SECTIONS);
 
   const handleSectionChange = (sectionId: string) => {
     setActiveSection(sectionId);
-  };
-
-  const handleDownloadPDF = () => {
-    // TODO: Implement PDF download
-    console.log("Download PDF clicked");
   };
 
   const renderActiveSection = () => {
@@ -94,9 +93,7 @@ export function ResumeEditor({ resumeId, initialData, onSave }: ResumeEditorProp
 
       {/* Middle Column - Editor */}
       <div className="lg:col-span-2">
-        <div className="space-y-6">
-          {renderActiveSection()}
-        </div>
+        <div className="space-y-6">{renderActiveSection()}</div>
       </div>
 
       {/* Right Column - Preview */}

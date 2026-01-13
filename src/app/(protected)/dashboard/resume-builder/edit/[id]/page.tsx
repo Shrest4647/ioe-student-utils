@@ -1,11 +1,11 @@
 "use client";
 
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ResumeEditor } from "@/components/resume-builder/editor/resume-editor";
+import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/eden";
 
 export default function EditResumePage() {
@@ -48,14 +48,16 @@ export default function EditResumePage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-          <p className="mt-4 text-muted-foreground text-sm">Loading resume...</p>
+          <p className="mt-4 text-muted-foreground text-sm">
+            Loading resume...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fade-in container mx-auto max-w-7xl p-4 md:p-8 animate-in duration-500">
+    <div className="fade-in container mx-auto max-w-7xl animate-in p-4 duration-500 md:p-8">
       <div className="mb-6 flex items-center gap-4">
         <Button
           variant="ghost"
@@ -65,7 +67,9 @@ export default function EditResumePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="font-bold text-3xl tracking-tight">{resumeName || "Edit Resume"}</h1>
+          <h1 className="font-bold text-3xl tracking-tight">
+            {resumeName || "Edit Resume"}
+          </h1>
           <p className="text-muted-foreground text-sm">
             Customize your resume sections and preview in real-time
           </p>

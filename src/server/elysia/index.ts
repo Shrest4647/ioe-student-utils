@@ -49,6 +49,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(programRoutes)
   .use(courseRoutes)
   .use(recommendationRoutes)
+  .use(gpaConverterRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],

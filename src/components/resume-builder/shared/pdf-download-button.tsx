@@ -1,11 +1,11 @@
 "use client";
 
-import { Download, FileText, Loader2 } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
+import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { pdf } from "@react-pdf/renderer";
 import { ResumePDF } from "@/components/resume-builder/pdf/resume-pdf";
+import { Button } from "@/components/ui/button";
 
 interface PDFDownloadButtonProps {
   resumeData?: any;

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  Image,
-  Font,
-  StyleSheet,
-  Link,
-} from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 interface ResumePDFProps {
   data?: {
@@ -212,14 +203,10 @@ export function ResumePDF({ data }: ResumePDFProps) {
           </Text>
 
           {profile?.email && (
-            <Text style={styles.headerContact}>
-              Email: {profile.email}
-            </Text>
+            <Text style={styles.headerContact}>Email: {profile.email}</Text>
           )}
           {profile?.phone && (
-            <Text style={styles.headerContact}>
-              Phone: {profile.phone}
-            </Text>
+            <Text style={styles.headerContact}>Phone: {profile.phone}</Text>
           )}
           {profile?.address && (
             <Text style={styles.headerContact}>

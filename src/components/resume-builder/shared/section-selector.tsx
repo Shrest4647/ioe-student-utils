@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 export interface SectionConfig {
   id: string;
@@ -19,19 +19,22 @@ interface SectionSelectorProps {
   onSectionsChange: (sections: SectionConfig[]) => void;
 }
 
-export function SectionSelector({ sections, onSectionsChange }: SectionSelectorProps) {
+export function SectionSelector({
+  sections,
+  onSectionsChange,
+}: SectionSelectorProps) {
   const [allSelected, setAllSelected] = useState(false);
 
   const handleToggle = (sectionId: string) => {
     const updated = sections.map((s) =>
-      s.id === sectionId && !s.required ? { ...s, checked: !s.checked } : s
+      s.id === sectionId && !s.required ? { ...s, checked: !s.checked } : s,
     );
     onSectionsChange(updated);
   };
 
   const handleSelectAll = () => {
     const updated = sections.map((s) =>
-      s.required ? s : { ...s, checked: !allSelected }
+      s.required ? s : { ...s, checked: !allSelected },
     );
     onSectionsChange(updated);
     setAllSelected(!allSelected);
@@ -39,9 +42,19 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
 
   const groupedSections = {
     required: sections.filter((s) => s.required),
-    core: sections.filter((s) => !s.required && ["work-experience", "education"].includes(s.id)),
-    skills: sections.filter((s) => !s.required && ["language-skills", "skills"].includes(s.id)),
-    optional: sections.filter((s) => !s.required && !["work-experience", "education", "language-skills", "skills"].includes(s.id)),
+    core: sections.filter(
+      (s) => !s.required && ["work-experience", "education"].includes(s.id),
+    ),
+    skills: sections.filter(
+      (s) => !s.required && ["language-skills", "skills"].includes(s.id),
+    ),
+    optional: sections.filter(
+      (s) =>
+        !s.required &&
+        !["work-experience", "education", "language-skills", "skills"].includes(
+          s.id,
+        ),
+    ),
   };
 
   const optionalCount = sections.filter((s) => !s.required).length;
@@ -52,12 +65,18 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Select Resume Sections</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={handleSelectAll}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSelectAll}
+          >
             {allSelected ? "Deselect All" : "Select All"}
           </Button>
         </div>
         <p className="text-muted-foreground text-sm">
-          Choose which sections to include in your resume ({selectedCount} of {optionalCount} optional sections selected)
+          Choose which sections to include in your resume ({selectedCount} of{" "}
+          {optionalCount} optional sections selected)
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -66,17 +85,21 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
           <div className="space-y-3">
             <h3 className="font-semibold text-sm">Required</h3>
             {groupedSections.required.map((section) => (
-              <div key={section.id} className="flex items-start space-x-3 opacity-60">
-                <Checkbox
-                  id={section.id}
-                  checked={section.checked}
-                  disabled
-                />
+              <div
+                key={section.id}
+                className="flex items-start space-x-3 opacity-60"
+              >
+                <Checkbox id={section.id} checked={section.checked} disabled />
                 <div className="flex-1">
-                  <Label htmlFor={section.id} className="cursor-pointer font-medium">
+                  <Label
+                    htmlFor={section.id}
+                    className="cursor-pointer font-medium"
+                  >
                     {section.label}
                   </Label>
-                  <p className="text-muted-foreground text-sm">{section.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {section.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -95,10 +118,15 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
                   onCheckedChange={() => handleToggle(section.id)}
                 />
                 <div className="flex-1">
-                  <Label htmlFor={section.id} className="cursor-pointer font-medium">
+                  <Label
+                    htmlFor={section.id}
+                    className="cursor-pointer font-medium"
+                  >
                     {section.label}
                   </Label>
-                  <p className="text-muted-foreground text-sm">{section.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {section.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -117,10 +145,15 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
                   onCheckedChange={() => handleToggle(section.id)}
                 />
                 <div className="flex-1">
-                  <Label htmlFor={section.id} className="cursor-pointer font-medium">
+                  <Label
+                    htmlFor={section.id}
+                    className="cursor-pointer font-medium"
+                  >
                     {section.label}
                   </Label>
-                  <p className="text-muted-foreground text-sm">{section.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {section.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -139,10 +172,15 @@ export function SectionSelector({ sections, onSectionsChange }: SectionSelectorP
                   onCheckedChange={() => handleToggle(section.id)}
                 />
                 <div className="flex-1">
-                  <Label htmlFor={section.id} className="cursor-pointer font-medium">
+                  <Label
+                    htmlFor={section.id}
+                    className="cursor-pointer font-medium"
+                  >
                     {section.label}
                   </Label>
-                  <p className="text-muted-foreground text-sm">{section.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {section.description}
+                  </p>
                 </div>
               </div>
             ))}

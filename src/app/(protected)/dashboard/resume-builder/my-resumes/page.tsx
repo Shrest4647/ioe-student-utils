@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  Clock,
+  Copy,
+  Edit2,
+  FileText,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Clock, Copy, Edit2, FileText, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -13,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import {
   Table,
   TableBody,
@@ -21,7 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { apiClient } from "@/lib/eden";
 
 interface Resume {
@@ -80,7 +87,9 @@ export default function MyResumesPage() {
   const handleDuplicate = async (id: string) => {
     setDuplicatingId(id);
     try {
-      const { data, error } = await apiClient.api.resumes({ id })["duplicate"].post();
+      const { data, error } = await apiClient.api
+        .resumes({ id })
+        .duplicate.post();
 
       if (error) {
         toast.error("Failed to duplicate resume");
@@ -105,7 +114,7 @@ export default function MyResumesPage() {
   };
 
   return (
-    <div className="fade-in container mx-auto max-w-7xl p-4 md:p-8 animate-in duration-500">
+    <div className="fade-in container mx-auto max-w-7xl animate-in p-4 duration-500 md:p-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="mb-1 font-bold text-3xl tracking-tight">My Resumes</h1>
@@ -123,7 +132,8 @@ export default function MyResumesPage() {
         <CardHeader>
           <CardTitle>Your Resumes</CardTitle>
           <CardDescription>
-            {resumes.length} {resumes.length === 1 ? "resume" : "resumes"} created
+            {resumes.length} {resumes.length === 1 ? "resume" : "resumes"}{" "}
+            created
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,7 +141,9 @@ export default function MyResumesPage() {
             <div className="flex min-h-64 items-center justify-center">
               <div className="text-center">
                 <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                <p className="mt-4 text-muted-foreground text-sm">Loading resumes...</p>
+                <p className="mt-4 text-muted-foreground text-sm">
+                  Loading resumes...
+                </p>
               </div>
             </div>
           ) : resumes.length === 0 ? (
@@ -158,8 +170,12 @@ export default function MyResumesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Resume Name</TableHead>
-                    <TableHead className="hidden md:table-cell">Created</TableHead>
-                    <TableHead className="hidden md:table-cell">Last Modified</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Created
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Last Modified
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -200,7 +216,11 @@ export default function MyResumesPage() {
                             variant="outline"
                             size="icon"
                             className="border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground"
-                            onClick={() => router.push(`/dashboard/resume-builder/edit/${resume.id}`)}
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/resume-builder/edit/${resume.id}`,
+                              )
+                            }
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
