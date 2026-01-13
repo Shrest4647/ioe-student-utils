@@ -1,18 +1,9 @@
 "use client";
 
+import { PDFViewer } from "@react-pdf/renderer";
 import { useState } from "react";
 import { PDFDownloadButton } from "@/components/resume-builder/shared/pdf-download-button";
 import type { ResumeData } from "@/components/resume-builder/shared/resume-types";
-import { AtsGridTemplate } from "@/components/resume-builder/templates/ats-grid-template";
-import { AtsTemplate } from "@/components/resume-builder/templates/ats-template";
-import { ClassicTemplate } from "@/components/resume-builder/templates/classic-template";
-import { CleanMinimalistBusinessTemplate } from "@/components/resume-builder/templates/clean-minimalist-business-template";
-import { MinimalistModernTemplate } from "@/components/resume-builder/templates/minimalist-modern-template";
-import { MinimalistTemplate } from "@/components/resume-builder/templates/minimalist-template";
-import { ProfessionalTemplate } from "@/components/resume-builder/templates/professional-template";
-import { SimpleCleanTemplate } from "@/components/resume-builder/templates/simple-clean-template";
-import { SimpleInfographicTemplate } from "@/components/resume-builder/templates/simple-infographic-template";
-import { A4PageMockup } from "@/components/ui/a4-mockup";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -21,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ResumePDF } from "../pdf/resume-pdf";
 
 interface ResumePreviewProps {
   resumeData?: ResumeData;
@@ -90,37 +82,15 @@ export function ResumePreview({ resumeData, resumeName }: ResumePreviewProps) {
       </Card>
 
       {/* A4 Preview Container Wrapper */}
-      <div className="relative flex w-full justify-center overflow-hidden rounded border bg-muted/30 p-0.5">
-        <div className="w-full max-w-[210mm]">
-          <A4PageMockup>
-            {template === "classic" && (
-              <ClassicTemplate resumeData={resumeData} />
-            )}
-            {template === "ats" && <AtsTemplate resumeData={resumeData} />}
-            {template === "professional" && (
-              <ProfessionalTemplate resumeData={resumeData} />
-            )}
-            {template === "minimalist" && (
-              <MinimalistTemplate resumeData={resumeData} />
-            )}
-            {template === "simple-clean" && (
-              <SimpleCleanTemplate resumeData={resumeData} />
-            )}
-            {template === "minimalist-modern" && (
-              <MinimalistModernTemplate resumeData={resumeData} />
-            )}
-            {template === "clean-minimalist-business" && (
-              <CleanMinimalistBusinessTemplate resumeData={resumeData} />
-            )}
-            {template === "simple-infographic" && (
-              <SimpleInfographicTemplate resumeData={resumeData} />
-            )}
-            {template === "ats-grid" && (
-              <AtsGridTemplate resumeData={resumeData} />
-            )}
-          </A4PageMockup>
+      {resumeData && (
+        <div className="relative flex w-full justify-center overflow-hidden rounded border bg-muted/30 p-0.5">
+          <div className="aspect-[1/1.5] h-full w-full">
+            <PDFViewer className="h-full w-full">
+              <ResumePDF data={resumeData} template={template} />
+            </PDFViewer>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
