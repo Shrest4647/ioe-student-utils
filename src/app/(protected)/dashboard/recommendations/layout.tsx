@@ -5,5 +5,5 @@ export default function RecommendationsLayout({
 }: {
   children: ReactNode;
 }) {
-  return children;
+  return <div className="container mx-auto py-8">{children}</div>;
 }

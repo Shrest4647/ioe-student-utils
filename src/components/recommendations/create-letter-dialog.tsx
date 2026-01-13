@@ -1,8 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { BriefcaseIcon, GraduationCapIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/eden";
 
 interface Template {
   id: string;
@@ -49,16 +51,18 @@ export function CreateLetterDialog({
   onOpenChange,
 }: CreateLetterDialogProps) {
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [programTypeFilter, setProgramTypeFilter] = useState<string>("all");
 
-  const fetchTemplates = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const {
+    data: templates = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["recommendation-templates", categoryFilter, programTypeFilter],
+    queryFn: async () => {
       const params = new URLSearchParams();
       params.append("isActive", "true");
       if (categoryFilter !== "all") {
@@ -68,42 +72,43 @@ export function CreateLetterDialog({
         params.append("targetProgramType", programTypeFilter);
       }
 
-      const response = await fetch(
-        `/api/recommendations/templates?${params.toString()}`,
+      const { data, error } = await apiClient.api.recommendations.templates.get(
+        {
+          query: Object.fromEntries(params),
+        }
       );
 
-      if (!response.ok) throw new Error("Failed to fetch templates");
+      if (error) {
+        throw new Error("Failed to fetch templates");
+      }
 
-      const data = await response.json();
-      setTemplates(data.data || []);
-    } catch (error) {
+      return data?.data || [];
+    },
+    enabled: open,
+  });
+
+  // Show error toast if query fails
+  React.useEffect(() => {
+    if (error) {
       console.error("Error fetching templates:", error);
       toast.error("Failed to load templates");
-    } finally {
-      setIsLoading(false);
     }
-  }, [categoryFilter, programTypeFilter]);
-
-  useEffect(() => {
-    if (open) {
-      fetchTemplates();
-    }
-  }, [open, fetchTemplates]);
+  }, [error]);
 
   const handleSelectTemplate = () => {
     if (!selectedTemplate) return;
 
     // Navigate to the wizard page with the selected template
     router.push(
-      `/dashboard/recommendations/new?templateId=${selectedTemplate}`,
+      `/dashboard/recommendations/new?templateId=${selectedTemplate}`
     );
     onOpenChange(false);
   };
 
-  const filteredTemplates = templates.filter(
+  const filteredTemplates = (templates as Template[]).filter(
     (template) =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      template.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getCategoryIcon = (category: string) => {
@@ -137,7 +142,7 @@ export function CreateLetterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] min-w-4xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Create New Recommendation Letter</DialogTitle>
           <DialogDescription>
@@ -158,7 +163,7 @@ export function CreateLetterDialog({
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -176,7 +181,7 @@ export function CreateLetterDialog({
               value={programTypeFilter}
               onValueChange={setProgramTypeFilter}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Program Type" />
               </SelectTrigger>
               <SelectContent>
@@ -211,7 +216,7 @@ export function CreateLetterDialog({
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {filteredTemplates.map((template) => (
+              {(filteredTemplates as Template[]).map((template) => (
                 <Card
                   key={template.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${

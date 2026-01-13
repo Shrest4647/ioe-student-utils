@@ -10,6 +10,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Menu,
+  PenTool,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -175,6 +176,18 @@ export function Navbar() {
                         >
                           Manage rating categories.
                         </ListItem>
+                        <ListItem
+                          href="/dashboard/recommendations"
+                          title="Recommendation Letters"
+                        >
+                          Create and manage recommendation letters.
+                        </ListItem>
+                        <ListItem
+                          href="/dashboard/resume-builder/my-resumes"
+                          title="Resume Builder"
+                        >
+                          Build and manage your resumes.
+                        </ListItem>
                         <ListItem href="/dashboard/settings" title="Settings">
                           Configure your account settings.
                         </ListItem>
@@ -316,6 +329,18 @@ export function Navbar() {
                     icon={<FileText className="h-4 w-4" />}
                   >
                     Rating Categories
+                  </MobileLink>
+                  <MobileLink
+                    href="/dashboard/recommendations"
+                    icon={<PenTool className="h-4 w-4" />}
+                  >
+                    Recommendation Letters
+                  </MobileLink>
+                  <MobileLink
+                    href="/dashboard/resume-builder/my-resumes"
+                    icon={<FileText className="h-4 w-4" />}
+                  >
+                    Resume Builder
                   </MobileLink>
                   <MobileLink
                     href="/dashboard/settings"

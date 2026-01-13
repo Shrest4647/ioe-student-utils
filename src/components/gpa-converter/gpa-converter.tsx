@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiClient } from "@/lib/eden";
+import { Label } from "../ui/label";
 import { GPACalculatorResults } from "./gpa-calculator-results";
 
 interface Course {
@@ -25,7 +27,7 @@ interface Course {
 interface ConversionStandard {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   ranges: Array<{
     minPercentage: string;
     maxPercentage: string;
@@ -38,20 +40,20 @@ export function GPAConverter() {
   const [courses, setCourses] = useState<Course[]>([
     { id: "1", name: "", percentage: "", credits: "" },
   ]);
-  const [selectedStandard, setSelectedStandard] = useState<string>("");
   const [standards, setStandards] = useState<ConversionStandard[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [selectedStandard, setSelectedStandard] = useState<string>("");
 
   // Fetch standards on mount
   useEffect(() => {
-    fetch("/api/gpa-converter/standards")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setStandards(data.data);
-          if (data.data.length > 0) {
-            setSelectedStandard(data.data[0].id);
+    apiClient.api["gpa-converter"].standards
+      .get()
+      .then((response) => {
+        if (response.data?.success) {
+          if (response.data?.data) {
+            setStandards(response.data.data);
+            setSelectedStandard(response.data.data[0].id);
           }
         }
       })
@@ -117,22 +119,18 @@ export function GPAConverter() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/gpa-converter/calculate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          standardId: selectedStandard,
-          courses: validCourses,
-        }),
+      const response = await apiClient.api["gpa-converter"].calculate.post({
+        standardId: selectedStandard,
+        courses: validCourses,
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (data.success) {
+      if (data?.success) {
         setResult(data.data);
         toast.success("GPA calculated successfully!");
       } else {
-        toast.error(data.error || "Failed to calculate GPA");
+        toast.error(data?.error || "Failed to calculate GPA");
       }
     } catch (_error) {
       toast.error("Failed to calculate GPA. Please try again.");
@@ -145,27 +143,30 @@ export function GPAConverter() {
     <div className="space-y-6">
       {/* Standard Selector */}
       <Card>
-        <CardHeader>
-          <CardTitle>Select Conversion Standard</CardTitle>
-        </CardHeader>
         <CardContent>
-          <Select value={selectedStandard} onValueChange={setSelectedStandard}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a conversion standard" />
-            </SelectTrigger>
-            <SelectContent>
-              {standards.map((standard) => (
-                <SelectItem key={standard.id} value={standard.id}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{standard.name}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {standard.description}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-4">
+            <Label className="flex items-center gap-2">
+              Conversion Standard
+            </Label>
+
+            <Select
+              value={selectedStandard}
+              onValueChange={setSelectedStandard}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a conversion standard" />
+              </SelectTrigger>
+              <SelectContent>
+                {standards.map((standard) => (
+                  <SelectItem key={standard.id} value={standard.id}>
+                    <div className="flex min-w-12 flex-col">
+                      <span className="font-medium">{standard.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 

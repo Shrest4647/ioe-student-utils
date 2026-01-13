@@ -709,6 +709,355 @@ async function seed() {
       console.log(
         `✅ Inserted Scholaro standard with ${scholaroRanges.length} ranges.`,
       );
+
+      // 3. UK Standard
+      const ukStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: ukStandardId,
+        name: "UK (4.0 Scale)",
+        description:
+          "UK degree classification converted to US 4.0 GPA scale. Used for UK university applications.",
+        isActive: true,
+      });
+
+      const ukRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: ukStandardId,
+          minPercentage: "70",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "First-Class",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ukStandardId,
+          minPercentage: "60",
+          maxPercentage: "69",
+          gpaValue: "3.5",
+          gradeLabel: "Upper Second (2:1)",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ukStandardId,
+          minPercentage: "50",
+          maxPercentage: "59",
+          gpaValue: "3.0",
+          gradeLabel: "Lower Second (2:2)",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ukStandardId,
+          minPercentage: "40",
+          maxPercentage: "49",
+          gpaValue: "2.0",
+          gradeLabel: "Third-Class",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ukStandardId,
+          minPercentage: "0",
+          maxPercentage: "39",
+          gpaValue: "0.0",
+          gradeLabel: "Fail",
+          sortOrder: "5",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(ukRanges);
+      console.log(`✅ Inserted UK standard with ${ukRanges.length} ranges.`);
+
+      // 4. Canada Standard
+      const canadaStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: canadaStandardId,
+        name: "Canada",
+        description:
+          "Canadian percentage-based grading converted to US 4.0 GPA scale. Used for Canadian university applications.",
+        isActive: true,
+      });
+
+      const canadaRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "90",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "A+",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "85",
+          maxPercentage: "89",
+          gpaValue: "4.0",
+          gradeLabel: "A",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "80",
+          maxPercentage: "84",
+          gpaValue: "3.7",
+          gradeLabel: "A-",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "75",
+          maxPercentage: "79",
+          gpaValue: "3.3",
+          gradeLabel: "B+",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "70",
+          maxPercentage: "74",
+          gpaValue: "3.0",
+          gradeLabel: "B",
+          sortOrder: "5",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "65",
+          maxPercentage: "69",
+          gpaValue: "2.7",
+          gradeLabel: "B-",
+          sortOrder: "6",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "60",
+          maxPercentage: "64",
+          gpaValue: "2.3",
+          gradeLabel: "C+",
+          sortOrder: "7",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "55",
+          maxPercentage: "59",
+          gpaValue: "2.0",
+          gradeLabel: "C",
+          sortOrder: "8",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: canadaStandardId,
+          minPercentage: "0",
+          maxPercentage: "54",
+          gpaValue: "0.0",
+          gradeLabel: "F",
+          sortOrder: "9",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(canadaRanges);
+      console.log(
+        `✅ Inserted Canada standard with ${canadaRanges.length} ranges.`,
+      );
+
+      // 5. Australia Standard
+      const australiaStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: australiaStandardId,
+        name: "Australia (7.0 Scale)",
+        description:
+          "Australian 7.0 GPA scale converted to US 4.0 scale. Used for Australian university applications.",
+        isActive: true,
+      });
+
+      const australiaRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: australiaStandardId,
+          minPercentage: "85",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "HD (High Distinction)",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: australiaStandardId,
+          minPercentage: "75",
+          maxPercentage: "84",
+          gpaValue: "3.4",
+          gradeLabel: "D (Distinction)",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: australiaStandardId,
+          minPercentage: "65",
+          maxPercentage: "74",
+          gpaValue: "2.9",
+          gradeLabel: "C (Credit)",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: australiaStandardId,
+          minPercentage: "50",
+          maxPercentage: "64",
+          gpaValue: "2.3",
+          gradeLabel: "P (Pass)",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: australiaStandardId,
+          minPercentage: "0",
+          maxPercentage: "49",
+          gpaValue: "0.0",
+          gradeLabel: "F (Fail)",
+          sortOrder: "5",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(australiaRanges);
+      console.log(
+        `✅ Inserted Australia standard with ${australiaRanges.length} ranges.`,
+      );
+
+      // 6. Germany Standard (Modified Bavarian Formula)
+      const germanyStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: germanyStandardId,
+        name: "Germany (1.0-5.0)",
+        description:
+          "German grading scale using Modified Bavarian Formula. Lower grades are better. Used for German university applications.",
+        isActive: true,
+      });
+
+      const germanyRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: germanyStandardId,
+          minPercentage: "90",
+          maxPercentage: "100",
+          gpaValue: "1.0",
+          gradeLabel: "Sehr Gut (Very Good)",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: germanyStandardId,
+          minPercentage: "80",
+          maxPercentage: "89",
+          gpaValue: "2.0",
+          gradeLabel: "Gut (Good)",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: germanyStandardId,
+          minPercentage: "70",
+          maxPercentage: "79",
+          gpaValue: "3.0",
+          gradeLabel: "Befriedigend (Satisfactory)",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: germanyStandardId,
+          minPercentage: "60",
+          maxPercentage: "69",
+          gpaValue: "4.0",
+          gradeLabel: "Ausreichend (Sufficient)",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: germanyStandardId,
+          minPercentage: "0",
+          maxPercentage: "59",
+          gpaValue: "5.0",
+          gradeLabel: "Nicht Ausreichend (Fail)",
+          sortOrder: "5",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(germanyRanges);
+      console.log(
+        `✅ Inserted Germany standard with ${germanyRanges.length} ranges.`,
+      );
+
+      // 7. ECTS Standard
+      const ectsStandardId = crypto.randomUUID();
+      await db.insert(gpaConversionStandards).values({
+        id: ectsStandardId,
+        name: "ECTS (European)",
+        description:
+          "European Credit Transfer and Accumulation System using relative grading. Based on percentile distribution.",
+        isActive: true,
+      });
+
+      const ectsRanges = [
+        {
+          id: crypto.randomUUID(),
+          standardId: ectsStandardId,
+          minPercentage: "90",
+          maxPercentage: "100",
+          gpaValue: "4.0",
+          gradeLabel: "A (Outstanding)",
+          sortOrder: "1",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ectsStandardId,
+          minPercentage: "75",
+          maxPercentage: "89",
+          gpaValue: "3.3",
+          gradeLabel: "B (Above Average)",
+          sortOrder: "2",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ectsStandardId,
+          minPercentage: "60",
+          maxPercentage: "74",
+          gpaValue: "2.7",
+          gradeLabel: "C (Average)",
+          sortOrder: "3",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ectsStandardId,
+          minPercentage: "50",
+          maxPercentage: "59",
+          gpaValue: "2.0",
+          gradeLabel: "D (Satisfactory)",
+          sortOrder: "4",
+        },
+        {
+          id: crypto.randomUUID(),
+          standardId: ectsStandardId,
+          minPercentage: "0",
+          maxPercentage: "49",
+          gpaValue: "0.0",
+          gradeLabel: "E/F (Fail)",
+          sortOrder: "5",
+        },
+      ];
+
+      await db.insert(gpaConversionRanges).values(ectsRanges);
+      console.log(
+        `✅ Inserted ECTS standard with ${ectsRanges.length} ranges.`,
+      );
     } else {
       console.log("⏭️ GPA conversion standards already seeded.");
     }

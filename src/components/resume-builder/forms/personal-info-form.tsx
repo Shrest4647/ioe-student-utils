@@ -134,16 +134,25 @@ export function PersonalInfoForm({
       const { url: uploadUrl } = presignedData.data;
 
       // Upload file to S3
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: {
           "Content-Type": file.type,
         },
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Failed to upload photo");
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to upload photo: ${errorText || response.statusText}`,
+        );
       }
 
       // Remove query params from URL

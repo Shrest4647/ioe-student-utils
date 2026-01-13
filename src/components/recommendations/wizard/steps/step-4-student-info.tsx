@@ -1,11 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { UserIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { apiClient } from "@/lib/eden";
 
 interface Step4StudentInfoProps {
   data: {
@@ -18,27 +19,23 @@ interface Step4StudentInfoProps {
 }
 
 export function Step4StudentInfo({ data, updateData }: Step4StudentInfoProps) {
-  const [profileData, setProfileData] = useState<any>(null);
+  const { data: profileData } = useQuery({
+    queryKey: ["recommendation-profile"],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api.recommendations.profile.get();
 
-  const fetchProfileData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/recommendations/profile");
-      if (response.ok) {
-        const result = await response.json();
-        setProfileData(result.data);
+      if (error) {
+        throw new Error("Failed to fetch profile data");
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
-  }, []);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, [fetchProfileData]);
+      return data?.data;
+    },
+  });
 
   const fillFromProfile = (field: string, profileField: string) => {
-    if (profileData?.[profileField] && !data[field as keyof typeof data]) {
-      updateData(field, profileData[profileField]);
+    const profileValue = (profileData as any)?.[profileField];
+    if (profileValue && !data[field as keyof typeof data]) {
+      updateData(field, profileValue);
     }
   };
 

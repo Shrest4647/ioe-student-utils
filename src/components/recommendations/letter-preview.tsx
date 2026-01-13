@@ -1,32 +1,30 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { LoaderIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { apiClient } from "@/lib/eden";
 
 interface LetterPreviewProps {
   letterId: string;
 }
 
 export function LetterPreview({ letterId }: LetterPreviewProps) {
-  const [letter, setLetter] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: letter, isLoading } = useQuery({
+    queryKey: ["recommendation-letter", letterId],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api.recommendations
+        .letters({
+          id: letterId,
+        })
+        .get();
 
-  const fetchLetter = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/recommendations/letters/${letterId}`);
-      if (!response.ok) throw new Error("Failed to fetch letter");
-      const data = await response.json();
-      setLetter(data.data);
-    } catch (error) {
-      console.error("Error fetching letter:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [letterId]);
+      if (error) {
+        throw new Error("Failed to fetch letter");
+      }
 
-  useEffect(() => {
-    fetchLetter();
-  }, [fetchLetter]);
+      return data?.data;
+    },
+  });
 
   if (isLoading) {
     return (

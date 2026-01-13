@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { apiClient } from "@/lib/eden";
 import { Step1TemplateInfo } from "./steps/step-1-template-info";
 import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
 import { Step3TargetInfo } from "./steps/step-3-target-info";
@@ -64,7 +66,6 @@ export function RecommendationWizard() {
   const [wizardData, setWizardData] = useState<Partial<WizardData>>({
     templateId: templateId || "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!templateId) {
@@ -114,38 +115,53 @@ export function RecommendationWizard() {
     }
   };
 
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch("/api/recommendations/letters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateId: wizardData.templateId,
-          title: `${wizardData.targetProgram} - ${wizardData.targetInstitution}`,
-          ...wizardData,
-        }),
+  const createLetterMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await apiClient.api.recommendations.letters.post({
+        templateId: wizardData.templateId || "",
+        title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
+        recommenderName: wizardData.recommenderName || "",
+        recommenderTitle: wizardData.recommenderTitle || "",
+        recommenderInstitution: wizardData.recommenderInstitution || "",
+        recommenderEmail: wizardData.recommenderEmail,
+        recommenderDepartment: wizardData.recommenderDepartment,
+        targetInstitution: wizardData.targetInstitution || "",
+        targetProgram: wizardData.targetProgram || "",
+        targetDepartment: wizardData.targetDepartment,
+        targetCountry: wizardData.targetCountry || "",
+        purpose: wizardData.purpose || "",
+        relationship: wizardData.relationship || "",
+        contextOfMeeting: wizardData.contextOfMeeting,
+        studentAchievements: wizardData.studentAchievements,
+        researchExperience: wizardData.researchExperience,
+        academicPerformance: wizardData.academicPerformance,
+        personalQualities: wizardData.personalQualities,
+        customContent: wizardData.customContent,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create letter");
+      if (error) {
+        throw new Error("Failed to create letter");
       }
 
-      const data = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
       toast.success("Recommendation letter created successfully!");
-
       // Redirect to the letter detail page
-      router.push(`/dashboard/recommendations/${data.data.id}`);
-    } catch (error) {
+      if (data?.data?.id) {
+        router.push(`/dashboard/recommendations/${data.data.id}`);
+      }
+    },
+    onError: (error) => {
       console.error("Error creating letter:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to create letter",
       );
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const handleSubmit = () => {
+    createLetterMutation.mutate();
   };
 
   const progress = (currentStep / 6) * 100;
@@ -174,7 +190,7 @@ export function RecommendationWizard() {
             data={wizardData}
             updateData={updateData}
             onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
+            isSubmitting={createLetterMutation.isPending}
           />
         );
       default:

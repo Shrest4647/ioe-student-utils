@@ -1,46 +1,34 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  targetProgramType: string;
-  targetRegion: string;
-}
+import { apiClient } from "@/lib/eden";
 
 interface Step1TemplateInfoProps {
   templateId: string;
 }
 
 export function Step1TemplateInfo({ templateId }: Step1TemplateInfoProps) {
-  const [template, setTemplate] = useState<Template | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: template, isLoading } = useQuery({
+    queryKey: ["recommendation-template", templateId],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api.recommendations
+        .templates({
+          id: templateId,
+        })
+        .get();
 
-  const fetchTemplate = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `/api/recommendations/templates/${templateId}`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch template");
-      const data = await response.json();
-      setTemplate(data.data);
-    } catch (error) {
-      console.error("Error fetching template:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [templateId]);
+      if (error) {
+        throw new Error("Failed to fetch template");
+      }
 
-  useEffect(() => {
-    fetchTemplate();
-  }, [fetchTemplate]);
+      return data?.data;
+    },
+    enabled: !!templateId,
+  });
 
   if (isLoading) {
     return (

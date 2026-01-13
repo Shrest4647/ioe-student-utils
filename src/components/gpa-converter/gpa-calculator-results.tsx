@@ -111,10 +111,10 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
   };
 
   const getGradeColor = (gpa: number) => {
-    if (gpa >= 3.7) return "bg-green-100 text-green-800";
-    if (gpa >= 3.0) return "bg-blue-100 text-blue-800";
-    if (gpa >= 2.0) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
+    if (gpa >= 3.7) return "bg-primary/10 text-primary";
+    if (gpa >= 3.0) return "bg-secondary/10 text-secondary";
+    if (gpa >= 2.0) return "bg-muted/10 text-muted-foreground";
+    return "bg-destructive/10 text-destructive";
   };
 
   return (
@@ -137,7 +137,7 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
       <CardContent className="space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <Card className="bg-linear-to-br from-primary to-primary/75 text-white">
             <CardContent className="p-6">
               <p className="font-medium text-sm opacity-90">Cumulative GPA</p>
               <p className="mt-2 font-bold text-4xl">
@@ -147,7 +147,7 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <Card className="bg-linear-to-br from-accent to-accent/75 text-white">
             <CardContent className="p-6">
               <p className="font-medium text-sm opacity-90">Total Credits</p>
               <p className="mt-2 font-bold text-4xl">
@@ -160,7 +160,7 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white">
+          <Card className="bg-linear-to-br from-accent to-accent/75 text-white">
             <CardContent className="p-6">
               <p className="font-medium text-sm opacity-90">Quality Points</p>
               <p className="mt-2 font-bold text-4xl">
@@ -234,8 +234,8 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
         </div>
 
         {/* Disclaimer */}
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-amber-900 text-sm">
+        <div className="rounded-lg border border-border bg-muted/50 p-4">
+          <p className="text-foreground text-sm">
             <strong>Disclaimer:</strong> This is an estimate only. Official
             evaluation requires WES/Scholaro assessment. Different universities
             may convert grades differently. Many US universities accept TU

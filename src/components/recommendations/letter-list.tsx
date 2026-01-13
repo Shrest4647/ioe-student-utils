@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   DownloadIcon,
@@ -9,7 +10,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,69 +35,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/eden";
 
 type LetterStatus = "draft" | "completed" | "exported";
 
-interface Letter {
-  id: string;
-  title: string;
-  status: LetterStatus;
-  createdAt: string;
-  updatedAt: string;
-  targetInstitution: string;
-  targetProgram: string;
-  recommenderName: string;
-}
-
 export function LetterList() {
-  const [letters, setLetters] = useState<Letter[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const queryClient = useQueryClient();
 
-  const fetchLetters = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const query = new URLSearchParams();
+  const { data: letters = [], isLoading } = useQuery({
+    queryKey: ["recommendation-letters", statusFilter],
+    queryFn: async () => {
+      const query: any = {};
       if (statusFilter !== "all") {
-        query.append("status", statusFilter);
+        query.status = statusFilter;
       }
 
-      const response = await fetch(
-        `/api/recommendations/letters?${query.toString()}`,
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch letters");
-
-      const data = await response.json();
-      setLetters(data.data || []);
-    } catch (error) {
-      console.error("Error fetching letters:", error);
-      toast.error("Failed to load recommendation letters");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchLetters();
-  }, [fetchLetters]);
-
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
-
-    try {
-      const response = await fetch(`/api/recommendations/letters/${id}`, {
-        method: "DELETE",
+      const { data, error } = await apiClient.api.recommendations.letters.get({
+        query,
       });
 
-      if (!response.ok) throw new Error("Failed to delete letter");
+      if (error) {
+        throw new Error("Failed to fetch letters");
+      }
 
+      return data?.data || [];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await apiClient.api.recommendations
+        .letters({ id })
+        .delete();
+
+      if (error) {
+        throw new Error("Failed to delete letter");
+      }
+
+      return data;
+    },
+    onSuccess: () => {
       toast.success("Letter deleted successfully");
-      fetchLetters();
-    } catch (error) {
-      console.error("Error deleting letter:", error);
+      queryClient.invalidateQueries({ queryKey: ["recommendation-letters"] });
+    },
+    onError: () => {
       toast.error("Failed to delete letter");
-    }
+    },
+  });
+
+  const handleDelete = (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    deleteMutation.mutate(id);
   };
 
   const getStatusBadgeVariant = (status: LetterStatus) => {
@@ -152,7 +142,7 @@ export function LetterList() {
       {/* Filter */}
       <div className="flex items-center gap-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
