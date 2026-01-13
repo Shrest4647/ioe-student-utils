@@ -54,7 +54,7 @@ const STEPS: Step[] = [
   },
 ];
 
-export function ProfileWizard({ onComplete }: ProfileWizardProps) {
+export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
@@ -78,15 +78,7 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
     }
   };
 
-  const _handleStepComplete = (_stepId: string, data?: any) => {
-    setCompletedSteps(new Set([...completedSteps, currentStep]));
-    if (data) {
-      setProfileData({ ...profileData, ...data });
-    }
-  };
-
   const handleComplete = () => {
-    // Show success message and redirect
     toast.success("Profile created successfully!");
     onComplete?.();
   };
@@ -132,7 +124,7 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
         {/* Step Content */}
         <div className="min-h-96">
           {currentStep === 0 && (
-            <PersonalInfoForm initialData={profileData} onSave={handleNext} />
+            <PersonalInfoForm initialData={initialData} onSave={handleNext} />
           )}
 
           {currentStep === 1 && <WorkExperienceForm onSave={handleNext} />}

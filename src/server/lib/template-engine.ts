@@ -50,13 +50,11 @@ export function replaceTemplateVariables(
       if (parts[0] === "user" && parts.length > 1) {
         const userKey = parts.slice(1).join("_");
         const userValue =
-          (
           defaultContext.user?.[userKey as keyof typeof defaultContext.user];
         if (typeof userValue === "string") {
           return userValue;
         }
-        return match
-        );
+        return match;
       }
     }
 
