@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "@/styles/globals.css";
 import { Navbar } from "@/components/common/navbar";
+import { VibeKanbanCompanion } from "@/components/common/vibe-kanban-companion";
 import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
@@ -37,6 +38,7 @@ export default function RootLayout({
           {children}
         </div>
         <Toaster />
+        <VibeKanbanCompanion />
       </body>
     </html>
   );
