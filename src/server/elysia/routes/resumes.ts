@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { resumeProfiles, resumes } from "@/server/db/schema";
+import { resumes } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const resumeRoutes = new Elysia({ prefix: "/resumes" })
@@ -194,7 +194,9 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
           ...(body.includedSections !== undefined && {
             includedSections: body.includedSections,
           }),
-          ...(body.designTheme !== undefined && { designTheme: body.designTheme }),
+          ...(body.designTheme !== undefined && {
+            designTheme: body.designTheme,
+          }),
           updatedAt: new Date(),
         })
         .where(eq(resumes.id, id));

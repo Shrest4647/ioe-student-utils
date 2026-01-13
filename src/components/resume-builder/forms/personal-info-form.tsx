@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { FileImage, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,11 @@ interface PersonalInfoFormProps {
   onSave?: () => void;
 }
 
-export function PersonalInfoForm({ initialData, onSave }: PersonalInfoFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function PersonalInfoForm({
+  initialData,
+  onSave,
+}: PersonalInfoFormProps) {
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(initialData?.photoUrl ?? "");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -127,7 +131,7 @@ export function PersonalInfoForm({ initialData, onSave }: PersonalInfoFormProps)
         throw new Error("Failed to get upload URL");
       }
 
-      const { url: uploadUrl, key } = presignedData.data;
+      const { url: uploadUrl } = presignedData.data;
 
       // Upload file to S3
       const response = await fetch(uploadUrl, {
@@ -172,7 +176,9 @@ export function PersonalInfoForm({ initialData, onSave }: PersonalInfoFormProps)
           <div className="flex items-center gap-6">
             <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-border bg-muted">
               {photoUrl ? (
-                <img
+                <Image
+                  height={200}
+                  width={200}
                   src={photoUrl}
                   alt="Profile photo"
                   className="h-full w-full object-cover"

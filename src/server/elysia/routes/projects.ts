@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { projectRecords, resumeProfiles } from "@/server/db/schema";
+import { projectRecords } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const projectRoutes = new Elysia({ prefix: "/projects" })
@@ -111,7 +111,9 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
         .update(projectRecords)
         .set({
           ...(body.name !== undefined && { name: body.name }),
-          ...(body.description !== undefined && { description: body.description }),
+          ...(body.description !== undefined && {
+            description: body.description,
+          }),
           ...(body.startDate !== undefined && { startDate: body.startDate }),
           ...(body.endDate !== undefined && { endDate: body.endDate }),
           ...(body.role !== undefined && { role: body.role }),

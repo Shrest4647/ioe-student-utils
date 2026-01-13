@@ -1,5 +1,5 @@
-import { GPAConverterHero } from "@/components/gpa-converter/gpa-converter-hero";
 import { GPAConverter } from "@/components/gpa-converter/gpa-converter";
+import { GPAConverterHero } from "@/components/gpa-converter/gpa-converter-hero";
 
 export default function GPAConverterPage() {
   return (

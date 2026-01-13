@@ -49,7 +49,7 @@ const DEGREE_LEVELS = [
 export function EducationForm({ onSave }: EducationFormProps) {
   const [educations, setEducations] = useState<EducationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const form = useForm({
@@ -67,18 +67,20 @@ export function EducationForm({ onSave }: EducationFormProps) {
       setIsSubmitting(true);
       try {
         if (editingId) {
-          const { data, error } = await apiClient.api.education({
-            id: editingId,
-          }).patch({
-            institution: value.institution || undefined,
-            qualification: value.qualification || undefined,
-            degreeLevel: value.degreeLevel || undefined,
-            startDate: value.startDate || undefined,
-            endDate: value.endDate || undefined,
-            grade: value.grade || undefined,
-            gradeType: value.gradeType || undefined,
-            description: value.description || undefined,
-          });
+          const { data, error } = await apiClient.api
+            .education({
+              id: editingId,
+            })
+            .patch({
+              institution: value.institution || undefined,
+              qualification: value.qualification || undefined,
+              degreeLevel: value.degreeLevel || undefined,
+              startDate: value.startDate || undefined,
+              endDate: value.endDate || undefined,
+              grade: value.grade || undefined,
+              gradeType: value.gradeType || undefined,
+              description: value.description || undefined,
+            });
 
           if (error) {
             toast.error("Failed to update education record.");
@@ -209,7 +211,9 @@ export function EducationForm({ onSave }: EducationFormProps) {
                     )}
                   </div>
                   {edu.institution && (
-                    <p className="mb-2 font-medium text-sm">{edu.institution}</p>
+                    <p className="mb-2 font-medium text-sm">
+                      {edu.institution}
+                    </p>
                   )}
                   <div className="mb-2 flex flex-wrap gap-2">
                     <Badge variant="secondary">
@@ -256,9 +260,7 @@ export function EducationForm({ onSave }: EducationFormProps) {
         {/* Add/Edit Form */}
         <div className="rounded-lg border p-4">
           <div className="mb-4 flex items-center justify-between">
-            <Label>
-              {editingId ? "Edit Education" : "Add Education"}
-            </Label>
+            <Label>{editingId ? "Edit Education" : "Add Education"}</Label>
             {editingId && (
               <Button
                 type="button"

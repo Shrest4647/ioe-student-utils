@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/eden";
 
 interface SkillRecord {
@@ -53,11 +52,14 @@ const PROFICIENCY_LEVELS = [
 export function SkillsForm({ onSave }: SkillsFormProps) {
   const [userSkills, setUserSkills] = useState<SkillRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [skillItems, setSkillItems] = useState<Array<{ name: string; proficiency?: string }>>([]);
+  const [skillItems, setSkillItems] = useState<
+    Array<{ name: string; proficiency?: string }>
+  >([]);
   const [newSkillName, setNewSkillName] = useState("");
-  const [newSkillProficiency, setNewSkillProficiency] = useState("intermediate");
+  const [newSkillProficiency, setNewSkillProficiency] =
+    useState("intermediate");
 
   const form = useForm({
     defaultValues: {
@@ -78,9 +80,11 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
         };
 
         if (editingId) {
-          const { data, error } = await apiClient.api.skills({
-            id: editingId,
-          }).patch(skillsData as any);
+          const { data, error } = await apiClient.api
+            .skills({
+              id: editingId,
+            })
+            .patch(skillsData as any);
 
           if (error) {
             toast.error("Failed to update skills.");
@@ -90,7 +94,9 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
             resetForm();
           }
         } else {
-          const { data, error } = await apiClient.api.skills.post(skillsData as any);
+          const { data, error } = await apiClient.api.skills.post(
+            skillsData as any,
+          );
 
           if (error) {
             toast.error("Failed to add skills.");
@@ -170,7 +176,11 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
       return;
     }
 
-    if (skillItems.some((s) => s.name.toLowerCase() === newSkillName.toLowerCase())) {
+    if (
+      skillItems.some(
+        (s) => s.name.toLowerCase() === newSkillName.toLowerCase(),
+      )
+    ) {
       toast.error("This skill already exists in the list.");
       return;
     }
@@ -213,11 +223,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {skillRecord.skills.map((skill, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="secondary"
-                        className="text-sm"
-                      >
+                      <Badge key={idx} variant="secondary" className="text-sm">
                         {skill.name}
                         {skill.proficiency && (
                           <span className="ml-1 opacity-70">
@@ -256,9 +262,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
         {/* Add/Edit Form */}
         <div className="rounded-lg border p-4">
           <div className="mb-4 flex items-center justify-between">
-            <Label>
-              {editingId ? "Edit Skills" : "Add Skills"}
-            </Label>
+            <Label>{editingId ? "Edit Skills" : "Add Skills"}</Label>
             {editingId && (
               <Button
                 type="button"
@@ -313,7 +317,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
               </Label>
               <div className="rounded-lg border p-3">
                 {skillItems.length === 0 ? (
-                  <p className="text-muted-foreground text-center text-sm">
+                  <p className="text-center text-muted-foreground text-sm">
                     No skills added yet. Add skills below.
                   </p>
                 ) : (
@@ -333,7 +337,7 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
                         <button
                           type="button"
                           onClick={() => removeSkillItem(index)}
-                          className="absolute -right-1 top-0 ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute top-0 -right-1 ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -396,7 +400,10 @@ export function SkillsForm({ onSave }: SkillsFormProps) {
                       Cancel
                     </Button>
                   )}
-                  <Button type="submit" disabled={isSubmitting || skillItems.length === 0}>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || skillItems.length === 0}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

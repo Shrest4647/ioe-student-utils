@@ -2,25 +2,24 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { PersonalInfoForm } from "@/components/resume-builder/forms/personal-info-form";
-import { WorkExperienceForm } from "@/components/resume-builder/forms/work-experience-form";
 import { EducationForm } from "@/components/resume-builder/forms/education-form";
 import { LanguageSkillsForm } from "@/components/resume-builder/forms/language-skills-form";
+import { PersonalInfoForm } from "@/components/resume-builder/forms/personal-info-form";
 import { SkillsForm } from "@/components/resume-builder/forms/skills-form";
+import { WorkExperienceForm } from "@/components/resume-builder/forms/work-experience-form";
 import {
+  EDUCATION_INSTRUCTIONS,
+  InstructionsPanel,
+  LANGUAGE_SKILLS_INSTRUCTIONS,
+  PROFILE_INSTRUCTIONS,
+  SKILLS_INSTRUCTIONS,
+  WORK_EXPERIENCE_INSTRUCTIONS,
+} from "@/components/resume-builder/shared/instructions-panel";
+import {
+  type Step,
   Stepper,
-  Step,
   StepperNav,
 } from "@/components/resume-builder/shared/stepper";
-import {
-  InstructionsPanel,
-  PROFILE_INSTRUCTIONS,
-  WORK_EXPERIENCE_INSTRUCTIONS,
-  EDUCATION_INSTRUCTIONS,
-  LANGUAGE_SKILLS_INSTRUCTIONS,
-  SKILLS_INSTRUCTIONS,
-} from "@/components/resume-builder/shared/instructions-panel";
-import { apiClient } from "@/lib/eden";
 
 interface ProfileWizardProps {
   initialData?: any;
@@ -80,7 +79,7 @@ export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
     }
   };
 
-  const handleStepComplete = (stepId: string, data?: any) => {
+  const _handleStepComplete = (_stepId: string, data?: any) => {
     setCompletedSteps(new Set([...completedSteps, currentStep]));
     if (data) {
       setProfileData({ ...profileData, ...data });
@@ -120,7 +119,7 @@ export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
       </div>
 
       {/* Right Column - Form */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6 lg:col-span-2">
         {/* Stepper */}
         <div className="overflow-x-auto">
           <Stepper
@@ -134,27 +133,16 @@ export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
         {/* Step Content */}
         <div className="min-h-96">
           {currentStep === 0 && (
-            <PersonalInfoForm
-              initialData={profileData}
-              onSave={handleNext}
-            />
+            <PersonalInfoForm initialData={profileData} onSave={handleNext} />
           )}
 
-          {currentStep === 1 && (
-            <WorkExperienceForm onSave={handleNext} />
-          )}
+          {currentStep === 1 && <WorkExperienceForm onSave={handleNext} />}
 
-          {currentStep === 2 && (
-            <EducationForm onSave={handleNext} />
-          )}
+          {currentStep === 2 && <EducationForm onSave={handleNext} />}
 
-          {currentStep === 3 && (
-            <LanguageSkillsForm onSave={handleNext} />
-          )}
+          {currentStep === 3 && <LanguageSkillsForm onSave={handleNext} />}
 
-          {currentStep === 4 && (
-            <SkillsForm onSave={handleNext} />
-          )}
+          {currentStep === 4 && <SkillsForm onSave={handleNext} />}
         </div>
 
         {/* Navigation - Only show if form doesn't have its own */}
@@ -166,7 +154,9 @@ export function ProfileWizard({ initialData, onComplete }: ProfileWizardProps) {
             onNext={handleNext}
             canGoPrevious={currentStep > 0}
             canGoNext={completedSteps.has(currentStep) || currentStep === 0}
-            nextLabel={currentStep === STEPS.length - 1 ? "Complete Profile" : undefined}
+            nextLabel={
+              currentStep === STEPS.length - 1 ? "Complete Profile" : undefined
+            }
           />
         )}
       </div>

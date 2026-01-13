@@ -1,9 +1,10 @@
 "use client";
 
-import { Download, Save, FileText } from "lucide-react";
+import { Download, FileText, Save } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
 
 interface GPACalculatorResultsProps {
   result: {
@@ -105,7 +105,7 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
       } else {
         toast.error(data.error || "Failed to save calculation");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to save calculation. Please try again.");
     }
   };
@@ -139,8 +139,8 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
             <CardContent className="p-6">
-              <p className="text-sm font-medium opacity-90">Cumulative GPA</p>
-              <p className="mt-2 text-4xl font-bold">
+              <p className="font-medium text-sm opacity-90">Cumulative GPA</p>
+              <p className="mt-2 font-bold text-4xl">
                 {result.cumulativeGPA.toFixed(2)}
               </p>
               <p className="mt-1 text-xs opacity-75">on 4.0 scale</p>
@@ -149,20 +149,21 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
 
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
             <CardContent className="p-6">
-              <p className="text-sm font-medium opacity-90">Total Credits</p>
-              <p className="mt-2 text-4xl font-bold">
+              <p className="font-medium text-sm opacity-90">Total Credits</p>
+              <p className="mt-2 font-bold text-4xl">
                 {result.totalCredits.toFixed(1)}
               </p>
               <p className="mt-1 text-xs opacity-75">
-                {result.courses.length} course{result.courses.length > 1 ? "s" : ""}
+                {result.courses.length} course
+                {result.courses.length > 1 ? "s" : ""}
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white">
             <CardContent className="p-6">
-              <p className="text-sm font-medium opacity-90">Quality Points</p>
-              <p className="mt-2 text-4xl font-bold">
+              <p className="font-medium text-sm opacity-90">Quality Points</p>
+              <p className="mt-2 font-bold text-4xl">
                 {result.totalQualityPoints.toFixed(2)}
               </p>
               <p className="mt-1 text-xs opacity-75">total earned</p>
@@ -176,8 +177,10 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
             <div className="flex items-start gap-3">
               <FileText className="mt-1 h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-semibold">Conversion Standard: {result.standard.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="font-semibold">
+                  Conversion Standard: {result.standard.name}
+                </p>
+                <p className="mt-1 text-muted-foreground text-sm">
                   {result.standard.description}
                 </p>
               </div>
@@ -187,7 +190,7 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
 
         {/* Course Breakdown Table */}
         <div>
-          <h3 className="mb-4 text-lg font-semibold">Course Breakdown</h3>
+          <h3 className="mb-4 font-semibold text-lg">Course Breakdown</h3>
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -204,15 +207,21 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
                 {result.courses.map((course, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{course.name}</TableCell>
-                    <TableCell className="text-center">{course.percentage}%</TableCell>
-                    <TableCell className="text-center">{course.credits}</TableCell>
+                    <TableCell className="text-center">
+                      {course.percentage}%
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {course.credits}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge className={getGradeColor(course.gpa)}>
                         {course.gpa.toFixed(2)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline">{course.gradeLabel || "N/A"}</Badge>
+                      <Badge variant="outline">
+                        {course.gradeLabel || "N/A"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {course.qualityPoints.toFixed(2)}
@@ -225,8 +234,8 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
         </div>
 
         {/* Disclaimer */}
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-          <p className="text-sm text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-amber-900 text-sm">
             <strong>Disclaimer:</strong> This is an estimate only. Official
             evaluation requires WES/Scholaro assessment. Different universities
             may convert grades differently. Many US universities accept TU

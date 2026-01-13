@@ -29,7 +29,8 @@ export function Stepper({
         {steps.map((step, index) => {
           const isCompleted = completedSteps.has(index);
           const isCurrent = index === currentStep;
-          const isClickable = onStepChange && (isCompleted || index < currentStep);
+          const isClickable =
+            onStepChange && (isCompleted || index < currentStep);
 
           return (
             <div key={step.id} className="flex flex-1 items-center">
@@ -51,7 +52,9 @@ export function Stepper({
                         "border-primary bg-primary text-primary-foreground",
                       isCompleted &&
                         "border-primary bg-primary text-primary-foreground",
-                      !isCurrent && !isCompleted && "border-muted-foreground/50",
+                      !isCurrent &&
+                        !isCompleted &&
+                        "border-muted-foreground/50",
                     )}
                   >
                     {isCompleted ? (
@@ -142,13 +145,11 @@ export function StepperNav({
         onClick={onNext}
         disabled={!canGoNext || isSubmitting}
       >
-        {isSubmitting ? (
-          "Saving..."
-        ) : isLastStep ? (
-          nextLabel || "Complete"
-        ) : (
-          "Next"
-        )}
+        {isSubmitting
+          ? "Saving..."
+          : isLastStep
+            ? nextLabel || "Complete"
+            : "Next"}
       </Button>
     </div>
   );

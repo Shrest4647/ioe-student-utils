@@ -2,12 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import {
-  gpaConversionStandards,
   gpaConversionRanges,
+  gpaConversionStandards,
   gpaConversions,
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
-import { sql } from "drizzle-orm";
 
 // Course input type for calculations
 const courseInputSchema = t.Object({
@@ -40,7 +39,9 @@ function calculateGPAForCourse(
   );
 
   if (!matchingRange) {
-    throw new Error(`No matching GPA range found for percentage: ${percentage}`);
+    throw new Error(
+      `No matching GPA range found for percentage: ${percentage}`,
+    );
   }
 
   return {
@@ -68,7 +69,9 @@ export const gpaConverterRoutes = new Elysia({ prefix: "/gpa-converter" })
       const standardsWithRanges = standards.map((standard) => {
         const ranges = allRanges
           .filter((range) => range.standardId === standard.id)
-          .sort((a, b) => parseInt(a.sortOrder) - parseInt(b.sortOrder));
+          .sort(
+            (a, b) => parseInt(a.sortOrder, 10) - parseInt(b.sortOrder, 10),
+          );
 
         return {
           ...standard,
@@ -124,7 +127,7 @@ export const gpaConverterRoutes = new Elysia({ prefix: "/gpa-converter" })
 
       // Sort ranges
       const sortedRanges = ranges.sort(
-        (a, b) => parseInt(a.sortOrder) - parseInt(b.sortOrder),
+        (a, b) => parseInt(a.sortOrder, 10) - parseInt(b.sortOrder, 10),
       );
 
       // Calculate GPA for each course
@@ -292,7 +295,7 @@ export const gpaConverterRoutes = new Elysia({ prefix: "/gpa-converter" })
       // Attach standard info to each calculation
       const calculationsWithStandard = calculations.map((calc) => ({
         ...calc,
-        courseCount: parseInt(calc.courseCount),
+        courseCount: parseInt(calc.courseCount, 10),
         standard: standards.find((s) => s.id === calc.standardId),
       }));
 

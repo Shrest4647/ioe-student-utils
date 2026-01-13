@@ -5,7 +5,8 @@ export const recommendationTemplates = [
   {
     id: "tpl_research_phd_strong",
     name: "PhD Research - Strong Candidate",
-    description: "Ideal for strong PhD candidates with significant research experience",
+    description:
+      "Ideal for strong PhD candidates with significant research experience",
     category: "research" as const,
     content: `[Date]
 
@@ -124,7 +125,8 @@ Sincerely,
         label: "Research Outcome",
         type: "textarea" as const,
         required: true,
-        description: "Outcome of the research (publications, presentations, etc.)",
+        description:
+          "Outcome of the research (publications, presentations, etc.)",
       },
       {
         name: "student_gpa",
@@ -995,5 +997,7 @@ export async function seedRecommendationTemplates() {
   }
 
   await db.insert(recommendationTemplate).values(recommendationTemplates);
-  console.log(`✓ Seeded ${recommendationTemplates.length} recommendation templates`);
+  console.log(
+    `✓ Seeded ${recommendationTemplates.length} recommendation templates`,
+  );
 }

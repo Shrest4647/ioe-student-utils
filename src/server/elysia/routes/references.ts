@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { referencesRecords, resumeProfiles } from "@/server/db/schema";
+import { referencesRecords } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const referenceRoutes = new Elysia({ prefix: "/references" })
@@ -112,7 +112,9 @@ export const referenceRoutes = new Elysia({ prefix: "/references" })
           ...(body.name !== undefined && { name: body.name }),
           ...(body.title !== undefined && { title: body.title }),
           ...(body.relation !== undefined && { relation: body.relation }),
-          ...(body.institution !== undefined && { institution: body.institution }),
+          ...(body.institution !== undefined && {
+            institution: body.institution,
+          }),
           ...(body.email !== undefined && { email: body.email }),
           ...(body.phone !== undefined && { phone: body.phone }),
         })
@@ -167,7 +169,9 @@ export const referenceRoutes = new Elysia({ prefix: "/references" })
         return { success: false, error: "Reference not found" };
       }
 
-      await db.delete(referencesRecords).where(eq(referencesRecords.id, params.id));
+      await db
+        .delete(referencesRecords)
+        .where(eq(referencesRecords.id, params.id));
 
       return {
         success: true,

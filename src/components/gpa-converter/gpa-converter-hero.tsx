@@ -7,8 +7,11 @@ export function GPAConverterHero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 py-12 text-white lg:py-16">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 h-full w-1/3 bg-blue-600 opacity-10 lg:opacity-20" style={{ clipPath: "polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%)" }} />
-      <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
+      <div
+        className="absolute top-0 right-0 h-full w-1/3 bg-blue-600 opacity-10 lg:opacity-20"
+        style={{ clipPath: "polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%)" }}
+      />
+      <div className="absolute -right-24 -bottom-24 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
       <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
 
       <div className="container relative mx-auto px-4">
@@ -38,10 +41,11 @@ export function GPAConverterHero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mb-8 text-lg text-gray-300 md:text-xl"
+            className="mb-8 text-gray-300 text-lg md:text-xl"
           >
-            Convert your Tribhuvan University percentage grades to US 4.0 GPA scale
-            using WES and Scholaro standards — recognized by universities worldwide.
+            Convert your Tribhuvan University percentage grades to US 4.0 GPA
+            scale using WES and Scholaro standards — recognized by universities
+            worldwide.
           </motion.p>
 
           <motion.div
@@ -53,7 +57,7 @@ export function GPAConverterHero() {
             <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
               <Calculator className="mx-auto mb-3 h-8 w-8 text-cyan-400" />
               <h3 className="mb-2 font-semibold">Multiple Standards</h3>
-              <p className="text-sm text-gray-300">
+              <p className="text-gray-300 text-sm">
                 Convert using WES and Scholaro standards
               </p>
             </div>
@@ -61,7 +65,7 @@ export function GPAConverterHero() {
             <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
               <TrendingUp className="mx-auto mb-3 h-8 w-8 text-cyan-400" />
               <h3 className="mb-2 font-semibold">Instant Results</h3>
-              <p className="text-sm text-gray-300">
+              <p className="text-gray-300 text-sm">
                 Get accurate GPA calculations in seconds
               </p>
             </div>
@@ -69,7 +73,7 @@ export function GPAConverterHero() {
             <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
               <GraduationCap className="mx-auto mb-3 h-8 w-8 text-cyan-400" />
               <h3 className="mb-2 font-semibold">Save & Export</h3>
-              <p className="text-sm text-gray-300">
+              <p className="text-gray-300 text-sm">
                 Save calculations and export to CSV
               </p>
             </div>

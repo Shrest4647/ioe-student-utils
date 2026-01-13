@@ -49,8 +49,10 @@ export function replaceTemplateVariables(
       const parts = variableName.split("_");
       if (parts[0] === "user" && parts.length > 1) {
         const userKey = parts.slice(1).join("_");
-        return defaultContext.user?.[userKey as keyof typeof defaultContext.user] ||
-          match;
+        return (
+          defaultContext.user?.[userKey as keyof typeof defaultContext.user] ||
+          match
+        );
       }
     }
 
@@ -132,10 +134,9 @@ export function generateDefaultContext(
   for (const variable of variables) {
     if (variable.defaultValue) {
       // Handle default values that reference {{user.name}} etc.
-      context[variable.name] = replaceTemplateVariables(
-        variable.defaultValue,
-        { user },
-      );
+      context[variable.name] = replaceTemplateVariables(variable.defaultValue, {
+        user,
+      });
     }
   }
 
@@ -170,8 +171,10 @@ export function preFillWithProfileData(
     student_gpa: profileData.gpa || context.student_gpa,
     major: profileData.major || context.major,
     minor: profileData.minor || context.minor,
-    expected_graduation: profileData.expectedGraduation || context.expected_graduation,
-    research_interests: profileData.researchInterests || context.research_interests,
+    expected_graduation:
+      profileData.expectedGraduation || context.expected_graduation,
+    research_interests:
+      profileData.researchInterests || context.research_interests,
     skills: profileData.skills || context.skills,
     achievements: profileData.achievements || context.achievements,
     projects: profileData.projects || context.projects,

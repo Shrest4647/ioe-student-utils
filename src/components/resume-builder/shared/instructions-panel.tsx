@@ -57,7 +57,7 @@ export function InstructionsPanel({
                 )}
                 {section.title}
               </h4>
-              <ul className="ml-6 list-disc space-y-1 text-sm text-muted-foreground">
+              <ul className="ml-6 list-disc space-y-1 text-muted-foreground text-sm">
                 {section.content.map((item, itemIdx) => (
                   <li key={itemIdx}>{item}</li>
                 ))}

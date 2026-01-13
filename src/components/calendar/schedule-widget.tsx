@@ -3,16 +3,17 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import {
   addDays,
+  compareAsc,
+  endOfWeek,
   format,
   isSameDay,
   isToday,
+  type Locale,
   startOfDay,
   startOfWeek,
-  endOfWeek,
-  type Locale,
-  compareAsc,
 } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type HTMLAttributes,
   useCallback,
@@ -21,9 +22,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // Google Calendar-inspired event card variants with saturated colors
 const scheduleEventVariants = cva(
@@ -42,7 +42,7 @@ const scheduleEventVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export type CalendarEvent = {
@@ -159,7 +159,7 @@ export function ScheduleWidget({
     <div
       className={cn(
         "flex flex-col overflow-hidden rounded-xl bg-neutral-900 text-white",
-        className
+        className,
       )}
       style={{ height }}
       {...props}
@@ -177,7 +177,7 @@ export function ScheduleWidget({
               {/* Stylized lines */}
               <svg
                 aria-hidden="true"
-                className="absolute bottom-0 left-0 right-0 h-24 opacity-40"
+                className="absolute right-0 bottom-0 left-0 h-24 opacity-40"
                 viewBox="0 0 400 100"
                 preserveAspectRatio="none"
               >
@@ -197,12 +197,14 @@ export function ScheduleWidget({
 
             {/* Month Title */}
             <div className="relative z-10 flex h-full flex-col justify-end p-6 pb-4">
-              <h1 className="font-light text-3xl tracking-wide">{currentMonth}</h1>
+              <h1 className="font-light text-3xl tracking-wide">
+                {currentMonth}
+              </h1>
             </div>
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center gap-2 border-b border-neutral-700 bg-neutral-800/80 py-2 px-4">
+          <div className="flex items-center gap-2 border-neutral-700 border-b bg-neutral-800/80 px-4 py-2">
             <Button
               size="icon"
               variant="ghost"
@@ -244,13 +246,10 @@ export function ScheduleWidget({
           const isTodayDate = isToday(dayDate);
 
           return (
-            <div
-              key={dateKey}
-              ref={isTodayDate ? todayRef : undefined}
-            >
+            <div key={dateKey} ref={isTodayDate ? todayRef : undefined}>
               {/* Week Separator */}
               {weekSeparator && (
-                <div className="sticky top-0 z-10 border-b border-neutral-800 bg-neutral-900/95 px-4 py-2 backdrop-blur-sm">
+                <div className="sticky top-0 z-10 border-neutral-800 border-b bg-neutral-900/95 px-4 py-2 backdrop-blur-sm">
                   <span className="font-medium text-neutral-400 text-xs">
                     {weekSeparator}
                   </span>
@@ -261,7 +260,7 @@ export function ScheduleWidget({
               <div
                 className={cn(
                   "flex gap-4 px-4 py-3",
-                  isTodayDate && "bg-neutral-800/30"
+                  isTodayDate && "bg-neutral-800/30",
                 )}
               >
                 {/* Date Column */}
@@ -272,9 +271,7 @@ export function ScheduleWidget({
                   <span
                     className={cn(
                       "mt-0.5 flex h-10 w-10 items-center justify-center rounded-full font-normal text-2xl",
-                      isTodayDate
-                        ? "bg-sky-500 text-white"
-                        : "text-white"
+                      isTodayDate ? "bg-sky-500 text-white" : "text-white",
                     )}
                   >
                     {format(dayDate, "d")}
@@ -289,7 +286,9 @@ export function ScheduleWidget({
                         key={event.id}
                         type="button"
                         onClick={() => onEventClick?.(event)}
-                        className={cn(scheduleEventVariants({ variant: event.color }))}
+                        className={cn(
+                          scheduleEventVariants({ variant: event.color }),
+                        )}
                       >
                         <div className="font-medium">{event.title}</div>
                         <div className="mt-0.5 text-sm opacity-90">
@@ -306,7 +305,7 @@ export function ScheduleWidget({
 
               {/* Divider between days */}
               {dayEvents.length > 0 && (
-                <div className="border-b border-neutral-800 ml-16" />
+                <div className="ml-16 border-neutral-800 border-b" />
               )}
             </div>
           );

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Calculator } from "lucide-react";
+import { Calculator, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import { GPACalculatorResults } from "./gpa-calculator-results";
 
 interface Course {
@@ -102,12 +102,12 @@ export function GPAConverter() {
       const percentage = parseFloat(course.percentage);
       const credits = parseFloat(course.credits);
 
-      if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+      if (Number.isNaN(percentage) || percentage < 0 || percentage > 100) {
         toast.error(`Invalid percentage for "${course.name}"`);
         return;
       }
 
-      if (isNaN(credits) || credits <= 0) {
+      if (Number.isNaN(credits) || credits <= 0) {
         toast.error(`Invalid credits for "${course.name}"`);
         return;
       }
@@ -134,7 +134,7 @@ export function GPAConverter() {
       } else {
         toast.error(data.error || "Failed to calculate GPA");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to calculate GPA. Please try again.");
     } finally {
       setLoading(false);
@@ -158,7 +158,7 @@ export function GPAConverter() {
                 <SelectItem key={standard.id} value={standard.id}>
                   <div className="flex flex-col">
                     <span className="font-medium">{standard.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {standard.description}
                     </span>
                   </div>
@@ -179,13 +179,15 @@ export function GPAConverter() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {courses.map((course, index) => (
+          {courses.map((course, _index) => (
             <div key={course.id} className="flex gap-3">
               <div className="flex-1">
                 <Input
                   placeholder="Course name (e.g., Mathematics)"
                   value={course.name}
-                  onChange={(e) => updateCourse(course.id, "name", e.target.value)}
+                  onChange={(e) =>
+                    updateCourse(course.id, "name", e.target.value)
+                  }
                 />
               </div>
               <div className="w-32">

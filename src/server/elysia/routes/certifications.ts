@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { certificationsRecords, resumeProfiles } from "@/server/db/schema";
+import { certificationsRecords } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const certificationRoutes = new Elysia({ prefix: "/certifications" })

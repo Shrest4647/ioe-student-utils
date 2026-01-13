@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { resumeProfiles, workExperiences } from "@/server/db/schema";
+import { workExperiences } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const workExperienceRoutes = new Elysia({
@@ -122,7 +122,9 @@ export const workExperienceRoutes = new Elysia({
           ...(body.endDate !== undefined && { endDate: body.endDate }),
           ...(body.city !== undefined && { city: body.city }),
           ...(body.country !== undefined && { country: body.country }),
-          ...(body.description !== undefined && { description: body.description }),
+          ...(body.description !== undefined && {
+            description: body.description,
+          }),
           ...(body.referenceLink !== undefined && {
             referenceLink: body.referenceLink,
           }),

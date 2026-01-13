@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { apiClient } from "@/lib/eden";
 import { ProfileWizard } from "@/components/resume-builder/editor/profile-wizard";
+import { apiClient } from "@/lib/eden";
 
 export default function ProfileCreationPage() {
   const router = useRouter();
@@ -38,11 +38,13 @@ export default function ProfileCreationPage() {
 
   if (isLoading) {
     return (
-      <div className="fade-in container mx-auto max-w-6xl p-4 md:p-8 animate-in duration-500">
+      <div className="fade-in container mx-auto max-w-6xl animate-in p-4 duration-500 md:p-8">
         <div className="flex min-h-96 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="mt-4 text-muted-foreground text-sm">Loading profile...</p>
+            <p className="mt-4 text-muted-foreground text-sm">
+              Loading profile...
+            </p>
           </div>
         </div>
       </div>
@@ -50,7 +52,7 @@ export default function ProfileCreationPage() {
   }
 
   return (
-    <div className="fade-in container mx-auto max-w-6xl p-4 md:p-8 animate-in duration-500">
+    <div className="fade-in container mx-auto max-w-6xl animate-in p-4 duration-500 md:p-8">
       <div className="mb-8">
         <h1 className="mb-2 font-bold text-3xl tracking-tight">
           {existingProfile ? "Edit Your Profile" : "Create Your Profile"}

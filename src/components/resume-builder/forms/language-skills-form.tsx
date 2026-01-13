@@ -57,7 +57,7 @@ const COMMON_LANGUAGES = [
 export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
   const [languageSkills, setLanguageSkills] = useState<LanguageSkill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const form = useForm({
@@ -202,12 +202,24 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-4 py-2 text-left font-semibold">Language</th>
-                    <th className="px-4 py-2 text-left font-semibold">Listening</th>
-                    <th className="px-4 py-2 text-left font-semibold">Reading</th>
-                    <th className="px-4 py-2 text-left font-semibold">Spoken</th>
-                    <th className="px-4 py-2 text-left font-semibold">Writing</th>
-                    <th className="px-4 py-2 text-right font-semibold">Actions</th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Language
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Listening
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Reading
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Spoken
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold">
+                      Writing
+                    </th>
+                    <th className="px-4 py-2 text-right font-semibold">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -220,10 +232,14 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="outline">{getCefrLabel(skill.listening)}</Badge>
+                        <Badge variant="outline">
+                          {getCefrLabel(skill.listening)}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="outline">{getCefrLabel(skill.reading)}</Badge>
+                        <Badge variant="outline">
+                          {getCefrLabel(skill.reading)}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant="outline">
@@ -231,7 +247,9 @@ export function LanguageSkillsForm({ onSave }: LanguageSkillsFormProps) {
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="outline">{getCefrLabel(skill.writing)}</Badge>
+                        <Badge variant="outline">
+                          {getCefrLabel(skill.writing)}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">

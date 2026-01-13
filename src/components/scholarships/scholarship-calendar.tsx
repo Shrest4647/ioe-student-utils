@@ -78,7 +78,6 @@ import {
   CalendarMonthView,
   CalendarNextTrigger,
   CalendarPrevTrigger,
-  CalendarScheduleView,
   CalendarTodayTrigger,
   CalendarViewTrigger,
   CalendarWeekView,

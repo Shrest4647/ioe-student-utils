@@ -579,7 +579,7 @@ const CalendarYearView = () => {
 };
 
 const CalendarScheduleView = () => {
-  const { view, date, locale, events, today, onEventClick } = useCalendar();
+  const { view, date, events, today, onEventClick } = useCalendar();
 
   // Generate 3 days for schedule view (can be made configurable)
   const scheduleDates = useMemo(() => {
@@ -634,7 +634,7 @@ const CalendarScheduleView = () => {
                     </span>
                     <span
                       className={cn(
-                        "grid h-8 w-8 place-content-center rounded-full text-lg font-bold",
+                        "grid h-8 w-8 place-content-center rounded-full font-bold text-lg",
                         isToday(dayDate)
                           ? "bg-primary text-primary-foreground"
                           : hasEvents
@@ -646,7 +646,7 @@ const CalendarScheduleView = () => {
                     </span>
                   </div>
                   {isToday(dayDate) && (
-                    <span className="text-muted-foreground text-xs font-medium">
+                    <span className="font-medium text-muted-foreground text-xs">
                       Today
                     </span>
                   )}
@@ -660,7 +660,7 @@ const CalendarScheduleView = () => {
                         key={event.id}
                         type="button"
                         className={cn(
-                          "w-full rounded px-2 py-1 text-left text-xs font-medium",
+                          "w-full rounded px-2 py-1 text-left font-medium text-xs",
                           dayEventVariants({ variant: event.color }),
                         )}
                         onClick={() => onEventClick?.(event)}
@@ -689,9 +689,7 @@ const CalendarScheduleView = () => {
             const dayEvents = events.filter((event) =>
               isSameDay(event.start, dayDate),
             );
-            const timedEvents = dayEvents.filter(
-              (e) => !isAllDayEvent(e),
-            );
+            const timedEvents = dayEvents.filter((e) => !isAllDayEvent(e));
 
             return (
               <div
@@ -704,7 +702,7 @@ const CalendarScheduleView = () => {
                 {/* Current time indicator */}
                 {isToday(dayDate) && (
                   <div
-                    className="absolute z-10 w-full border-t-2 border-red-500"
+                    className="absolute z-10 w-full border-red-500 border-t-2"
                     style={{
                       top: `${
                         (today.getHours() * 60 + today.getMinutes()) / 1440
@@ -732,8 +730,7 @@ const CalendarScheduleView = () => {
                           differenceInMinutes(event.end, event.start) / 60,
                           0.25,
                         );
-                        const startPosition =
-                          event.start.getMinutes() / 60;
+                        const startPosition = event.start.getMinutes() / 60;
 
                         return (
                           <HoverCard key={event.id} openDelay={300}>
@@ -741,7 +738,7 @@ const CalendarScheduleView = () => {
                               <button
                                 type="button"
                                 className={cn(
-                                  "absolute left-1 right-1 line-clamp-2 rounded px-2 py-1 text-left text-xs",
+                                  "absolute right-1 left-1 line-clamp-2 rounded px-2 py-1 text-left text-xs",
                                   dayEventVariants({
                                     variant: event.color,
                                   }),
@@ -756,7 +753,7 @@ const CalendarScheduleView = () => {
                                   {event.title}
                                 </div>
                                 {hoursDifference >= 1 && (
-                                  <div className="text-muted-foreground text-[10px]">
+                                  <div className="text-[10px] text-muted-foreground">
                                     {format(event.start, "p")} -{" "}
                                     {format(event.end, "p")}
                                   </div>
@@ -780,15 +777,13 @@ const CalendarScheduleView = () => {
                                   ></div>
                                 </div>
                                 <div>
-                                  <p className="font-semibold">
-                                    {event.title}
-                                  </p>
+                                  <p className="font-semibold">{event.title}</p>
                                   <p className="text-muted-foreground text-xs">
                                     {format(event.start, "PPP p")} –{" "}
                                     {format(event.end, "p")}
                                   </p>
                                   {event.description && (
-                                    <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                                    <p className="mt-2 text-muted-foreground text-xs leading-snug">
                                       {event.description}
                                     </p>
                                   )}

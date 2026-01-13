@@ -3,6 +3,8 @@ import {
   countries,
   degreeLevels,
   fieldsOfStudy,
+  gpaConversionRanges,
+  gpaConversionStandards,
   resourceAttachments,
   resourceCategories,
   resourceContentTypes,
@@ -14,8 +16,6 @@ import {
   scholarshipsToCountries,
   scholarshipsToDegrees,
   scholarshipsToFields,
-  gpaConversionStandards,
-  gpaConversionRanges,
 } from "./schema";
 
 const categories = [
@@ -527,7 +527,8 @@ async function seed() {
 
     // --- Seeding GPA Converter Data ---
 
-    const existingGPAStandards = await db.query.gpaConversionStandards.findMany();
+    const existingGPAStandards =
+      await db.query.gpaConversionStandards.findMany();
     if (existingGPAStandards.length === 0) {
       // 1. WES Standard
       const wesStandardId = crypto.randomUUID();

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { resumeProfiles, userSkills } from "@/server/db/schema";
+import { userSkills } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const skillRoutes = new Elysia({ prefix: "/skills" })

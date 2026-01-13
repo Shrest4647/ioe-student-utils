@@ -49,7 +49,7 @@ const COUNTRIES = [
 export function WorkExperienceForm({ onSave }: WorkExperienceFormProps) {
   const [experiences, setExperiences] = useState<WorkExperience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrent, setIsCurrent] = useState(false);
 
@@ -68,13 +68,13 @@ export function WorkExperienceForm({ onSave }: WorkExperienceFormProps) {
       try {
         if (editingId) {
           // Update existing experience
-          const { data, error } = await apiClient.api[
-            "work-experiences"
-          ]({ id: editingId }).patch({
+          const { data, error } = await apiClient.api["work-experiences"]({
+            id: editingId,
+          }).patch({
             jobTitle: value.jobTitle || undefined,
             employer: value.employer || undefined,
             startDate: value.startDate || undefined,
-            endDate: isCurrent ? undefined : (value.endDate || undefined),
+            endDate: isCurrent ? undefined : value.endDate || undefined,
             city: value.city || undefined,
             country: value.country || undefined,
             description: value.description || undefined,
@@ -93,7 +93,7 @@ export function WorkExperienceForm({ onSave }: WorkExperienceFormProps) {
             jobTitle: value.jobTitle || undefined,
             employer: value.employer || undefined,
             startDate: value.startDate || undefined,
-            endDate: isCurrent ? undefined : (value.endDate || undefined),
+            endDate: isCurrent ? undefined : value.endDate || undefined,
             city: value.city || undefined,
             country: value.country || undefined,
             description: value.description || undefined,
@@ -203,7 +203,9 @@ export function WorkExperienceForm({ onSave }: WorkExperienceFormProps) {
               >
                 <div className="flex-1">
                   <div className="mb-2 flex items-center gap-2">
-                    <h4 className="font-semibold">{exp.jobTitle || "Position"}</h4>
+                    <h4 className="font-semibold">
+                      {exp.jobTitle || "Position"}
+                    </h4>
                     {exp.employer && (
                       <>
                         <span className="text-muted-foreground">@</span>

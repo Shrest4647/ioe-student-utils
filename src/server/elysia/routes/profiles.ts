@@ -114,7 +114,9 @@ export const profileRoutes = new Elysia({ prefix: "/profiles" })
           ...(body.email !== undefined && { email: body.email }),
           ...(body.phone !== undefined && { phone: body.phone }),
           ...(body.address !== undefined && { address: body.address }),
-          ...(body.nationality !== undefined && { nationality: body.nationality }),
+          ...(body.nationality !== undefined && {
+            nationality: body.nationality,
+          }),
           ...(body.dateOfBirth !== undefined && {
             dateOfBirth: body.dateOfBirth,
           }),
@@ -178,9 +180,7 @@ export const profileRoutes = new Elysia({ prefix: "/profiles" })
         return { success: false, error: "Profile not found" };
       }
 
-      await db
-        .delete(resumeProfiles)
-        .where(eq(resumeProfiles.id, existing.id));
+      await db.delete(resumeProfiles).where(eq(resumeProfiles.id, existing.id));
 
       return {
         success: true,
