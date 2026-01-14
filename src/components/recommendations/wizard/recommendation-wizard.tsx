@@ -65,7 +65,7 @@ export function RecommendationWizard() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [wizardData, setWizardData] = useState<Partial<WizardData>>(
-    templateId ? { templateId } : {},
+    templateId ? { templateId } : {}
   );
 
   const updateData = (field: string, value: string) => {
@@ -156,7 +156,7 @@ export function RecommendationWizard() {
     onError: (error) => {
       console.error("Error creating letter:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create letter",
+        error instanceof Error ? error.message : "Failed to create letter"
       );
     },
   });
@@ -210,8 +210,8 @@ export function RecommendationWizard() {
       </div>
 
       {/* Progress */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="p-1">
+        <CardContent className="py-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Step {currentStep} of 6</span>
