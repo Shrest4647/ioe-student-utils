@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { apiClient } from "@/lib/eden";
+import { Step0TemplateSelection } from "./steps/step-0-template-selection";
 import { Step1TemplateInfo } from "./steps/step-1-template-info";
 import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
 import { Step3TargetInfo } from "./steps/step-3-target-info";
@@ -49,12 +50,13 @@ interface WizardData {
 }
 
 const steps = [
-  { id: 1, title: "Template Info", description: "Review your selection" },
-  { id: 2, title: "Recommender", description: "Who is recommending you?" },
-  { id: 3, title: "Target", description: "Where are you applying?" },
-  { id: 4, title: "Student Info", description: "Your achievements" },
-  { id: 5, title: "Custom Content", description: "Add extra details" },
-  { id: 6, title: "Review", description: "Review and edit" },
+  { id: 1, title: "Choose Template", description: "Select a template" },
+  { id: 2, title: "Template Info", description: "Review your selection" },
+  { id: 3, title: "Recommender", description: "Who is recommending you?" },
+  { id: 4, title: "Target", description: "Where are you applying?" },
+  { id: 5, title: "Student Info", description: "Your achievements" },
+  { id: 6, title: "Custom Content", description: "Add extra details" },
+  { id: 7, title: "Review", description: "Review and edit" },
 ];
 
 export function RecommendationWizard() {
@@ -63,16 +65,11 @@ export function RecommendationWizard() {
   const templateId = searchParams.get("templateId");
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<Partial<WizardData>>({
-    templateId: templateId || "",
-  });
-
-  useEffect(() => {
-    if (!templateId) {
-      toast.error("No template selected. Please choose a template first.");
-      router.push("/dashboard/recommendations");
-    }
-  }, [templateId, router]);
+  const [wizardData, setWizardData] = useState<Partial<WizardData>>(
+    templateId
+      ? { templateId }
+      : {}
+  );
 
   const updateData = (field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
@@ -80,7 +77,14 @@ export function RecommendationWizard() {
 
   const handleNext = async () => {
     // Validation for each step
-    if (currentStep === 2) {
+    if (currentStep === 1) {
+      if (!wizardData.templateId) {
+        toast.error("Please select a template to continue");
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
       if (
         !wizardData.recommenderName ||
         !wizardData.recommenderTitle ||
@@ -91,7 +95,7 @@ export function RecommendationWizard() {
       }
     }
 
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       if (
         !wizardData.targetInstitution ||
         !wizardData.targetProgram ||
@@ -104,7 +108,7 @@ export function RecommendationWizard() {
       }
     }
 
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -164,27 +168,26 @@ export function RecommendationWizard() {
     createLetterMutation.mutate();
   };
 
-  const progress = (currentStep / 6) * 100;
+  const progress = (currentStep / 7) * 100;
 
   const renderStep = () => {
-    if (!wizardData.templateId) {
-      return null;
-    }
-
     switch (currentStep) {
       case 1:
-        return <Step1TemplateInfo templateId={wizardData.templateId} />;
+        return <Step0TemplateSelection data={wizardData} updateData={updateData} />;
       case 2:
+        if (!wizardData.templateId) return null;
+        return <Step1TemplateInfo templateId={wizardData.templateId} />;
+      case 3:
         return (
           <Step2RecommenderInfo data={wizardData} updateData={updateData} />
         );
-      case 3:
-        return <Step3TargetInfo data={wizardData} updateData={updateData} />;
       case 4:
-        return <Step4StudentInfo data={wizardData} updateData={updateData} />;
+        return <Step3TargetInfo data={wizardData} updateData={updateData} />;
       case 5:
-        return <Step5CustomContent data={wizardData} updateData={updateData} />;
+        return <Step4StudentInfo data={wizardData} updateData={updateData} />;
       case 6:
+        return <Step5CustomContent data={wizardData} updateData={updateData} />;
+      case 7:
         return (
           <Step6ReviewEdit
             data={wizardData}
@@ -244,7 +247,7 @@ export function RecommendationWizard() {
       </Card>
 
       {/* Navigation */}
-      {currentStep < 6 && (
+      {currentStep < 7 && (
         <div className="flex justify-between">
           <Button
             variant="outline"
@@ -255,7 +258,7 @@ export function RecommendationWizard() {
             Back
           </Button>
           <Button onClick={handleNext}>
-            {currentStep === 5 ? "Review" : "Next"}
+            {currentStep === 6 ? "Review" : "Next"}
             <ChevronRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>
