@@ -1,3 +1,6 @@
+"use client";
+
+import { motion, useInView } from "framer-motion";
 import {
   BookOpen,
   Briefcase,
@@ -13,6 +16,7 @@ import {
   Target,
   Users,
 } from "lucide-react";
+import { useRef } from "react";
 import {
   Card,
   CardContent,
@@ -99,31 +103,82 @@ const features = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.04,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.35,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
 export function Features() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
     <section className="px-4 py-16" id="features">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="mb-12 text-center font-bold text-3xl">Features</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div ref={ref} className="mx-auto max-w-6xl">
+        <motion.h2
+          className="mb-12 text-center font-bold text-3xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          Features
+        </motion.h2>
+        <motion.div
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+        >
           {features
             .sort((a, b) => a.title.localeCompare(b.title))
             .map((feature) => (
-              <Card className="text-center" key={feature.title}>
-                <CardHeader>
-                  <div className="mx-auto mb-4">
-                    <feature.icon
-                      aria-hidden="true"
-                      className="h-12 w-12 text-primary"
-                    />
-                  </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={feature.title}
+                variants={cardVariants}
+                whileHover={{
+                  y: -5,
+                  transition: { duration: 0.2 },
+                }}
+              >
+                <Card className="h-full text-center transition-shadow hover:shadow-lg">
+                  <CardHeader>
+                    <motion.div
+                      className="mx-auto mb-4"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <feature.icon
+                        aria-hidden="true"
+                        className="h-12 w-12 text-primary"
+                      />
+                    </motion.div>
+                    <CardTitle>{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

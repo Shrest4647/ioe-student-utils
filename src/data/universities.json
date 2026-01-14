@@ -1,0 +1,654 @@
+{
+  "universities": [
+    {
+      "name": "Tribhuvan University",
+      "colleges": [
+        {
+          "name": "Pulchowk Campus",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Architecture",
+              "programs": ["Bachelor of Architecture (B.Arch)"]
+            },
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics and Computer Engineering",
+              "programs": [
+                "Bachelor of Electronics, Communication and Information Engineering (BEI)",
+                "Bachelor of Computer Engineering (BCT)"
+              ]
+            },
+            {
+              "name": "Mechanical and Aerospace Engineering",
+              "programs": [
+                "Bachelor of Mechanical Engineering",
+                "Bachelor of Aerospace Engineering"
+              ]
+            },
+            {
+              "name": "Applied Sciences and Chemical Engineering",
+              "programs": ["Bachelor of Chemical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Thapathali Campus",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            },
+            {
+              "name": "Automobile Engineering",
+              "programs": ["Bachelor of Automobile Engineering"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            },
+            {
+              "name": "Architecture",
+              "programs": ["Bachelor of Architecture (B.Arch)"]
+            }
+          ]
+        },
+        {
+          "name": "Paschimanchal Campus (Pokhara)",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Electronics and Communication Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Purwanchal Campus (Dharan)",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Electronics and Communication Engineering"
+              ]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            }
+          ]
+        },
+        {
+          "name": "Chitwan Engineering Campus (Rampur)",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Kathmandu Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Electronics and Communication Engineering"
+              ]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Khwopa College of Engineering",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Kantipur Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Electronics and Communication Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Advanced College of Engineering and Management",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            }
+          ]
+        },
+        {
+          "name": "Sagarmatha Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Janakpur Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kathmandu University",
+      "colleges": [
+        {
+          "name": "School of Engineering, Dhulikhel",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (B.E.)"]
+            },
+            {
+              "name": "Electrical and Electronics Engineering",
+              "programs": [
+                "Bachelor of Engineering in Electrical and Electronics Engineering"
+              ]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Engineering in Mechanical Engineering"]
+            },
+            {
+              "name": "Geomatics Engineering",
+              "programs": ["Bachelor of Engineering in Geomatics Engineering"]
+            },
+            {
+              "name": "Chemical Science and Engineering",
+              "programs": ["Bachelor of Engineering in Chemical Engineering"]
+            },
+            {
+              "name": "Computer Science and Engineering",
+              "programs": [
+                "Bachelor of Engineering (Computer Engineering)",
+                "Bachelor of Technology in Cybersecurity",
+                "Bachelor of Information Technology (BIT)",
+                "Bachelor of Science (Computer Science)"
+              ]
+            },
+            {
+              "name": "Architecture",
+              "programs": [
+                "Bachelor of Architecture (B.Arch)",
+                "Bachelor in Heritage Conservation (BHC)"
+              ]
+            },
+            {
+              "name": "Environmental Engineering",
+              "programs": [
+                "Bachelor of Engineering in Environmental Engineering"
+              ]
+            },
+            {
+              "name": "Artificial Intelligence",
+              "programs": ["Bachelor of Technology in Artificial Intelligence"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pokhara University",
+      "colleges": [
+        {
+          "name": "School of Engineering, Pokhara",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Engineering in Civil Engineering"]
+            },
+            {
+              "name": "Civil and Rural Engineering",
+              "programs": [
+                "Bachelor of Engineering in Civil and Rural Engineering"
+              ]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            },
+            {
+              "name": "Software Engineering",
+              "programs": ["Bachelor of Engineering in Software Engineering"]
+            },
+            {
+              "name": "Electrical and Electronics Engineering",
+              "programs": [
+                "Bachelor of Engineering in Electrical and Electronics Engineering"
+              ]
+            },
+            {
+              "name": "Information Technology Engineering",
+              "programs": [
+                "Bachelor of Engineering in Information Technology Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Pokhara Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Nepal Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            },
+            {
+              "name": "Mechanical Engineering",
+              "programs": ["Bachelor of Mechanical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Gandaki College of Engineering and Science",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Engineering in Civil Engineering"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Universal Engineering and Science College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Engineering in Civil Engineering"]
+            },
+            {
+              "name": "Electrical and Electronics Engineering",
+              "programs": [
+                "Bachelor of Engineering in Electrical and Electronics Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Oxford College of Engineering and Management",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            },
+            {
+              "name": "Software Engineering",
+              "programs": ["Bachelor of Engineering in Software Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Nepal College of Information Technology (NCIT)",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            },
+            {
+              "name": "Software Engineering",
+              "programs": ["Bachelor of Engineering in Software Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Engineering in Electronics and Communication Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Cosmos College of Management and Technology",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            },
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Engineering in Civil Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Rapti Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Engineering in Civil Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Apex College of Engineering",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Engineering in Computer Engineering"]
+            },
+            {
+              "name": "Electrical and Electronics Engineering",
+              "programs": [
+                "Bachelor of Engineering in Electrical and Electronics Engineering"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Purbanchal University",
+      "colleges": [
+        {
+          "name": "School of Engineering, Biratnagar",
+          "type": "Constituent",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (B.E.)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (B.E.)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering (B.E.)"]
+            },
+            {
+              "name": "Electronics, Communication & Automation Engineering",
+              "programs": [
+                "Bachelor of Electronics, Communication & Automation Engineering (B.E.)"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Acme Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Aryan School of Engineering and Management",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Hillside College of Engineering",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering (BCE)"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering (BCT)"]
+            }
+          ]
+        },
+        {
+          "name": "Central Engineering College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering"]
+            },
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "College of Information Technology and Engineering",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering"]
+            },
+            {
+              "name": "Electronics and Communication Engineering",
+              "programs": [
+                "Bachelor of Electronics and Communication Engineering"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Eastern College of Engineering",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Civil Engineering",
+              "programs": ["Bachelor of Civil Engineering"]
+            },
+            {
+              "name": "Electrical Engineering",
+              "programs": ["Bachelor of Electrical Engineering"]
+            }
+          ]
+        },
+        {
+          "name": "Kantipur City College",
+          "type": "Affiliated",
+          "departments": [
+            {
+              "name": "Computer Engineering",
+              "programs": ["Bachelor of Computer Engineering"]
+            },
+            {
+              "name": "Electronics Engineering",
+              "programs": ["Bachelor of Electronics Engineering"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+ALTER TABLE "country" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "country" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "degree_level" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "degree_level" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "field_of_study" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "field_of_study" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "pg-drizzle_post" ALTER COLUMN "createdAt" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_attachment" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_attachment" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_category" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_category" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_content_type" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource_content_type" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "resource" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "round_event" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "round_event" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "scholarship_round" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "scholarship_round" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "scholarship" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "scholarship" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_application" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_application" ALTER COLUMN "updated_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_profile" ALTER COLUMN "created_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_profile" ALTER COLUMN "updated_at" DROP NOT NULL;

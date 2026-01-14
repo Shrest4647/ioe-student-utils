@@ -1,0 +1,265 @@
+"use client";
+
+import { useMutation } from "@tanstack/react-query";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { apiClient } from "@/lib/eden";
+import { Step1TemplateInfo } from "./steps/step-1-template-info";
+import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
+import { Step3TargetInfo } from "./steps/step-3-target-info";
+import { Step4StudentInfo } from "./steps/step-4-student-info";
+import { Step5CustomContent } from "./steps/step-5-custom-content";
+import { Step6ReviewEdit } from "./steps/step-6-review-edit";
+
+interface WizardData {
+  // Template info (from step 1)
+  templateId: string;
+
+  // Recommender info (step 2)
+  recommenderName: string;
+  recommenderTitle: string;
+  recommenderInstitution: string;
+  recommenderEmail?: string;
+  recommenderDepartment?: string;
+
+  // Target info (step 3)
+  targetInstitution: string;
+  targetProgram: string;
+  targetDepartment?: string;
+  targetCountry: string;
+  purpose: string;
+
+  // Relationship (step 3)
+  relationship: string;
+  contextOfMeeting?: string;
+
+  // Student info (step 4)
+  studentAchievements?: string;
+  researchExperience?: string;
+  academicPerformance?: string;
+  personalQualities?: string;
+
+  // Custom content (step 5)
+  customContent?: string;
+}
+
+const steps = [
+  { id: 1, title: "Template Info", description: "Review your selection" },
+  { id: 2, title: "Recommender", description: "Who is recommending you?" },
+  { id: 3, title: "Target", description: "Where are you applying?" },
+  { id: 4, title: "Student Info", description: "Your achievements" },
+  { id: 5, title: "Custom Content", description: "Add extra details" },
+  { id: 6, title: "Review", description: "Review and edit" },
+];
+
+export function RecommendationWizard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("templateId");
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [wizardData, setWizardData] = useState<Partial<WizardData>>({
+    templateId: templateId || "",
+  });
+
+  useEffect(() => {
+    if (!templateId) {
+      toast.error("No template selected. Please choose a template first.");
+      router.push("/dashboard/recommendations");
+    }
+  }, [templateId, router]);
+
+  const updateData = (field: string, value: string) => {
+    setWizardData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleNext = async () => {
+    // Validation for each step
+    if (currentStep === 2) {
+      if (
+        !wizardData.recommenderName ||
+        !wizardData.recommenderTitle ||
+        !wizardData.recommenderInstitution
+      ) {
+        toast.error("Please fill in all required recommender fields");
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
+      if (
+        !wizardData.targetInstitution ||
+        !wizardData.targetProgram ||
+        !wizardData.targetCountry ||
+        !wizardData.purpose ||
+        !wizardData.relationship
+      ) {
+        toast.error("Please fill in all required target fields");
+        return;
+      }
+    }
+
+    if (currentStep < 6) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
+  const createLetterMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await apiClient.api.recommendations.letters.post({
+        templateId: wizardData.templateId || "",
+        title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
+        recommenderName: wizardData.recommenderName || "",
+        recommenderTitle: wizardData.recommenderTitle || "",
+        recommenderInstitution: wizardData.recommenderInstitution || "",
+        recommenderEmail: wizardData.recommenderEmail,
+        recommenderDepartment: wizardData.recommenderDepartment,
+        targetInstitution: wizardData.targetInstitution || "",
+        targetProgram: wizardData.targetProgram || "",
+        targetDepartment: wizardData.targetDepartment,
+        targetCountry: wizardData.targetCountry || "",
+        purpose: wizardData.purpose || "",
+        relationship: wizardData.relationship || "",
+        contextOfMeeting: wizardData.contextOfMeeting,
+        studentAchievements: wizardData.studentAchievements,
+        researchExperience: wizardData.researchExperience,
+        academicPerformance: wizardData.academicPerformance,
+        personalQualities: wizardData.personalQualities,
+        customContent: wizardData.customContent,
+      });
+
+      if (error) {
+        throw new Error("Failed to create letter");
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success("Recommendation letter created successfully!");
+      // Redirect to the letter detail page
+      if (data?.data?.id) {
+        router.push(`/dashboard/recommendations/${data.data.id}`);
+      }
+    },
+    onError: (error) => {
+      console.error("Error creating letter:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create letter",
+      );
+    },
+  });
+
+  const handleSubmit = () => {
+    createLetterMutation.mutate();
+  };
+
+  const progress = (currentStep / 6) * 100;
+
+  const renderStep = () => {
+    if (!wizardData.templateId) {
+      return null;
+    }
+
+    switch (currentStep) {
+      case 1:
+        return <Step1TemplateInfo templateId={wizardData.templateId} />;
+      case 2:
+        return (
+          <Step2RecommenderInfo data={wizardData} updateData={updateData} />
+        );
+      case 3:
+        return <Step3TargetInfo data={wizardData} updateData={updateData} />;
+      case 4:
+        return <Step4StudentInfo data={wizardData} updateData={updateData} />;
+      case 5:
+        return <Step5CustomContent data={wizardData} updateData={updateData} />;
+      case 6:
+        return (
+          <Step6ReviewEdit
+            data={wizardData}
+            updateData={updateData}
+            onSubmit={handleSubmit}
+            isSubmitting={createLetterMutation.isPending}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="font-bold text-3xl tracking-tight">
+          Create Recommendation Letter
+        </h1>
+        <p className="text-muted-foreground">
+          Follow the steps to create your personalized recommendation letter
+        </p>
+      </div>
+
+      {/* Progress */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Step {currentStep} of 6</span>
+              <span className="text-muted-foreground">
+                {steps[currentStep - 1].title}
+              </span>
+            </div>
+            <Progress value={progress} className="h-2" />
+            <div className="flex justify-between text-muted-foreground text-xs">
+              {steps.map((step) => (
+                <span
+                  key={step.id}
+                  className={step.id === currentStep ? "font-medium" : ""}
+                >
+                  {step.id}
+                </span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step Content */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+        </CardHeader>
+        <CardContent>{renderStep()}</CardContent>
+      </Card>
+
+      {/* Navigation */}
+      {currentStep < 6 && (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={currentStep === 1}
+          >
+            <ChevronLeftIcon className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button onClick={handleNext}>
+            {currentStep === 5 ? "Review" : "Next"}
+            <ChevronRightIcon className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
