@@ -75,12 +75,12 @@ export function Step4TemplateVariables({
     // Mapping from wizard data fields to template variable names
     const fieldMapping: Record<string, string> = {
       // Recommender info from Step 2
-      recommenderName: "your_name",
-      recommenderTitle: "your_title",
-      recommenderInstitution: "your_institution",
-      recommenderDepartment: "your_department",
-      recommenderEmail: "your_email",
-      recommenderPhone: "your_phone",
+      recommenderName: "recommender_name",
+      recommenderTitle: "recommender_title",
+      recommenderInstitution: "recommender_institution",
+      recommenderDepartment: "recommender_department",
+      recommenderEmail: "recommender_email",
+      recommenderPhone: "recommender_phone",
 
       // Target info from Step 3
       targetInstitution: "target_institution",
@@ -152,12 +152,12 @@ export function Step4TemplateVariables({
 
   // Check if form has data
   const hasFormData = Object.keys(data).some(
-    (key) => data[key] && data[key]?.trim().length > 0,
+    (key) => data[key] && data[key]?.trim().length > 0
   );
 
   // Find current saved variables
   const currentSavedVariables = savedVariablesList?.find(
-    (v) => v.id === data.savedVariablesId,
+    (v) => v.id === data.savedVariablesId
   );
 
   if (templateLoading || savedLoading) {
@@ -178,10 +178,7 @@ export function Step4TemplateVariables({
       // Group by category based on variable name patterns
       let category = "general";
 
-      if (
-        variable.name.includes("your_") ||
-        variable.name.includes("recommender")
-      ) {
+      if (variable.name.includes("recommender")) {
         category = "recommender";
       } else if (
         variable.name.includes("target_") ||
@@ -205,7 +202,7 @@ export function Step4TemplateVariables({
       acc[category].push(variable);
       return acc;
     },
-    {} as Record<string, typeof variables>,
+    {} as Record<string, typeof variables>
   );
 
   const categoryOrder = ["user", "recommender", "target", "student", "general"];
