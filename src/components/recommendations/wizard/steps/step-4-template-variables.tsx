@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, FolderOpenIcon, LoaderIcon, SaveIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export function Step4TemplateVariables({
   const queryClient = useQueryClient();
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [saveName, setSaveName] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch template
   const { data: template, isLoading: templateLoading } = useQuery({
@@ -66,6 +67,50 @@ export function Step4TemplateVariables({
     },
     enabled: !!templateId,
   });
+
+  // Auto-populate template variables from Steps 2 & 3 data
+  useEffect(() => {
+    if (!template || hasInitialized) return;
+
+    // Mapping from wizard data fields to template variable names
+    const fieldMapping: Record<string, string> = {
+      // Recommender info from Step 2
+      recommenderName: "your_name",
+      recommenderTitle: "your_title",
+      recommenderInstitution: "your_institution",
+      recommenderDepartment: "your_department",
+      recommenderEmail: "your_email",
+      recommenderPhone: "your_phone",
+
+      // Target info from Step 3
+      targetInstitution: "target_institution",
+      targetProgram: "target_program",
+      targetDepartment: "target_department",
+      targetCountry: "target_country",
+      purpose: "purpose",
+
+      // Relationship info
+      relationship: "relationship",
+      contextOfMeeting: "context_of_meeting",
+      duration_known: "duration_known",
+    };
+
+    // Populate fields from wizard data
+    Object.entries(fieldMapping).forEach(([wizardField, templateVar]) => {
+      const value = data[wizardField];
+      if (value && !data[templateVar]) {
+        // Only set if not already set
+        updateData(templateVar, value);
+      }
+    });
+
+    // Set student_name from user data if available
+    if (!data.student_name && data.user_name) {
+      updateData("student_name", data.user_name);
+    }
+
+    setHasInitialized(true);
+  }, [template, data, hasInitialized, updateData]);
 
   // Save mutation
   const saveMutation = useMutation({
