@@ -986,6 +986,7 @@ export const savedRecommender = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
     updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
       .$onUpdate(() => new Date())
       .notNull(),
     isActive: boolean("is_active")
@@ -1019,6 +1020,7 @@ export const savedTargetInstitution = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
     updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
       .$onUpdate(() => new Date())
       .notNull(),
     isActive: boolean("is_active")
@@ -1050,6 +1052,7 @@ export const savedTemplateVariables = pgTable(
       .$defaultFn(() => new Date())
       .notNull(),
     updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
       .$onUpdate(() => new Date())
       .notNull(),
     isActive: boolean("is_active")

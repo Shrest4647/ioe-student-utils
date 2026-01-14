@@ -46,7 +46,7 @@ export const savedRecommendationsRoutes = new Elysia({
     "/recommenders/:id",
     async ({ user, params, set }) => {
       const recommender = await db.query.savedRecommender.findFirst({
-        where: { id: params.id },
+        where: { id: params.id, isActive: true },
       });
 
       if (!recommender) {
@@ -230,7 +230,7 @@ export const savedRecommendationsRoutes = new Elysia({
     "/institutions/:id",
     async ({ user, params, set }) => {
       const institution = await db.query.savedTargetInstitution.findFirst({
-        where: { id: params.id },
+        where: { id: params.id, isActive: true },
       });
 
       if (!institution) {
@@ -417,7 +417,7 @@ export const savedRecommendationsRoutes = new Elysia({
     "/template-variables/:id",
     async ({ user, params, set }) => {
       const savedVars = await db.query.savedTemplateVariables.findFirst({
-        where: { id: params.id },
+        where: { id: params.id, isActive: true },
       });
 
       if (!savedVars) {

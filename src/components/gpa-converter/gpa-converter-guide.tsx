@@ -1278,11 +1278,11 @@ export function GPAConverterGuide() {
                   <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
                     <li>
                       <strong>Institutional reputation:</strong> WES considers
-                      university tier in evaluations [^4]
+                      university tier in evaluations
                     </li>
                     <li>
                       <strong>Mark consistency:</strong> Stable vs fluctuating
-                      percentages affect final GPA [^23]
+                      percentages affect final GPA
                     </li>
                     <li>
                       <strong>Subject difficulty:</strong> STEM courses may be

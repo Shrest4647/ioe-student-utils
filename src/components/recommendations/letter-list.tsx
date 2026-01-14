@@ -89,6 +89,33 @@ export function LetterList() {
     deleteMutation.mutate(id);
   };
 
+  const handleDownloadLetter = async (id: string, title: string) => {
+    try {
+      const response = await fetch(
+        `/api/recommendations/letters/${id}/download`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("PDF downloaded successfully");
+    } catch (_error) {
+      toast.error("Failed to download PDF");
+    }
+  };
+
   const getStatusBadgeVariant = (status: LetterStatus) => {
     switch (status) {
       case "draft":
@@ -106,7 +133,7 @@ export function LetterList() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-45" />
+          <Skeleton className="h-10 w-44" />
         </div>
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
@@ -203,14 +230,14 @@ export function LetterList() {
                           Edit
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/dashboard/recommendations/${letter.id}`}
-                          className="cursor-pointer"
-                        >
-                          <DownloadIcon className="mr-2 h-4 w-4" />
-                          Download PDF
-                        </Link>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleDownloadLetter(letter.id, letter.title)
+                        }
+                        className="cursor-pointer"
+                      >
+                        <DownloadIcon className="mr-2 h-4 w-4" />
+                        Download PDF
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDelete(letter.id, letter.title)}

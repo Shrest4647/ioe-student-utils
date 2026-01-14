@@ -28,7 +28,6 @@ export default function RecommendationsPage() {
         throw new Error("Failed to fetch letters");
       }
 
-      console.log("Letters data received:", data?.data);
       return data?.data || [];
     },
   });
@@ -47,16 +46,6 @@ export default function RecommendationsPage() {
   const completedLetters = Array.isArray(letters)
     ? letters.filter((l) => l?.status === "completed").length
     : 0;
-
-  // Debug logging
-  useEffect(() => {
-    console.log("Stats updated:", {
-      total: totalLetters,
-      drafts: draftLetters,
-      completed: completedLetters,
-      lettersData: letters,
-    });
-  }, [letters, totalLetters, draftLetters, completedLetters]);
 
   return (
     <div className="space-y-6">

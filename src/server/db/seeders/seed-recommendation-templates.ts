@@ -1001,5 +1001,3 @@ export async function seedRecommendationTemplates() {
     `✓ Seeded ${recommendationTemplates.length} recommendation templates`,
   );
 }
-
-await seedRecommendationTemplates();

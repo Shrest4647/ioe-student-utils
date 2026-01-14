@@ -64,6 +64,7 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
   useEffect(() => {
     if (data.finalContent) {
       setPreviewContent(data.finalContent);
+      setIsGeneratingPreview(false);
     } else {
       generatePreview();
     }

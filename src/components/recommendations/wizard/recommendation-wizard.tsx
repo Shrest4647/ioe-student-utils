@@ -1,9 +1,9 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,9 +79,30 @@ export function RecommendationWizard() {
     templateId ? { templateId } : {},
   );
 
-  const updateData = (field: string, value: string) => {
+  // Fetch template for validation
+  const { data: template } = useQuery({
+    queryKey: ["recommendation-template", wizardData.templateId],
+    queryFn: async () => {
+      if (!wizardData.templateId) return null;
+
+      const { data, error } = await apiClient.api.recommendations
+        .templates({
+          id: wizardData.templateId,
+        })
+        .get();
+
+      if (error) {
+        throw new Error("Failed to fetch template");
+      }
+
+      return data?.data;
+    },
+    enabled: !!wizardData.templateId,
+  });
+
+  const updateData = useCallback((field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const handleNext = async () => {
     // Validation for each step
@@ -118,31 +139,21 @@ export function RecommendationWizard() {
 
     if (currentStep === 4) {
       // Step 4 validation - check required template variables
-      // We need to fetch the template to know which fields are required
-      // For now, we'll validate common required fields
-      const requiredFields = [
-        "student_name",
-        "your_name",
-        "your_email",
-        "duration_known",
-        "target_program",
-        "target_institution",
-        "relationship",
-        "your_title",
-        "your_institution",
-        "student_pronoun",
-        "student_object",
-      ];
+      if (template?.variables) {
+        const requiredFields = template.variables
+          .filter((v) => v.required)
+          .map((v) => v.name);
 
-      const missingFields = requiredFields.filter(
-        (field) => !wizardData[field] || wizardData[field]?.trim() === "",
-      );
-
-      if (missingFields.length > 0) {
-        toast.error(
-          `Please fill in all required template fields. Missing: ${missingFields.length} required field(s)`,
+        const missingFields = requiredFields.filter(
+          (field) => !wizardData[field] || wizardData[field]?.trim() === "",
         );
-        return;
+
+        if (missingFields.length > 0) {
+          toast.error(
+            `Please fill in all required template fields. Missing: ${missingFields.length} required field(s)`,
+          );
+          return;
+        }
       }
     }
 
@@ -183,6 +194,7 @@ export function RecommendationWizard() {
         "academicPerformance",
         "personalQualities",
         "customContent",
+        "finalContent",
       ];
 
       const templateVariables: Record<string, string> = {};
