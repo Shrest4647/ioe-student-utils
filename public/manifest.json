@@ -1,0 +1,48 @@
+{
+  "name": "IOE Student Utils",
+  "short_name": "IOE Utils",
+  "description": "The ultimate open-source toolkit for Institute of Engineering students to navigate their academic journey and transition to international education.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities", "students"],
+  "shortcuts": [
+    {
+      "name": "Colleges",
+      "short_name": "Colleges",
+      "description": "Browse engineering colleges",
+      "url": "/colleges",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Scholarships",
+      "short_name": "Scholarships",
+      "description": "View available scholarships",
+      "url": "/scholarships",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "GPA Converter",
+      "short_name": "GPA Converter",
+      "description": "Convert your GPA",
+      "url": "/gpa-converter",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
