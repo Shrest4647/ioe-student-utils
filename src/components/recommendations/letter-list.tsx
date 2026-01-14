@@ -104,36 +104,24 @@ export function LetterList() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-45" />
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
-    );
-  }
-
-  if (letters.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <FileTextIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="mb-2 font-semibold text-lg">No letters yet</h3>
-          <p className="mb-4 text-center text-muted-foreground">
-            Create your first recommendation letter to get started
-          </p>
-          <Link href="/dashboard/recommendations/new">
-            <Button>Create Letter</Button>
-          </Link>
-        </CardContent>
-      </Card>
     );
   }
 
@@ -154,9 +142,30 @@ export function LetterList() {
         </Select>
       </div>
 
-      {/* Letters Grid */}
-      <div className="grid gap-4">
-        {letters.map((letter) => (
+      {/* Empty State */}
+      {letters.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileTextIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 font-semibold text-lg">
+              {statusFilter === "all" ? "No letters yet" : `No ${statusFilter} letters`}
+            </h3>
+            <p className="mb-4 text-center text-muted-foreground">
+              {statusFilter === "all"
+                ? "Create your first recommendation letter to get started"
+                : `Try selecting a different filter`}
+            </p>
+            {statusFilter === "all" && (
+              <Link href="/dashboard/recommendations/new">
+                <Button>Create Letter</Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        /* Letters Grid */
+        <div className="grid gap-4">
+          {letters.map((letter) => (
           <Card key={letter.id} className="transition-shadow hover:shadow-md">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -226,7 +235,8 @@ export function LetterList() {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
