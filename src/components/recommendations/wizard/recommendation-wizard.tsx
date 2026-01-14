@@ -13,9 +13,9 @@ import { Step0TemplateSelection } from "./steps/step-0-template-selection";
 
 import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
 import { Step3TargetInfo } from "./steps/step-3-target-info";
-import { Step4StudentInfo } from "./steps/step-4-student-info";
-import { Step5CustomContent } from "./steps/step-5-custom-content";
-import { Step6ReviewEdit } from "./steps/step-6-review-edit";
+import { Step4TemplateVariables } from "./steps/step-4-template-variables";
+import { Step6CustomContent } from "./steps/step-6-custom-content";
+import { Step7ReviewEdit } from "./steps/step-7-review-edit";
 
 interface WizardData {
   // Template info (from step 1)
@@ -45,6 +45,9 @@ interface WizardData {
   academicPerformance?: string;
   personalQualities?: string;
 
+  // Template variables (step 4) - dynamic fields from template
+  [key: string]: string | undefined;
+
   // Custom content (step 5)
   customContent?: string;
 
@@ -56,7 +59,7 @@ const steps = [
   { id: 1, title: "Choose Template", description: "Select a template" },
   { id: 2, title: "Recommender", description: "Who is recommending you?" },
   { id: 3, title: "Target", description: "Where are you applying?" },
-  { id: 4, title: "Student Info", description: "Your achievements" },
+  { id: 4, title: "Template Details", description: "Fill in template variables" },
   { id: 5, title: "Custom Content", description: "Add extra details" },
   { id: 6, title: "Review", description: "Review and edit" },
 ];
@@ -121,6 +124,35 @@ export function RecommendationWizard() {
 
   const createLetterMutation = useMutation({
     mutationFn: async () => {
+      // Extract template variables (all fields that aren't predefined)
+      const predefinedFields = [
+        "templateId",
+        "recommenderName",
+        "recommenderTitle",
+        "recommenderInstitution",
+        "recommenderEmail",
+        "recommenderDepartment",
+        "targetInstitution",
+        "targetProgram",
+        "targetDepartment",
+        "targetCountry",
+        "purpose",
+        "relationship",
+        "contextOfMeeting",
+        "studentAchievements",
+        "researchExperience",
+        "academicPerformance",
+        "personalQualities",
+        "customContent",
+      ];
+
+      const templateVariables: Record<string, string> = {};
+      Object.keys(wizardData).forEach((key) => {
+        if (!predefinedFields.includes(key) && wizardData[key]) {
+          templateVariables[key] = wizardData[key] as string;
+        }
+      });
+
       const { data, error } = await apiClient.api.recommendations.letters.post({
         templateId: wizardData.templateId || "",
         title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
@@ -141,6 +173,7 @@ export function RecommendationWizard() {
         academicPerformance: wizardData.academicPerformance,
         personalQualities: wizardData.personalQualities,
         customContent: wizardData.customContent,
+        templateVariables,
       });
 
       if (error) {
@@ -183,12 +216,18 @@ export function RecommendationWizard() {
       case 3:
         return <Step3TargetInfo data={wizardData} updateData={updateData} />;
       case 4:
-        return <Step4StudentInfo data={wizardData} updateData={updateData} />;
+        return (
+          <Step4TemplateVariables
+            data={wizardData}
+            updateData={updateData}
+            templateId={wizardData.templateId || ""}
+          />
+        );
       case 5:
-        return <Step5CustomContent data={wizardData} updateData={updateData} />;
+        return <Step6CustomContent data={wizardData} updateData={updateData} />;
       case 6:
         return (
-          <Step6ReviewEdit
+          <Step7ReviewEdit
             data={wizardData}
             updateData={updateData}
             onSubmit={handleSubmit}

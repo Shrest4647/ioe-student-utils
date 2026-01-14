@@ -9,19 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
-interface Step6ReviewEditProps {
+interface Step7ReviewEditProps {
   data: Record<string, string | undefined>;
   updateData: (field: string, value: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
 }
 
-export function Step6ReviewEdit({
+export function Step7ReviewEdit({
   data,
   updateData,
   onSubmit,
   isSubmitting,
-}: Step6ReviewEditProps) {
+}: Step7ReviewEditProps) {
   const [previewContent, setPreviewContent] = useState<string>("");
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(true);
 

@@ -12,7 +12,7 @@ interface Step5CustomContentProps {
   updateData: (field: string, value: string) => void;
 }
 
-export function Step5CustomContent({
+export function Step6CustomContent({
   data,
   updateData,
 }: Step5CustomContentProps) {

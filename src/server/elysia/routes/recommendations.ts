@@ -253,6 +253,9 @@ export const recommendationRoutes = new Elysia({
         academic_performance: body.academicPerformance,
         personal_qualities: body.personalQualities,
         custom_content: body.customContent,
+
+        // Template variables (all additional fields from the dynamic form)
+        ...(body.templateVariables || {}),
       };
 
       // 4. Generate default context from template variables
@@ -346,6 +349,7 @@ export const recommendationRoutes = new Elysia({
         academicPerformance: t.Optional(t.String()),
         personalQualities: t.Optional(t.String()),
         customContent: t.Optional(t.String()),
+        templateVariables: t.Optional(t.Record(t.String(), t.Optional(t.String()))),
       }),
       detail: {
         tags: ["Recommendations", "Letters"],
