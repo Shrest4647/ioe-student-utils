@@ -33,16 +33,134 @@ export function GPAConverterGuide() {
           international GPA standards
         </p>
       </div>
-      <Accordion type="single" collapsible defaultValue="how-to-calculate">
+      <Accordion type="single" collapsible>
+        <AccordionItem value="tu-system">
+          <AccordionTrigger className="font-semibold text-base">
+            TU Grading System Explained
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    New System (2080 Batch Onwards)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {[
+                    { grade: "A+", range: "90-100%", gpa: "4.0" },
+                    { grade: "A", range: "80-89%", gpa: "3.6" },
+                    { grade: "B+", range: "70-79%", gpa: "3.2" },
+                    { grade: "B", range: "60-69%", gpa: "2.8" },
+                    { grade: "B-", range: "50-59%", gpa: "2.7" },
+                    { grade: "F", range: "Below 50%", gpa: "0.0" },
+                  ].map((item) => (
+                    <div
+                      key={item.grade}
+                      className="flex items-center justify-between rounded-lg bg-muted/50 p-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{item.grade}</Badge>
+                        <span className="text-muted-foreground text-sm">
+                          {item.range}
+                        </span>
+                      </div>
+                      <span className="font-medium font-mono">{item.gpa}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Legacy System (Before 2080)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {[
+                    { division: "Distinction", range: "80% and above" },
+                    { division: "First Division", range: "65-79%" },
+                    { division: "Second Division", range: "50-64%" },
+                    { division: "Pass Division", range: "40-49%" },
+                  ].map((item) => (
+                    <div
+                      key={item.division}
+                      className="flex items-center justify-between rounded-lg bg-muted/50 p-2"
+                    >
+                      <span className="font-medium text-sm">
+                        {item.division}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {item.range}
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-primary/5">
+              <CardContent className="pt-6">
+                <p className="text-sm">
+                  <strong>IOE-Specific:</strong> Internal assessment counts for
+                  40 marks, final examination for 60 marks. Pass mark is
+                  typically 40-50% depending on the course level.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Understanding the Grading Transition
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-muted-foreground text-sm">
+                  TU's grading system has evolved significantly over the years.
+                  Here's how the different systems relate to each other:
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-green-600">80%+</Badge>
+                    <span className="flex-1">
+                      Old: Distinction → New: A+ (4.0)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-blue-600">65-79%</Badge>
+                    <span className="flex-1">
+                      Old: First Division → New: A/B+ (3.2-3.6)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-yellow-600">50-64%</Badge>
+                    <span className="flex-1">
+                      Old: Second Division → New: B/B- (2.7-2.8)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-red-600">Below 50%</Badge>
+                    <span className="flex-1">
+                      Old: Pass/Fail → New: F (0.0)
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="how-to-calculate">
           <AccordionTrigger className="font-semibold text-base">
-            Comprehensive GPA Conversion Guide
+            GPA Conversion Steps
           </AccordionTrigger>
           <AccordionContent className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card key="step1" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     1
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -59,7 +177,7 @@ export function GPAConverterGuide() {
 
               <Card key="step2" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     2
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -76,7 +194,7 @@ export function GPAConverterGuide() {
 
               <Card key="step3" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     3
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -92,7 +210,7 @@ export function GPAConverterGuide() {
 
               <Card key="step4" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     4
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -109,7 +227,7 @@ export function GPAConverterGuide() {
 
               <Card key="step5" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     5
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -126,7 +244,7 @@ export function GPAConverterGuide() {
 
               <Card key="step6" className="relative">
                 <CardHeader>
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
+                  <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs">
                     6
                   </div>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -141,7 +259,14 @@ export function GPAConverterGuide() {
                 </CardContent>
               </Card>
             </div>
+          </AccordionContent>
+        </AccordionItem>
 
+        <AccordionItem value="conversion-tables">
+          <AccordionTrigger className="font-semibold text-base">
+            GPA Conversion Guide
+          </AccordionTrigger>
+          <AccordionContent className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Conversion Standards & Formulas</CardTitle>
@@ -515,7 +640,7 @@ export function GPAConverterGuide() {
                 </div>
 
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="font-mono text-lg">
+                  <p className="font-mono text-sm">
                     Weighted GPA = Total Quality Points ÷ Total Credits = 42.4 ÷
                     12 = <strong>3.53</strong>
                   </p>
@@ -539,124 +664,6 @@ export function GPAConverterGuide() {
                   </div>
                   <div>
                     • German: <strong>2.0</strong> (Gut)
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="tu-system">
-          <AccordionTrigger className="font-semibold text-base">
-            TU Grading System Explained
-          </AccordionTrigger>
-          <AccordionContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    New System (2080 Batch Onwards)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {[
-                    { grade: "A+", range: "90-100%", gpa: "4.0" },
-                    { grade: "A", range: "80-89%", gpa: "3.6" },
-                    { grade: "B+", range: "70-79%", gpa: "3.2" },
-                    { grade: "B", range: "60-69%", gpa: "2.8" },
-                    { grade: "B-", range: "50-59%", gpa: "2.7" },
-                    { grade: "F", range: "Below 50%", gpa: "0.0" },
-                  ].map((item) => (
-                    <div
-                      key={item.grade}
-                      className="flex items-center justify-between rounded-lg bg-muted/50 p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{item.grade}</Badge>
-                        <span className="text-muted-foreground text-sm">
-                          {item.range}
-                        </span>
-                      </div>
-                      <span className="font-medium font-mono">{item.gpa}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    Legacy System (Before 2080)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {[
-                    { division: "Distinction", range: "80% and above" },
-                    { division: "First Division", range: "65-79%" },
-                    { division: "Second Division", range: "50-64%" },
-                    { division: "Pass Division", range: "40-49%" },
-                  ].map((item) => (
-                    <div
-                      key={item.division}
-                      className="flex items-center justify-between rounded-lg bg-muted/50 p-2"
-                    >
-                      <span className="font-medium text-sm">
-                        {item.division}
-                      </span>
-                      <span className="text-muted-foreground text-sm">
-                        {item.range}
-                      </span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="bg-primary/5">
-              <CardContent className="pt-6">
-                <p className="text-sm">
-                  <strong>IOE-Specific:</strong> Internal assessment counts for
-                  40 marks, final examination for 60 marks. Pass mark is
-                  typically 40-50% depending on the course level.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Understanding the Grading Transition
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  TU's grading system has evolved significantly over the years.
-                  Here's how the different systems relate to each other:
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-green-600">80%+</Badge>
-                    <span className="flex-1">
-                      Old: Distinction → New: A+ (4.0)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-blue-600">65-79%</Badge>
-                    <span className="flex-1">
-                      Old: First Division → New: A/B+ (3.2-3.6)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-yellow-600">50-64%</Badge>
-                    <span className="flex-1">
-                      Old: Second Division → New: B/B- (2.7-2.8)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-red-600">Below 50%</Badge>
-                    <span className="flex-1">
-                      Old: Pass/Fail → New: F (0.0)
-                    </span>
                   </div>
                 </div>
               </CardContent>
