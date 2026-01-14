@@ -14,7 +14,11 @@ import { apiClient } from "@/lib/eden";
 export default function RecommendationsPage() {
   const router = useRouter();
 
-  const { data: letters = [], isLoading: statsLoading, error } = useQuery({
+  const {
+    data: letters = [],
+    isLoading: statsLoading,
+    error,
+  } = useQuery({
     queryKey: ["recommendation-letters", "all"],
     queryFn: async () => {
       const { data, error } = await apiClient.api.recommendations.letters.get();

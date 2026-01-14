@@ -1,9 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Label } from "@/components/ui/label";
+import { LoaderIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,10 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoaderIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/eden";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface Step4TemplateVariablesProps {
   data: Record<string, string | undefined>;
@@ -30,9 +30,11 @@ export function Step4TemplateVariables({
   const { data: template, isLoading } = useQuery({
     queryKey: ["recommendation-template", templateId],
     queryFn: async () => {
-      const { data, error } = await apiClient.api.recommendations.templates({
-        id: templateId,
-      }).get();
+      const { data, error } = await apiClient.api.recommendations
+        .templates({
+          id: templateId,
+        })
+        .get();
 
       if (error) {
         throw new Error("Failed to fetch template");
@@ -56,34 +58,40 @@ export function Step4TemplateVariables({
   }
 
   const variables = template.variables || [];
-  const groupedVariables = variables.reduce((acc, variable) => {
-    // Group by category based on variable name patterns
-    let category = "general";
+  const groupedVariables = variables.reduce(
+    (acc, variable) => {
+      // Group by category based on variable name patterns
+      let category = "general";
 
-    if (variable.name.includes("your_") || variable.name.includes("recommender")) {
-      category = "recommender";
-    } else if (
-      variable.name.includes("target_") ||
-      variable.name.includes("purpose")
-    ) {
-      category = "target";
-    } else if (
-      variable.name.includes("student_") ||
-      variable.name.includes("research") ||
-      variable.name.includes("course") ||
-      variable.name.includes("academic")
-    ) {
-      category = "student";
-    } else if (variable.name.includes("user")) {
-      category = "user";
-    }
+      if (
+        variable.name.includes("your_") ||
+        variable.name.includes("recommender")
+      ) {
+        category = "recommender";
+      } else if (
+        variable.name.includes("target_") ||
+        variable.name.includes("purpose")
+      ) {
+        category = "target";
+      } else if (
+        variable.name.includes("student_") ||
+        variable.name.includes("research") ||
+        variable.name.includes("course") ||
+        variable.name.includes("academic")
+      ) {
+        category = "student";
+      } else if (variable.name.includes("user")) {
+        category = "user";
+      }
 
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(variable);
-    return acc;
-  }, {} as Record<string, typeof variables>);
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(variable);
+      return acc;
+    },
+    {} as Record<string, typeof variables>,
+  );
 
   const categoryOrder = ["user", "recommender", "target", "student", "general"];
   const categoryTitles: Record<string, string> = {
@@ -115,7 +123,9 @@ export function Step4TemplateVariables({
         <div className="flex items-center gap-2">
           <Label htmlFor={fieldId}>
             {variable.label}
-            {variable.required && <span className="text-destructive ml-1">*</span>}
+            {variable.required && (
+              <span className="ml-1 text-destructive">*</span>
+            )}
           </Label>
           {variable.required && (
             <Badge variant="outline" className="text-xs">
@@ -125,7 +135,9 @@ export function Step4TemplateVariables({
         </div>
 
         {variable.description && (
-          <p className="text-muted-foreground text-sm">{variable.description}</p>
+          <p className="text-muted-foreground text-sm">
+            {variable.description}
+          </p>
         )}
 
         {variable.type === "textarea" ? (
@@ -145,7 +157,9 @@ export function Step4TemplateVariables({
             required={variable.required}
           >
             <SelectTrigger id={fieldId}>
-              <SelectValue placeholder={`Select ${variable.label.toLowerCase()}`} />
+              <SelectValue
+                placeholder={`Select ${variable.label.toLowerCase()}`}
+              />
             </SelectTrigger>
             <SelectContent>
               {variable.options?.map((option) => (
@@ -172,7 +186,7 @@ export function Step4TemplateVariables({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Template Details</h3>
+        <h3 className="font-medium text-lg">Template Details</h3>
         <p className="text-muted-foreground text-sm">
           Fill in the variables for the "{template.name}" template
         </p>

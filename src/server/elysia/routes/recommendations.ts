@@ -349,7 +349,9 @@ export const recommendationRoutes = new Elysia({
         academicPerformance: t.Optional(t.String()),
         personalQualities: t.Optional(t.String()),
         customContent: t.Optional(t.String()),
-        templateVariables: t.Optional(t.Record(t.String(), t.Optional(t.String()))),
+        templateVariables: t.Optional(
+          t.Record(t.String(), t.Optional(t.String())),
+        ),
       }),
       detail: {
         tags: ["Recommendations", "Letters"],

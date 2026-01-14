@@ -59,7 +59,11 @@ const steps = [
   { id: 1, title: "Choose Template", description: "Select a template" },
   { id: 2, title: "Recommender", description: "Who is recommending you?" },
   { id: 3, title: "Target", description: "Where are you applying?" },
-  { id: 4, title: "Template Details", description: "Fill in template variables" },
+  {
+    id: 4,
+    title: "Template Details",
+    description: "Fill in template variables",
+  },
   { id: 5, title: "Custom Content", description: "Add extra details" },
   { id: 6, title: "Review", description: "Review and edit" },
 ];

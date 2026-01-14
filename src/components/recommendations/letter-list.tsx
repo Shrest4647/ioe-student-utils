@@ -148,7 +148,9 @@ export function LetterList() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileTextIcon className="mb-4 h-12 w-12 text-muted-foreground" />
             <h3 className="mb-2 font-semibold text-lg">
-              {statusFilter === "all" ? "No letters yet" : `No ${statusFilter} letters`}
+              {statusFilter === "all"
+                ? "No letters yet"
+                : `No ${statusFilter} letters`}
             </h3>
             <p className="mb-4 text-center text-muted-foreground">
               {statusFilter === "all"
@@ -166,75 +168,76 @@ export function LetterList() {
         /* Letters Grid */
         <div className="grid gap-4">
           {letters.map((letter) => (
-          <Card key={letter.id} className="transition-shadow hover:shadow-md">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="flex items-center gap-2">
-                    <Link
-                      href={`/dashboard/recommendations/${letter.id}`}
-                      className="hover:underline"
-                    >
-                      {letter.title}
-                    </Link>
-                    <Badge variant={getStatusBadgeVariant(letter.status)}>
-                      {letter.status}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {letter.targetInstitution} - {letter.targetProgram}
-                  </CardDescription>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVerticalIcon className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
+            <Card key={letter.id} className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2">
                       <Link
                         href={`/dashboard/recommendations/${letter.id}`}
-                        className="cursor-pointer"
+                        className="hover:underline"
                       >
-                        <EditIcon className="mr-2 h-4 w-4" />
-                        Edit
+                        {letter.title}
                       </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/recommendations/${letter.id}`}
-                        className="cursor-pointer"
+                      <Badge variant={getStatusBadgeVariant(letter.status)}>
+                        {letter.status}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {letter.targetInstitution} - {letter.targetProgram}
+                    </CardDescription>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVerticalIcon className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/recommendations/${letter.id}`}
+                          className="cursor-pointer"
+                        >
+                          <EditIcon className="mr-2 h-4 w-4" />
+                          Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/recommendations/${letter.id}`}
+                          className="cursor-pointer"
+                        >
+                          <DownloadIcon className="mr-2 h-4 w-4" />
+                          Download PDF
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(letter.id, letter.title)}
+                        className="text-destructive"
                       >
-                        <DownloadIcon className="mr-2 h-4 w-4" />
-                        Download PDF
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDelete(letter.id, letter.title)}
-                      className="text-destructive"
-                    >
-                      <TrashIcon className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">Recommender:</span>{" "}
-                  {letter.recommenderName}
+                        <TrashIcon className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <div className="text-muted-foreground">
-                  Created {format(new Date(letter.createdAt), "MMM d, yyyy")} •
-                  Updated {format(new Date(letter.updatedAt), "MMM d, yyyy")}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium">Recommender:</span>{" "}
+                    {letter.recommenderName}
+                  </div>
+                  <div className="text-muted-foreground">
+                    Created {format(new Date(letter.createdAt), "MMM d, yyyy")}{" "}
+                    • Updated{" "}
+                    {format(new Date(letter.updatedAt), "MMM d, yyyy")}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
