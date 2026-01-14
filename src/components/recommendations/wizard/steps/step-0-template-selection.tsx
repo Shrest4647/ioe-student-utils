@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BriefcaseIcon, GraduationCapIcon, SearchIcon } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,

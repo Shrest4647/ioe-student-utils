@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +65,7 @@ export function RecommendationWizard() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [wizardData, setWizardData] = useState<Partial<WizardData>>(
-    templateId ? { templateId } : {}
+    templateId ? { templateId } : {},
   );
 
   const updateData = (field: string, value: string) => {
@@ -156,7 +156,7 @@ export function RecommendationWizard() {
     onError: (error) => {
       console.error("Error creating letter:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create letter"
+        error instanceof Error ? error.message : "Failed to create letter",
       );
     },
   });
