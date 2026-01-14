@@ -20,7 +20,10 @@ export default function RecommendationsPage() {
             Create and manage your recommendation letters
           </p>
         </div>
-        <Button onClick={() => router.push("/dashboard/recommendations/new")} size="lg">
+        <Button
+          onClick={() => router.push("/dashboard/recommendations/new")}
+          size="lg"
+        >
           <PlusIcon className="mr-2 h-5 w-5" />
           Create New Letter
         </Button>

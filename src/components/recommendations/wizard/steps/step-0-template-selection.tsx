@@ -4,7 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { BriefcaseIcon, GraduationCapIcon, SearchIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -105,7 +111,7 @@ export function Step0TemplateSelection({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         <p>
           Select a template that best matches your recommendation letter needs.
           Templates are pre-designed with appropriate structure and language for
@@ -134,15 +140,10 @@ export function Step0TemplateSelection({
             <SelectItem value="academic">Academic</SelectItem>
             <SelectItem value="industry">Industry</SelectItem>
             <SelectItem value="general">General</SelectItem>
-            <SelectItem value="country_specific">
-              Country-Specific
-            </SelectItem>
+            <SelectItem value="country_specific">Country-Specific</SelectItem>
           </SelectContent>
         </Select>
-        <Select
-          value={programTypeFilter}
-          onValueChange={setProgramTypeFilter}
-        >
+        <Select value={programTypeFilter} onValueChange={setProgramTypeFilter}>
           <SelectTrigger className="w-45">
             <SelectValue placeholder="Program Type" />
           </SelectTrigger>
@@ -182,9 +183,7 @@ export function Step0TemplateSelection({
             <Card
               key={template.id}
               className={`cursor-pointer transition-all hover:shadow-md ${
-                data.templateId === template.id
-                  ? "ring-2 ring-primary"
-                  : ""
+                data.templateId === template.id ? "ring-2 ring-primary" : ""
               }`}
               onClick={() => updateData("templateId", template.id)}
             >
@@ -223,7 +222,7 @@ export function Step0TemplateSelection({
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
           Failed to load templates. Please try again.
         </div>
       )}
