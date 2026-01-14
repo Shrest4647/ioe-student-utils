@@ -152,12 +152,12 @@ export function Step4TemplateVariables({
 
   // Check if form has data
   const hasFormData = Object.keys(data).some(
-    (key) => data[key] && data[key]?.trim().length > 0
+    (key) => data[key] && data[key]?.trim().length > 0,
   );
 
   // Find current saved variables
   const currentSavedVariables = savedVariablesList?.find(
-    (v) => v.id === data.savedVariablesId
+    (v) => v.id === data.savedVariablesId,
   );
 
   if (templateLoading || savedLoading) {
@@ -202,7 +202,7 @@ export function Step4TemplateVariables({
       acc[category].push(variable);
       return acc;
     },
-    {} as Record<string, typeof variables>
+    {} as Record<string, typeof variables>,
   );
 
   const categoryOrder = ["user", "recommender", "target", "student", "general"];
