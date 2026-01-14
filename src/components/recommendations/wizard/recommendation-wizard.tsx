@@ -47,6 +47,9 @@ interface WizardData {
 
   // Custom content (step 5)
   customContent?: string;
+
+  // Final content (step 6)
+  finalContent?: string;
 }
 
 const steps = [

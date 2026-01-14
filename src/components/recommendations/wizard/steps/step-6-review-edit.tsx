@@ -62,8 +62,12 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
   }, [data]);
 
   useEffect(() => {
-    generatePreview();
-  }, [generatePreview]);
+    if (data.finalContent) {
+      setPreviewContent(data.finalContent);
+    } else {
+      generatePreview();
+    }
+  }, [generatePreview, data.finalContent]);
 
   return (
     <div className="space-y-6">
@@ -199,10 +203,11 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
                 </Label>
                 <Textarea
                   id="finalContent"
-                  value={previewContent}
+                  value={data.finalContent || previewContent}
                   onChange={(e) => updateData("finalContent", e.target.value)}
                   rows={15}
                   className="resize-none font-mono text-sm"
+                  placeholder="Edit your letter content here..."
                 />
               </div>
             </CardContent>
@@ -222,7 +227,7 @@ ${data.recommenderEmail ? data.recommenderEmail : ""}
               ) : (
                 <div className="prose max-w-none">
                   <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                    {previewContent}
+                    {data.finalContent || previewContent}
                   </pre>
                 </div>
               )}
