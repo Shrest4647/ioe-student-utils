@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://ioestudentutils.com";
+    process.env.NEXT_PUBLIC_APP_URL || "https://ioesu.sunilshrestha.com.com";
 
   // Static routes
   const routes = [

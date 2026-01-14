@@ -7,4 +7,4 @@ Disallow: /auth/
 Disallow: /dashboard/
 
 # Allow search engines to crawl sitemap
-Sitemap: https://ioestudentutils.com/sitemap.xml
+Sitemap: https://ioesu.sunilshrestha.com.com/sitemap.xml

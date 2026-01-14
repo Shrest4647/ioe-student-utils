@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   creator: "IOE Student Utils",
   publisher: "IOE Student Utils",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://ioestudentutils.com",
+    process.env.NEXT_PUBLIC_APP_URL || "https://ioesu.sunilshrestha.com.com"
   ),
   alternates: {
     canonical: "/",
