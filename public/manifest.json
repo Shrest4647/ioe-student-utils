@@ -1,6 +1,6 @@
 {
   "name": "IOE Student Utils",
-  "short_name": "IOE Utils",
+  "short_name": "IOESU",
   "description": "The ultimate open-source toolkit for Institute of Engineering students to navigate their academic journey and transition to international education.",
   "start_url": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -28,21 +28,36 @@
       "short_name": "Colleges",
       "description": "Browse engineering colleges",
       "url": "/colleges",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Scholarships",
       "short_name": "Scholarships",
       "description": "View available scholarships",
       "url": "/scholarships",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "GPA Converter",
       "short_name": "GPA Converter",
       "description": "Convert your GPA",
       "url": "/gpa-converter",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
