@@ -142,7 +142,7 @@ export function CreateLetterDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] min-w-4xl flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] min-w-5xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Create New Recommendation Letter</DialogTitle>
           <DialogDescription>
@@ -211,11 +211,11 @@ export function CreateLetterDialog({
               ))}
             </div>
           ) : filteredTemplates.length === 0 ? (
-            <div className="py-8 text-center">
+            <div className="p-8 text-center">
               <p className="text-muted-foreground">No templates found</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 p-2 md:grid-cols-2">
               {(filteredTemplates as Template[]).map((template) => (
                 <Card
                   key={template.id}

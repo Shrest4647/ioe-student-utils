@@ -12,7 +12,7 @@ export const recommendationTemplates = [
 
 Dear {{target_admissions_committee}},
 
-It is my great pleasure to write this letter of recommendation for {{student_name}} for admission to the {{target_program}} at {{target_institution}}. I have known {{student_name}} for {{duration_known}} in my capacity as {{your_title}} at {{your_institution}}, and I can confidently state that {{student_pronoun}} is one of the most exceptional students I have had the privilege to mentor.
+It is my great pleasure to write this letter of recommendation for {{student_name}} for admission to the {{target_program}} at {{target_institution}}. I have known {{student_name}} for {{duration_known}} in my capacity as {{recommender_title}} at {{recommender_institution}}, and I can confidently state that {{student_pronoun}} is one of the most exceptional students I have had the privilege to mentor.
 
 {{student_name}} worked under my supervision as {{relationship}}, during which {{student_pronoun}} demonstrated exceptional research aptitude and intellectual curiosity. {{student_pronoun}} contributed significantly to our research on {{research_topic}}, where {{student_pronoun}} {{research_contribution}}. This work resulted in {{research_outcome}}.
 
@@ -26,11 +26,11 @@ I strongly recommend {{student_name}} for admission to your PhD program without 
 
 Sincerely,
 
-{{your_name}}
-{{your_title}}
-{{your_department}}
-{{your_institution}}
-{{your_email}}`,
+{{recommender_name}}
+{{recommender_title}}
+{{recommender_department}}
+{{recommender_institution}}
+{{recommender_email}}`,
     variables: [
       {
         name: "target_admissions_committee",
@@ -45,7 +45,7 @@ Sincerely,
         label: "Student Name",
         type: "text" as const,
         required: true,
-        defaultValue: "{{user.name}}",
+        defaultValue: "",
         description: "Full name of the student",
       },
       {
@@ -70,18 +70,18 @@ Sincerely,
         description: 'How long you have known the student (e.g., "two years")',
       },
       {
-        name: "your_title",
-        label: "Your Title",
+        name: "recommender_title",
+        label: "Recommender Title",
         type: "text" as const,
         required: true,
-        description: "Your position/title",
+        description: "Recommender position/title",
       },
       {
-        name: "your_institution",
-        label: "Your Institution",
+        name: "recommender_institution",
+        label: "Recommender Institution",
         type: "text" as const,
         required: true,
-        description: "Your institution name",
+        description: "Recommender institution name",
       },
       {
         name: "student_pronoun",
@@ -104,27 +104,27 @@ Sincerely,
         label: "Relationship",
         type: "text" as const,
         required: true,
-        description: "Your relationship to the student",
+        description: "Recommender relationship to the student",
       },
       {
         name: "research_topic",
         label: "Research Topic",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "Topic of research the student worked on",
       },
       {
         name: "research_contribution",
         label: "Research Contribution",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "What the student contributed to the research",
       },
       {
         name: "research_outcome",
         label: "Research Outcome",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description:
           "Outcome of the research (publications, presentations, etc.)",
       },
@@ -132,75 +132,75 @@ Sincerely,
         name: "student_gpa",
         label: "Student GPA",
         type: "text" as const,
-        required: true,
+        required: false,
         description: "Student's GPA",
       },
       {
         name: "course_name",
         label: "Course Name",
         type: "text" as const,
-        required: true,
+        required: false,
         description: "A specific course the student excelled in",
       },
       {
         name: "specific_strength",
         label: "Specific Strength",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "Specific strength demonstrated in the course",
       },
       {
         name: "personal_quality_1",
         label: "Personal Quality 1",
         type: "text" as const,
-        required: true,
+        required: false,
         description: "First personal quality",
       },
       {
         name: "personal_quality_2",
         label: "Personal Quality 2",
         type: "text" as const,
-        required: true,
+        required: false,
         description: "Second personal quality",
       },
       {
         name: "leadership_example",
         label: "Leadership Example",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "Example of leadership or initiative",
       },
       {
         name: "evidence_of_potential",
         label: "Evidence of Potential",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "Evidence of student's research potential",
       },
       {
         name: "research_interests",
         label: "Research Interests",
         type: "textarea" as const,
-        required: true,
+        required: false,
         description: "Student's research interests",
       },
       {
-        name: "your_name",
-        label: "Your Name",
+        name: "recommender_name",
+        label: "Recommender Name",
         type: "text" as const,
         required: true,
         description: "Recommender's name",
       },
       {
-        name: "your_department",
-        label: "Your Department",
+        name: "recommender_department",
+        label: "Recommender Department",
         type: "text" as const,
         required: true,
         description: "Recommender's department",
       },
       {
-        name: "your_email",
-        label: "Your Email",
+        name: "recommender_email",
+        label: "Recommender Email",
         type: "text" as const,
         required: true,
         description: "Recommender's email",
@@ -220,7 +220,7 @@ Sincerely,
 
 To the Graduate Admissions Committee,
 
-I am writing to enthusiastically recommend {{student_name}} for admission to the {{target_program}} at {{target_institution}}. As {{your_title}} at {{your_institution}}, I have had the pleasure of knowing {{student_name}} for {{duration_known}} as {{relationship}}.
+I am writing to enthusiastically recommend {{student_name}} for admission to the {{target_program}} at {{target_institution}}. As {{recommender_title}} at {{recommender_institution}}, I have had the pleasure of knowing {{student_name}} for {{duration_known}} as {{relationship}}.
 
 During this time, {{student_name}} has consistently demonstrated {{academic_strength}}. In my {{course_name}} course, {{student_pronoun}} earned a {{grade}} and distinguished {{student_object}}self through {{class_performance}}. {{student_pronoun}} possesses a strong foundation in {{subject_area}}, as evidenced by {{evidence_of_knowledge}}.
 
@@ -232,18 +232,18 @@ I recommend {{student_name}} without reservation. Please feel free to contact me
 
 Sincerely,
 
-{{your_name}}
-{{your_title}}
-{{your_department}}
-{{your_institution}}
-{{your_email}}`,
+{{recommender_name}}
+{{recommender_title}}
+{{recommender_department}}
+{{recommender_institution}}
+{{recommender_email}}`,
     variables: [
       {
         name: "student_name",
         label: "Student Name",
         type: "text" as const,
         required: true,
-        defaultValue: "{{user.name}}",
+        defaultValue: "",
       },
       {
         name: "target_program",
@@ -258,14 +258,14 @@ Sincerely,
         required: true,
       },
       {
-        name: "your_title",
-        label: "Your Title",
+        name: "recommender_title",
+        label: "Recommender Title",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_institution",
-        label: "Your Institution",
+        name: "recommender_institution",
+        label: "Recommender Institution",
         type: "text" as const,
         required: true,
       },
@@ -285,13 +285,13 @@ Sincerely,
         name: "academic_strength",
         label: "Academic Strength",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "course_name",
         label: "Course Name",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "student_pronoun",
@@ -311,65 +311,65 @@ Sincerely,
         name: "grade",
         label: "Grade",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "class_performance",
         label: "Class Performance",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "subject_area",
         label: "Subject Area",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "evidence_of_knowledge",
         label: "Evidence of Knowledge",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "personal_quality",
         label: "Personal Quality",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "anecdote",
         label: "Anecdote",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "skill_demonstrated",
         label: "Skill Demonstrated",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "student_interests",
         label: "Student Interests",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
-        name: "your_name",
-        label: "Your Name",
+        name: "recommender_name",
+        label: "Recommender Name",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_department",
-        label: "Your Department",
+        name: "recommender_department",
+        label: "Recommender Department",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_email",
-        label: "Your Email",
+        name: "recommender_email",
+        label: "Recommender Email",
         type: "text" as const,
         required: true,
       },
@@ -388,7 +388,7 @@ Sincerely,
 
 To the Hiring Manager,
 
-I am writing to recommend {{student_name}} for the {{position}} role at {{company}}. As {{your_title}} at {{your_institution}}, I have worked closely with {{student_name}} for {{duration_known}} and can confidently speak to {{student_pronoun}} technical abilities and potential as a software engineer.
+I am writing to recommend {{student_name}} for the {{position}} role at {{company}}. As {{recommender_title}} at {{recommender_institution}}, I have worked closely with {{student_name}} for {{duration_known}} and can confidently speak to {{student_pronoun}} technical abilities and potential as a software engineer.
 
 {{student_name}} has demonstrated exceptional programming skills through {{project_experience}}. In our {{project_name}} project, {{student_pronoun}} was responsible for {{responsibilities}}, where {{student_pronoun}} successfully {{achievement}}. {{student_pronoun}} code quality is {{code_quality_description}}, and {{student_pronoun}} consistently follows {{best_practices}}.
 
@@ -402,18 +402,18 @@ Please do not hesitate to contact me if you need any additional information.
 
 Best regards,
 
-{{your_name}}
-{{your_title}}
-{{your_department}}
-{{your_institution}}
-{{your_email}}`,
+{{recommender_name}}
+{{recommender_title}}
+{{recommender_department}}
+{{recommender_institution}}
+{{recommender_email}}`,
     variables: [
       {
         name: "student_name",
         label: "Student Name",
         type: "text" as const,
         required: true,
-        defaultValue: "{{user.name}}",
+        defaultValue: "",
       },
       {
         name: "position",
@@ -428,14 +428,14 @@ Best regards,
         required: true,
       },
       {
-        name: "your_title",
-        label: "Your Title",
+        name: "recommender_title",
+        label: "Recommender Title",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_institution",
-        label: "Your Institution",
+        name: "recommender_institution",
+        label: "Recommender Institution",
         type: "text" as const,
         required: true,
       },
@@ -532,20 +532,20 @@ Best regards,
         required: true,
       },
       {
-        name: "your_name",
-        label: "Your Name",
+        name: "recommender_name",
+        label: "Recommender Name",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_department",
-        label: "Your Department",
+        name: "recommender_department",
+        label: "Recommender Department",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_email",
-        label: "Your Email",
+        name: "recommender_email",
+        label: "Recommender Email",
         type: "text" as const,
         required: true,
       },
@@ -564,7 +564,7 @@ Best regards,
 
 To Whom It May Concern,
 
-I am pleased to recommend {{student_name}} for {{purpose}} at {{target_institution}}. I have known {{student_name}} for {{duration_known}} in my capacity as {{your_title}} at {{your_institution}}.
+I am pleased to recommend {{student_name}} for {{purpose}} at {{target_institution}}. I have known {{student_name}} for {{duration_known}} in my capacity as {{recommender_title}} at {{recommender_institution}}.
 
 During our time working together, {{student_name}} has consistently demonstrated {{key_strength_1}} and {{key_strength_2}}. {{student_pronoun}} approached {{context}} with {{approach_quality}}, resulting in {{outcome}}.
 
@@ -574,17 +574,17 @@ I am confident that {{student_name}} will be an asset to {{target_institution}} 
 
 Sincerely,
 
-{{your_name}}
-{{your_title}}
-{{your_institution}}
-{{your_email}}`,
+{{recommender_name}}
+{{recommender_title}}
+{{recommender_institution}}
+{{recommender_email}}`,
     variables: [
       {
         name: "student_name",
         label: "Student Name",
         type: "text" as const,
         required: true,
-        defaultValue: "{{user.name}}",
+        defaultValue: "",
       },
       {
         name: "purpose",
@@ -605,14 +605,14 @@ Sincerely,
         required: true,
       },
       {
-        name: "your_title",
-        label: "Your Title",
+        name: "recommender_title",
+        label: "Recommender Title",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_institution",
-        label: "Your Institution",
+        name: "recommender_institution",
+        label: "Recommender Institution",
         type: "text" as const,
         required: true,
       },
@@ -697,14 +697,14 @@ Sincerely,
         required: true,
       },
       {
-        name: "your_name",
-        label: "Your Name",
+        name: "recommender_name",
+        label: "Recommender Name",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_email",
-        label: "Your Email",
+        name: "recommender_email",
+        label: "Recommender Email",
         type: "text" as const,
         required: true,
       },
@@ -729,7 +729,7 @@ RE: Letter of Recommendation for {{student_name}}
 
 Dear {{target_admissions_committee}},
 
-It is my distinct pleasure to provide this letter of recommendation for {{student_name}} in support of {{student_pronoun}} application to the {{target_program}} at {{target_institution}}. I have known {{student_name}} since {{when_met}} in my capacity as {{your_title}} at {{your_institution}}, and I am delighted to recommend {{student_object}} without reservation.
+It is my distinct pleasure to provide this letter of recommendation for {{student_name}} in support of {{student_pronoun}} application to the {{target_program}} at {{target_institution}}. I have known {{student_name}} since {{when_met}} in my capacity as {{recommender_title}} at {{recommender_institution}}, and I am delighted to recommend {{student_object}} without reservation.
 
 Academic Excellence
 {{student_name}} has consistently demonstrated outstanding academic ability. {{student_pronoun}} has maintained a GPA of {{student_gpa}} while completing a rigorous curriculum that included {{challenging_courses}}. In my {{course_name}} course, {{student_pronoun}} earned a {{grade}}, placing {{student_object}} in the top {{top_percent}} of the class. {{student_pronoun}} particular strength in {{subject_area}} was evident through {{specific_evidence}}.
@@ -752,11 +752,11 @@ Sincerely,
 
 {{signature}}
 
-{{your_name}}, {{your_title}}
-{{your_department}}
-{{your_institution}}
-{{your_email}}
-{{your_phone}}`,
+{{recommender_name}}, {{recommender_title}}
+{{recommender_department}}
+{{recommender_institution}}
+{{recommender_email}}
+{{recommender_phone}}`,
     variables: [
       {
         name: "target_admissions_committee",
@@ -787,7 +787,7 @@ Sincerely,
         label: "Student Name",
         type: "text" as const,
         required: true,
-        defaultValue: "{{user.name}}",
+        defaultValue: "",
       },
       {
         name: "student_pronoun",
@@ -810,14 +810,14 @@ Sincerely,
         required: true,
       },
       {
-        name: "your_title",
-        label: "Your Title",
+        name: "recommender_title",
+        label: "Recommender Title",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_institution",
-        label: "Your Institution",
+        name: "recommender_institution",
+        label: "Recommender Institution",
         type: "text" as const,
         required: true,
       },
@@ -825,7 +825,7 @@ Sincerely,
         name: "student_gpa",
         label: "Student GPA",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "challenging_courses",
@@ -837,13 +837,13 @@ Sincerely,
         name: "course_name",
         label: "Course Name",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "grade",
         label: "Grade",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "top_percent",
@@ -855,7 +855,7 @@ Sincerely,
         name: "subject_area",
         label: "Subject Area",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "specific_evidence",
@@ -873,7 +873,7 @@ Sincerely,
         name: "project_description",
         label: "Project Description",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "contribution",
@@ -885,7 +885,7 @@ Sincerely,
         name: "skill_demonstrated",
         label: "Skill Demonstrated",
         type: "text" as const,
-        required: true,
+        required: false,
       },
       {
         name: "outcome",
@@ -921,13 +921,13 @@ Sincerely,
         name: "anecdote",
         label: "Anecdote",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "research_interests",
         label: "Research Interests",
         type: "textarea" as const,
-        required: true,
+        required: false,
       },
       {
         name: "field",
@@ -955,26 +955,26 @@ Sincerely,
         description: "Optional signature text",
       },
       {
-        name: "your_name",
-        label: "Your Name",
+        name: "recommender_name",
+        label: "Recommender Name",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_department",
-        label: "Your Department",
+        name: "recommender_department",
+        label: "Recommender Department",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_email",
-        label: "Your Email",
+        name: "recommender_email",
+        label: "Recommender Email",
         type: "text" as const,
         required: true,
       },
       {
-        name: "your_phone",
-        label: "Your Phone",
+        name: "recommender_phone",
+        label: "Recommender Phone",
         type: "text" as const,
         required: true,
       },

@@ -1,20 +1,21 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { apiClient } from "@/lib/eden";
-import { Step1TemplateInfo } from "./steps/step-1-template-info";
+import { Step0TemplateSelection } from "./steps/step-0-template-selection";
+
 import { Step2RecommenderInfo } from "./steps/step-2-recommender-info";
 import { Step3TargetInfo } from "./steps/step-3-target-info";
-import { Step4StudentInfo } from "./steps/step-4-student-info";
-import { Step5CustomContent } from "./steps/step-5-custom-content";
-import { Step6ReviewEdit } from "./steps/step-6-review-edit";
+import { Step4TemplateVariables } from "./steps/step-4-template-variables";
+import { Step6CustomContent } from "./steps/step-6-custom-content";
+import { Step7ReviewEdit } from "./steps/step-7-review-edit";
 
 interface WizardData {
   // Template info (from step 1)
@@ -26,6 +27,10 @@ interface WizardData {
   recommenderInstitution: string;
   recommenderEmail?: string;
   recommenderDepartment?: string;
+  recommenderPhone?: string;
+  relationship: string;
+  contextOfMeeting?: string;
+  savedRecommenderId?: string;
 
   // Target info (step 3)
   targetInstitution: string;
@@ -33,10 +38,7 @@ interface WizardData {
   targetDepartment?: string;
   targetCountry: string;
   purpose: string;
-
-  // Relationship (step 3)
-  relationship: string;
-  contextOfMeeting?: string;
+  savedInstitutionId?: string;
 
   // Student info (step 4)
   studentAchievements?: string;
@@ -44,15 +46,25 @@ interface WizardData {
   academicPerformance?: string;
   personalQualities?: string;
 
+  // Template variables (step 4) - dynamic fields from template
+  [key: string]: string | undefined;
+
   // Custom content (step 5)
   customContent?: string;
+
+  // Final content (step 6)
+  finalContent?: string;
 }
 
 const steps = [
-  { id: 1, title: "Template Info", description: "Review your selection" },
+  { id: 1, title: "Choose Template", description: "Select a template" },
   { id: 2, title: "Recommender", description: "Who is recommending you?" },
   { id: 3, title: "Target", description: "Where are you applying?" },
-  { id: 4, title: "Student Info", description: "Your achievements" },
+  {
+    id: 4,
+    title: "Template Details",
+    description: "Fill in template variables",
+  },
   { id: 5, title: "Custom Content", description: "Add extra details" },
   { id: 6, title: "Review", description: "Review and edit" },
 ];
@@ -63,28 +75,50 @@ export function RecommendationWizard() {
   const templateId = searchParams.get("templateId");
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<Partial<WizardData>>({
-    templateId: templateId || "",
+  const [wizardData, setWizardData] = useState<Partial<WizardData>>(
+    templateId ? { templateId } : {},
+  );
+
+  // Fetch template for validation
+  const { data: template } = useQuery({
+    queryKey: ["recommendation-template", wizardData.templateId],
+    queryFn: async () => {
+      if (!wizardData.templateId) return null;
+
+      const { data, error } = await apiClient.api.recommendations
+        .templates({
+          id: wizardData.templateId,
+        })
+        .get();
+
+      if (error) {
+        throw new Error("Failed to fetch template");
+      }
+
+      return data?.data;
+    },
+    enabled: !!wizardData.templateId,
   });
 
-  useEffect(() => {
-    if (!templateId) {
-      toast.error("No template selected. Please choose a template first.");
-      router.push("/dashboard/recommendations");
-    }
-  }, [templateId, router]);
-
-  const updateData = (field: string, value: string) => {
+  const updateData = useCallback((field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const handleNext = async () => {
     // Validation for each step
+    if (currentStep === 1) {
+      if (!wizardData.templateId) {
+        toast.error("Please select a template to continue");
+        return;
+      }
+    }
+
     if (currentStep === 2) {
       if (
         !wizardData.recommenderName ||
         !wizardData.recommenderTitle ||
-        !wizardData.recommenderInstitution
+        !wizardData.recommenderInstitution ||
+        !wizardData.relationship
       ) {
         toast.error("Please fill in all required recommender fields");
         return;
@@ -96,11 +130,30 @@ export function RecommendationWizard() {
         !wizardData.targetInstitution ||
         !wizardData.targetProgram ||
         !wizardData.targetCountry ||
-        !wizardData.purpose ||
-        !wizardData.relationship
+        !wizardData.purpose
       ) {
         toast.error("Please fill in all required target fields");
         return;
+      }
+    }
+
+    if (currentStep === 4) {
+      // Step 4 validation - check required template variables
+      if (template?.variables) {
+        const requiredFields = template.variables
+          .filter((v) => v.required)
+          .map((v) => v.name);
+
+        const missingFields = requiredFields.filter(
+          (field) => !wizardData[field] || wizardData[field]?.trim() === "",
+        );
+
+        if (missingFields.length > 0) {
+          toast.error(
+            `Please fill in all required template fields. Missing: ${missingFields.length} required field(s)`,
+          );
+          return;
+        }
       }
     }
 
@@ -117,6 +170,40 @@ export function RecommendationWizard() {
 
   const createLetterMutation = useMutation({
     mutationFn: async () => {
+      // Extract template variables (all fields that aren't predefined)
+      const predefinedFields = [
+        "templateId",
+        "recommenderName",
+        "recommenderTitle",
+        "recommenderInstitution",
+        "recommenderEmail",
+        "recommenderDepartment",
+        "recommenderPhone",
+        "relationship",
+        "contextOfMeeting",
+        "savedRecommenderId",
+        "targetInstitution",
+        "targetProgram",
+        "targetDepartment",
+        "targetCountry",
+        "purpose",
+        "savedInstitutionId",
+        "savedVariablesId",
+        "studentAchievements",
+        "researchExperience",
+        "academicPerformance",
+        "personalQualities",
+        "customContent",
+        "finalContent",
+      ];
+
+      const templateVariables: Record<string, string> = {};
+      Object.keys(wizardData).forEach((key) => {
+        if (!predefinedFields.includes(key) && wizardData[key]) {
+          templateVariables[key] = wizardData[key] as string;
+        }
+      });
+
       const { data, error } = await apiClient.api.recommendations.letters.post({
         templateId: wizardData.templateId || "",
         title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
@@ -137,6 +224,7 @@ export function RecommendationWizard() {
         academicPerformance: wizardData.academicPerformance,
         personalQualities: wizardData.personalQualities,
         customContent: wizardData.customContent,
+        templateVariables,
       });
 
       if (error) {
@@ -167,13 +255,11 @@ export function RecommendationWizard() {
   const progress = (currentStep / 6) * 100;
 
   const renderStep = () => {
-    if (!wizardData.templateId) {
-      return null;
-    }
-
     switch (currentStep) {
       case 1:
-        return <Step1TemplateInfo templateId={wizardData.templateId} />;
+        return (
+          <Step0TemplateSelection data={wizardData} updateData={updateData} />
+        );
       case 2:
         return (
           <Step2RecommenderInfo data={wizardData} updateData={updateData} />
@@ -181,12 +267,18 @@ export function RecommendationWizard() {
       case 3:
         return <Step3TargetInfo data={wizardData} updateData={updateData} />;
       case 4:
-        return <Step4StudentInfo data={wizardData} updateData={updateData} />;
+        return (
+          <Step4TemplateVariables
+            data={wizardData}
+            updateData={updateData}
+            templateId={wizardData.templateId || ""}
+          />
+        );
       case 5:
-        return <Step5CustomContent data={wizardData} updateData={updateData} />;
+        return <Step6CustomContent data={wizardData} updateData={updateData} />;
       case 6:
         return (
-          <Step6ReviewEdit
+          <Step7ReviewEdit
             data={wizardData}
             updateData={updateData}
             onSubmit={handleSubmit}
@@ -211,8 +303,8 @@ export function RecommendationWizard() {
       </div>
 
       {/* Progress */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="p-1">
+        <CardContent className="py-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Step {currentStep} of 6</span>

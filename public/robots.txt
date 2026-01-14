@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow auth and dashboard routes
+Disallow: /auth/
+Disallow: /dashboard/
+
+# Allow search engines to crawl sitemap
+Sitemap: https://ioesu.sunilshrestha.com.com/sitemap.xml

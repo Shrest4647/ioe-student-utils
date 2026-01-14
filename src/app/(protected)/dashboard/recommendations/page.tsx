@@ -1,20 +1,51 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { FileTextIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
-import { CreateLetterDialog } from "@/components/recommendations/create-letter-dialog";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { LetterList } from "@/components/recommendations/letter-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/eden";
 
 export default function RecommendationsPage() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const router = useRouter();
 
-  const _handleLetterCreated = () => {
-    setRefreshKey((prev) => prev + 1);
-    setIsCreateDialogOpen(false);
-  };
+  const {
+    data: letters = [],
+    isLoading: statsLoading,
+    error,
+  } = useQuery({
+    queryKey: ["recommendation-letters", "all"],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api.recommendations.letters.get();
+
+      if (error) {
+        console.error("Error fetching letters:", error);
+        throw new Error("Failed to fetch letters");
+      }
+
+      return data?.data || [];
+    },
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load recommendation letters");
+    }
+  }, [error]);
+
+  // Safely compute stats with optional chaining
+  const totalLetters = Array.isArray(letters) ? letters.length : 0;
+  const draftLetters = Array.isArray(letters)
+    ? letters.filter((l) => l?.status === "draft").length
+    : 0;
+  const completedLetters = Array.isArray(letters)
+    ? letters.filter((l) => l?.status === "completed").length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -27,7 +58,10 @@ export default function RecommendationsPage() {
             Create and manage your recommendation letters
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+        <Button
+          onClick={() => router.push("/dashboard/recommendations/new")}
+          size="lg"
+        >
           <PlusIcon className="mr-2 h-5 w-5" />
           Create New Letter
         </Button>
@@ -41,7 +75,11 @@ export default function RecommendationsPage() {
             <FileTextIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">-</div>
+            {statsLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="font-bold text-2xl">{totalLetters}</div>
+            )}
             <p className="text-muted-foreground text-xs">
               All recommendation letters
             </p>
@@ -53,7 +91,11 @@ export default function RecommendationsPage() {
             <CardTitle className="font-medium text-sm">Drafts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">-</div>
+            {statsLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="font-bold text-2xl">{draftLetters}</div>
+            )}
             <p className="text-muted-foreground text-xs">Letters in progress</p>
           </CardContent>
         </Card>
@@ -63,20 +105,18 @@ export default function RecommendationsPage() {
             <CardTitle className="font-medium text-sm">Completed</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">-</div>
+            {statsLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="font-bold text-2xl">{completedLetters}</div>
+            )}
             <p className="text-muted-foreground text-xs">Ready to use</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Letters List */}
-      <LetterList key={refreshKey} />
-
-      {/* Create Letter Dialog */}
-      <CreateLetterDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-      />
+      <LetterList />
     </div>
   );
 }
