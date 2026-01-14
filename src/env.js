@@ -19,6 +19,11 @@ export const appEnv = createEnv({
     RESEND_API_KEY: z.string(),
     RESEND_FROM_EMAIL: z.string(),
     DATABASE_URL: z.string().url(),
+    S3_ACCESS_KEY_ID: z.string(),
+    S3_SECRET_ACCESS_KEY: z.string(),
+    S3_REGION: z.string(),
+    S3_BUCKET_NAME: z.string(),
+    S3_ENDPOINT: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -49,6 +54,11 @@ export const appEnv = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     DATABASE_URL: process.env.DATABASE_URL,
+    S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+    S3_REGION: process.env.S3_REGION,
+    S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
+    S3_ENDPOINT: process.env.S3_ENDPOINT,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
   },

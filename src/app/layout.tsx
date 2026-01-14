@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "@/styles/globals.css";
 import { Navbar } from "@/components/common/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "./providers";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -31,12 +32,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen">
-          <Navbar />
+        <Providers>
+          <div className="min-h-screen">
+            <Navbar />
 
-          {children}
-        </div>
-        <Toaster />
+            {children}
+          </div>
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

@@ -37,7 +37,7 @@ The primary goal of this project is to create an open source, community driven e
 This project includes specific instructions for AI agents (Gemini, Claude, Copilot, etc.) to ensure consistency in coding style and architecture.
 
 - **[.cursorrules](.cursorrules)**: Global rules for AI editors.
-- **[ai_rules.md](ai_rules.md)**: Detailed project-wide standards.
+- **[AGENTS.md](AGENTS.md)**: Detailed project-wide standards.
 
 ## Getting Started
 

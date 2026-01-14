@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { signIn } from "@/lib/auth-client";
 import { signInSchema } from "@/lib/auth-schemas";
 import { cn } from "@/lib/utils";
@@ -131,9 +132,8 @@ export default function SignIn() {
                       </div>
                     </FieldLabel>
                     <FieldContent>
-                      <Input
+                      <PasswordInput
                         id={field.name}
-                        type="password"
                         placeholder="password"
                         autoComplete="password"
                         value={field.state.value}

@@ -1,0 +1,1 @@
+ALTER TABLE "scholarship_round" ADD COLUMN "description" text;

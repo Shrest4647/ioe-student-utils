@@ -16,7 +16,9 @@ export const userRoutes = new Elysia({ prefix: "/user" })
     "/profile",
     async ({ user: currentUser }) => {
       const profile = await db.query.userProfile.findFirst({
-        where: eq(userProfile.userId, currentUser.id),
+        where: {
+          userId: currentUser.id,
+        },
       });
 
       return {
@@ -56,7 +58,9 @@ export const userRoutes = new Elysia({ prefix: "/user" })
       // Upsert user profile for bio and location
       if (bio !== undefined || location !== undefined) {
         const existingProfile = await db.query.userProfile.findFirst({
-          where: eq(userProfile.userId, currentUser.id),
+          where: {
+            userId: currentUser.id,
+          },
         });
 
         if (existingProfile) {
@@ -127,7 +131,9 @@ export const userRoutes = new Elysia({ prefix: "/user" })
       const { bio, location } = body;
 
       const existingProfile = await db.query.userProfile.findFirst({
-        where: eq(userProfile.userId, id),
+        where: {
+          userId: id,
+        },
       });
 
       if (existingProfile) {
@@ -174,7 +180,7 @@ export const userRoutes = new Elysia({ prefix: "/user" })
 
       // Verify password by attempting to find the account with password
       const userAccount = await db.query.account.findFirst({
-        where: eq(account.userId, currentUser.id),
+        where: { userId: currentUser.id },
       });
 
       if (!userAccount || !userAccount.password) {

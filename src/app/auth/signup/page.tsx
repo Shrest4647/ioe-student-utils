@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  PasswordInput,
+  PasswordInputStrengthChecker,
+} from "@/components/ui/password-input";
 import { signUp } from "@/lib/auth-client";
 import { signUpSchema } from "@/lib/auth-schemas";
 
@@ -183,15 +187,16 @@ export default function SignUp() {
                       <Label htmlFor={field.name}>Password</Label>
                     </FieldLabel>
                     <FieldContent>
-                      <Input
+                      <PasswordInput
                         id={field.name}
-                        type="password"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         autoComplete="new-password"
                         placeholder="Password"
-                      />
+                      >
+                        <PasswordInputStrengthChecker />
+                      </PasswordInput>
                       {field.state.meta.isTouched &&
                       field.state.meta.errors.length ? (
                         <FieldError>
@@ -214,9 +219,8 @@ export default function SignUp() {
                       <Label htmlFor={field.name}>Confirm Password</Label>
                     </FieldLabel>
                     <FieldContent>
-                      <Input
+                      <PasswordInput
                         id={field.name}
-                        type="password"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
