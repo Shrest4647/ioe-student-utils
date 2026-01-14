@@ -37,10 +37,11 @@ export default function RootLayout({
           <div className="min-h-screen">
             <Navbar />
 
-          {children}
-        </div>
-        <Toaster />
-        <VibeKanbanCompanion />
+            {children}
+          </div>
+          <Toaster />
+          <VibeKanbanCompanion />
+        </Providers>
       </body>
     </html>
   );
