@@ -1,0 +1,1 @@
+ALTER TABLE "saved_recommender" ADD COLUMN "context_of_meeting" text;

@@ -1,9 +1,16 @@
 "use client";
 
-import { UserIcon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckIcon, LoaderIcon, SaveIcon, UserIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { apiClient } from "@/lib/eden";
 
 interface Step2RecommenderInfoProps {
   data: {
@@ -12,6 +19,10 @@ interface Step2RecommenderInfoProps {
     recommenderInstitution?: string;
     recommenderEmail?: string;
     recommenderDepartment?: string;
+    recommenderPhone?: string;
+    relationship?: string;
+    contextOfMeeting?: string;
+    savedRecommenderId?: string;
   };
   updateData: (field: string, value: string) => void;
 }
@@ -20,8 +31,128 @@ export function Step2RecommenderInfo({
   data,
   updateData,
 }: Step2RecommenderInfoProps) {
+  const queryClient = useQueryClient();
+  const [showSaveForm, setShowSaveForm] = useState(false);
+  const [saveName, setSaveName] = useState("");
+
+  // Fetch saved recommenders
+  const { data: savedRecommenders, isLoading } = useQuery({
+    queryKey: ["saved-recommenders"],
+    queryFn: async () => {
+      const { data } =
+        await apiClient.api.recommendations.saved.recommenders.get();
+      return data?.data || [];
+    },
+  });
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiClient.api.recommendations.saved.recommenders.post({
+        name: saveName,
+        title: data.recommenderTitle || "",
+        institution: data.recommenderInstitution || "",
+        department: data.recommenderDepartment,
+        email: data.recommenderEmail,
+        phone: data.recommenderPhone,
+        relationship: data.relationship,
+        contextOfMeeting: data.contextOfMeeting,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Recommender saved for future use!");
+      setShowSaveForm(false);
+      setSaveName("");
+      queryClient.invalidateQueries({ queryKey: ["saved-recommenders"] });
+    },
+    onError: () => {
+      toast.error("Failed to save recommender");
+    },
+  });
+
+  // Handle selecting a saved recommender
+  const handleSelectSaved = (recommender: any) => {
+    updateData("recommenderName", recommender.name);
+    updateData("recommenderTitle", recommender.title);
+    updateData("recommenderInstitution", recommender.institution);
+    updateData("recommenderDepartment", recommender.department || "");
+    updateData("recommenderEmail", recommender.email || "");
+    updateData("recommenderPhone", recommender.phone || "");
+    updateData("relationship", recommender.relationship || "");
+    updateData("contextOfMeeting", recommender.contextOfMeeting || "");
+    updateData("savedRecommenderId", recommender.id);
+  };
+
+  // Handle clearing selection
+  const handleClearSelection = () => {
+    updateData("savedRecommenderId", "");
+  };
+
+  // Check if form has data
+  const hasFormData =
+    data.recommenderName ||
+    data.recommenderTitle ||
+    data.recommenderInstitution;
+
+  // Find current saved recommender
+  const currentSavedRecommender = savedRecommenders?.find(
+    (r) => r.id === data.savedRecommenderId,
+  );
+
   return (
     <div className="space-y-6">
+      {/* Saved Recommenders Selection */}
+      {!isLoading && savedRecommenders && savedRecommenders.length > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              Saved Recommenders
+              {currentSavedRecommender && (
+                <Badge variant="default" className="ml-2">
+                  <CheckIcon className="mr-1 h-3 w-3" />
+                  Selected
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {savedRecommenders.map((recommender) => (
+              <div
+                key={recommender.id}
+                role="button"
+                tabIndex={0}
+                className="flex cursor-pointer items-center justify-between rounded-lg border bg-card p-3 hover:bg-accent/50"
+                onClick={() => handleSelectSaved(recommender)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelectSaved(recommender);
+                  }
+                }}
+              >
+                <div className="flex-1">
+                  <p className="font-medium">{recommender.name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {recommender.title} at {recommender.institution}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectSaved(recommender);
+                  }}
+                >
+                  Use
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -38,7 +169,10 @@ export function Step2RecommenderInfo({
               id="recommenderName"
               placeholder="Dr. John Smith"
               value={data.recommenderName || ""}
-              onChange={(e) => updateData("recommenderName", e.target.value)}
+              onChange={(e) => {
+                updateData("recommenderName", e.target.value);
+                handleClearSelection();
+              }}
             />
           </div>
 
@@ -90,6 +224,107 @@ export function Step2RecommenderInfo({
               onChange={(e) => updateData("recommenderEmail", e.target.value)}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="recommenderPhone">Phone (optional)</Label>
+            <Input
+              id="recommenderPhone"
+              type="tel"
+              placeholder="+977 1-1234567"
+              value={data.recommenderPhone || ""}
+              onChange={(e) => updateData("recommenderPhone", e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="relationship">
+              How do you know them? <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="relationship"
+              placeholder="e.g., Thesis Advisor, Course Instructor, Research Supervisor"
+              value={data.relationship || ""}
+              onChange={(e) => updateData("relationship", e.target.value)}
+            />
+            <p className="text-muted-foreground text-xs">
+              Describe your relationship with the recommender
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contextOfMeeting">
+              Context of meeting (optional)
+            </Label>
+            <Textarea
+              id="contextOfMeeting"
+              placeholder="e.g., Supervised my senior year project, taught 3 courses including Data Structures and Algorithms"
+              value={data.contextOfMeeting || ""}
+              onChange={(e) => updateData("contextOfMeeting", e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+            <p className="text-muted-foreground text-xs">
+              Provide more context about how you know the recommender
+            </p>
+          </div>
+
+          {/* Save for future reference */}
+          {hasFormData && !showSaveForm && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowSaveForm(true)}
+            >
+              <SaveIcon className="mr-2 h-4 w-4" />
+              Save for future reference
+            </Button>
+          )}
+
+          {showSaveForm && (
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="space-y-2">
+                <Label htmlFor="saveName">
+                  Save as <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="saveName"
+                  placeholder="e.g., Thesis Advisor - Dr. Smith"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Give this recommender a name for easy identification
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={!saveName || saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? (
+                    <>
+                      <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowSaveForm(false);
+                    setSaveName("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

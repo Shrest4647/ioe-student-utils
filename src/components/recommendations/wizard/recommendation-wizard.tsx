@@ -27,6 +27,10 @@ interface WizardData {
   recommenderInstitution: string;
   recommenderEmail?: string;
   recommenderDepartment?: string;
+  recommenderPhone?: string;
+  relationship: string;
+  contextOfMeeting?: string;
+  savedRecommenderId?: string;
 
   // Target info (step 3)
   targetInstitution: string;
@@ -34,10 +38,7 @@ interface WizardData {
   targetDepartment?: string;
   targetCountry: string;
   purpose: string;
-
-  // Relationship (step 3)
-  relationship: string;
-  contextOfMeeting?: string;
+  savedInstitutionId?: string;
 
   // Student info (step 4)
   studentAchievements?: string;
@@ -95,7 +96,8 @@ export function RecommendationWizard() {
       if (
         !wizardData.recommenderName ||
         !wizardData.recommenderTitle ||
-        !wizardData.recommenderInstitution
+        !wizardData.recommenderInstitution ||
+        !wizardData.relationship
       ) {
         toast.error("Please fill in all required recommender fields");
         return;
@@ -107,10 +109,39 @@ export function RecommendationWizard() {
         !wizardData.targetInstitution ||
         !wizardData.targetProgram ||
         !wizardData.targetCountry ||
-        !wizardData.purpose ||
-        !wizardData.relationship
+        !wizardData.purpose
       ) {
         toast.error("Please fill in all required target fields");
+        return;
+      }
+    }
+
+    if (currentStep === 4) {
+      // Step 4 validation - check required template variables
+      // We need to fetch the template to know which fields are required
+      // For now, we'll validate common required fields
+      const requiredFields = [
+        "student_name",
+        "your_name",
+        "your_email",
+        "duration_known",
+        "target_program",
+        "target_institution",
+        "relationship",
+        "your_title",
+        "your_institution",
+        "student_pronoun",
+        "student_object",
+      ];
+
+      const missingFields = requiredFields.filter(
+        (field) => !wizardData[field] || wizardData[field]?.trim() === "",
+      );
+
+      if (missingFields.length > 0) {
+        toast.error(
+          `Please fill in all required template fields. Missing: ${missingFields.length} required field(s)`,
+        );
         return;
       }
     }
@@ -136,13 +167,17 @@ export function RecommendationWizard() {
         "recommenderInstitution",
         "recommenderEmail",
         "recommenderDepartment",
+        "recommenderPhone",
+        "relationship",
+        "contextOfMeeting",
+        "savedRecommenderId",
         "targetInstitution",
         "targetProgram",
         "targetDepartment",
         "targetCountry",
         "purpose",
-        "relationship",
-        "contextOfMeeting",
+        "savedInstitutionId",
+        "savedVariablesId",
         "studentAchievements",
         "researchExperience",
         "academicPerformance",

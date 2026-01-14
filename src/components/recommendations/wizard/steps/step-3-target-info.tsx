@@ -1,6 +1,16 @@
 "use client";
 
-import { GlobeIcon, GraduationCapIcon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CheckIcon,
+  GraduationCapIcon,
+  LoaderIcon,
+  SaveIcon,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { apiClient } from "@/lib/eden";
 
 interface Step3TargetInfoProps {
   data: {
@@ -20,15 +30,127 @@ interface Step3TargetInfoProps {
     targetDepartment?: string;
     targetCountry?: string;
     purpose?: string;
-    relationship?: string;
-    contextOfMeeting?: string;
+    savedInstitutionId?: string;
   };
   updateData: (field: string, value: string) => void;
 }
 
 export function Step3TargetInfo({ data, updateData }: Step3TargetInfoProps) {
+  const queryClient = useQueryClient();
+  const [showSaveForm, setShowSaveForm] = useState(false);
+  const [saveName, setSaveName] = useState("");
+
+  // Fetch saved institutions
+  const { data: savedInstitutions, isLoading } = useQuery({
+    queryKey: ["saved-institutions"],
+    queryFn: async () => {
+      const { data } =
+        await apiClient.api.recommendations.saved.institutions.get();
+      return data?.data || [];
+    },
+  });
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiClient.api.recommendations.saved.institutions.post({
+        institution: data.targetInstitution || "",
+        program: data.targetProgram,
+        department: data.targetDepartment,
+        country: data.targetCountry || "",
+        purpose: data.purpose,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Institution saved for future use!");
+      setShowSaveForm(false);
+      setSaveName("");
+      queryClient.invalidateQueries({ queryKey: ["saved-institutions"] });
+    },
+    onError: () => {
+      toast.error("Failed to save institution");
+    },
+  });
+
+  // Handle selecting a saved institution
+  const handleSelectSaved = (institution: any) => {
+    updateData("targetInstitution", institution.institution);
+    updateData("targetProgram", institution.program || "");
+    updateData("targetDepartment", institution.department || "");
+    updateData("targetCountry", institution.country);
+    updateData("purpose", institution.purpose || "");
+    updateData("savedInstitutionId", institution.id);
+  };
+
+  // Handle clearing selection
+  const handleClearSelection = () => {
+    updateData("savedInstitutionId", "");
+  };
+
+  // Check if form has data
+  const hasFormData =
+    data.targetInstitution || data.targetProgram || data.targetCountry;
+
+  // Find current saved institution
+  const currentSavedInstitution = savedInstitutions?.find(
+    (i) => i.id === data.savedInstitutionId,
+  );
+
   return (
     <div className="space-y-6">
+      {/* Saved Institutions Selection */}
+      {!isLoading && savedInstitutions && savedInstitutions.length > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              Saved Institutions
+              {currentSavedInstitution && (
+                <Badge variant="default" className="ml-2">
+                  <CheckIcon className="mr-1 h-3 w-3" />
+                  Selected
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {savedInstitutions.map((institution) => (
+              <div
+                key={institution.id}
+                role="button"
+                tabIndex={0}
+                className="flex cursor-pointer items-center justify-between rounded-lg border bg-card p-3 hover:bg-accent/50"
+                onClick={() => handleSelectSaved(institution)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelectSaved(institution);
+                  }
+                }}
+              >
+                <div className="flex-1">
+                  <p className="font-medium">{institution.institution}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {institution.program || "No program"} •{" "}
+                    {institution.country}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectSaved(institution);
+                  }}
+                >
+                  Use
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -45,7 +167,10 @@ export function Step3TargetInfo({ data, updateData }: Step3TargetInfoProps) {
               id="targetInstitution"
               placeholder="Stanford University"
               value={data.targetInstitution || ""}
-              onChange={(e) => updateData("targetInstitution", e.target.value)}
+              onChange={(e) => {
+                updateData("targetInstitution", e.target.value);
+                handleClearSelection();
+              }}
             />
           </div>
 
@@ -89,6 +214,8 @@ export function Step3TargetInfo({ data, updateData }: Step3TargetInfoProps) {
                 <SelectItem value="Canada">Canada</SelectItem>
                 <SelectItem value="Australia">Australia</SelectItem>
                 <SelectItem value="Japan">Japan</SelectItem>
+                <SelectItem value="Nepal">Nepal</SelectItem>
+                <SelectItem value="India">India</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
@@ -114,43 +241,71 @@ export function Step3TargetInfo({ data, updateData }: Step3TargetInfoProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Save for future reference */}
+          {hasFormData && !showSaveForm && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowSaveForm(true)}
+            >
+              <SaveIcon className="mr-2 h-4 w-4" />
+              Save for future reference
+            </Button>
+          )}
+
+          {showSaveForm && (
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="space-y-2">
+                <Label htmlFor="saveName">
+                  Save as <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="saveName"
+                  placeholder="e.g., Stanford PhD - Computer Science"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Give this institution a name for easy identification
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={!saveName || saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? (
+                    <>
+                      <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowSaveForm(false);
+                    setSaveName("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GlobeIcon className="h-5 w-5" />
-            Relationship with Recommender
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="relationship">
-              How do you know them? <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="relationship"
-              placeholder="e.g., Thesis advisor, Professor for 3 courses"
-              value={data.relationship || ""}
-              onChange={(e) => updateData("relationship", e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contextOfMeeting">
-              Context of meeting (optional)
-            </Label>
-            <Textarea
-              id="contextOfMeeting"
-              placeholder="e.g., Took 'Data Structures' and 'Algorithms' courses, worked on senior project together"
-              value={data.contextOfMeeting || ""}
-              onChange={(e) => updateData("contextOfMeeting", e.target.value)}
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <p className="text-muted-foreground text-sm">
+        Enter the details of where you are applying. This information will be
+        used in the letter body.
+      </p>
     </div>
   );
 }

@@ -960,6 +960,109 @@ export const recommendationLetter = pgTable(
   ],
 );
 
+// Saved Recommenders - for reusing recommender information
+export const savedRecommender = pgTable(
+  "saved_recommender",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    // Recommender details
+    name: text("name").notNull(),
+    title: text("title").notNull(),
+    institution: text("institution").notNull(),
+    department: text("department"),
+    email: text("email"),
+    phone: text("phone"),
+
+    // Relationship information
+    relationship: text("relationship"),
+    contextOfMeeting: text("context_of_meeting"),
+
+    // Metadata
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => new Date())
+      .notNull(),
+    isActive: boolean("is_active")
+      .$defaultFn(() => true)
+      .notNull(),
+  },
+  (t) => [
+    index("saved_recommender_user_id_idx").on(t.userId),
+    index("saved_recommender_name_idx").on(t.name),
+  ],
+);
+
+// Saved Target Institutions - for reusing target information
+export const savedTargetInstitution = pgTable(
+  "saved_target_institution",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    // Target details
+    institution: text("institution").notNull(),
+    program: text("program"),
+    department: text("department"),
+    country: text("country").notNull(),
+    purpose: text("purpose"), // Template for purpose
+
+    // Metadata
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => new Date())
+      .notNull(),
+    isActive: boolean("is_active")
+      .$defaultFn(() => true)
+      .notNull(),
+  },
+  (t) => [
+    index("saved_target_institution_user_id_idx").on(t.userId),
+    index("saved_target_institution_institution_idx").on(t.institution),
+  ],
+);
+
+// Saved Template Variables - for reusing template variable responses
+export const savedTemplateVariables = pgTable(
+  "saved_template_variables",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    templateId: text("template_id")
+      .notNull()
+      .references(() => recommendationTemplate.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // User-provided name for this saved set
+    variables: jsonb("variables").notNull(), // Key-value pairs of variable responses
+
+    // Metadata
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => new Date())
+      .notNull(),
+    isActive: boolean("is_active")
+      .$defaultFn(() => true)
+      .notNull(),
+  },
+  (t) => [
+    index("saved_template_variables_user_id_idx").on(t.userId),
+    index("saved_template_variables_template_id_idx").on(t.templateId),
+    index("saved_template_variables_name_idx").on(t.name),
+  ],
+);
+
 export const studentProfileData = pgTable(
   "student_profile_data",
   {
