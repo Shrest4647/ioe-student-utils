@@ -57,7 +57,7 @@ export default function SignUp() {
           },
           {
             onSuccess: async () => {
-              router.push("/auth/verify-email");
+              router.push("/verify-email");
             },
             onError: (ctx) => {
               toast.error(ctx.error.message);
