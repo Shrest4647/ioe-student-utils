@@ -192,6 +192,10 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
             country: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Universities Admin"],
+            summary: "Create university",
+          },
         },
       )
       .patch(
@@ -215,6 +219,10 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
             country: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Universities Admin"],
+            summary: "Update university",
+          },
         },
       ),
   );

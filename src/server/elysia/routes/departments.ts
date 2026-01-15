@@ -248,6 +248,10 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
             websiteUrl: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Departments Admin"],
+            summary: "Create department",
+          },
         },
       )
       .patch(
@@ -267,6 +271,10 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
             websiteUrl: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Departments Admin"],
+            summary: "Update department",
+          },
         },
       ),
   );

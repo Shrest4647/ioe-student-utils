@@ -325,6 +325,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             name: t.String(),
             region: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create country",
+          },
         },
       )
       .patch(
@@ -342,6 +346,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             name: t.Optional(t.String()),
             region: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update country",
+          },
         },
       )
       // Degree Levels
@@ -363,6 +371,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             name: t.String(),
             rank: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create degree level",
+          },
         },
       )
       .patch(
@@ -380,6 +392,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             name: t.Optional(t.String()),
             rank: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update degree level",
+          },
         },
       )
       // Fields of Study
@@ -400,6 +416,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           body: t.Object({
             name: t.String(),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create field of study",
+          },
         },
       )
       .patch(
@@ -416,6 +436,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           body: t.Object({
             name: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update field of study",
+          },
         },
       )
       // --- Admin Scholarship Management ---
@@ -488,6 +512,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             degreeIds: t.Optional(t.Array(t.String())),
             fieldIds: t.Optional(t.Array(t.String())),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create scholarship",
+          },
         },
       )
       .patch(
@@ -575,6 +603,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             degreeIds: t.Optional(t.Array(t.String())),
             fieldIds: t.Optional(t.Array(t.String())),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update scholarship",
+          },
         },
       )
       // Scholarship Rounds
@@ -604,6 +636,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             scholarshipAmount: t.Optional(t.String()),
             description: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create scholarship round",
+          },
         },
       )
       .patch(
@@ -632,6 +668,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             scholarshipAmount: t.Optional(t.String()),
             description: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update scholarship round",
+          },
         },
       )
       // Round Events
@@ -664,6 +704,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             ),
             description: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Create round event",
+          },
         },
       )
       .patch(
@@ -696,6 +740,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             ),
             description: t.Optional(t.String()),
           }),
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Update round event",
+          },
         },
       ),
   );

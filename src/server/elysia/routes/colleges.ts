@@ -458,6 +458,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             location: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Create college",
+          },
         },
       )
       .patch(
@@ -478,6 +482,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             location: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Update college",
+          },
         },
       )
       .post(
@@ -536,6 +544,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           body: t.Object({
             departmentIds: t.Array(t.String()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Add departments to college",
+          },
         },
       )
       .patch(
@@ -559,6 +571,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             websiteUrl: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Update college department",
+          },
         },
       )
       .delete(
@@ -576,6 +592,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Delete college department",
+          },
         },
       )
       .post(
@@ -660,6 +680,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           body: t.Object({
             programIds: t.Array(t.String()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Add programs to college department",
+          },
         },
       )
       .patch(
@@ -704,6 +728,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             credits: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Update college department program",
+          },
         },
       )
       .delete(
@@ -739,7 +767,13 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             );
           return { success: true };
         },
-        { role: "admin" },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Delete college department program",
+          },
+        },
       )
       .post(
         "/:id/departments/:departmentId/programs/:programId/courses",
@@ -834,6 +868,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
           body: t.Object({
             courseIds: t.Array(t.String()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Add courses to college department program",
+          },
         },
       )
       .patch(
@@ -897,6 +935,10 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             credits: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Update college department program course",
+          },
         },
       )
       .delete(
@@ -949,6 +991,12 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
             );
           return { success: true };
         },
-        { role: "admin" },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Colleges Admin"],
+            summary: "Delete college department program course",
+          },
+        },
       ),
   );
