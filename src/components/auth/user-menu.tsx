@@ -75,7 +75,7 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {!isEmailVerified && (
-          <Link href="/auth/verify-email">
+          <Link href="/verify-email">
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4 text-red-500" />
               <span className="text-red-400">Verify Email</span>

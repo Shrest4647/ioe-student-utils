@@ -188,7 +188,7 @@ export default function DashboardPage() {
               <Button
                 variant="link"
                 className="h-auto p-0 text-chart-3 underline-offset-4 hover:text-chart-3/80"
-                onClick={() => router.push("/auth/verify-email")}
+                onClick={() => router.push("/verify-email")}
               >
                 Verify Email
               </Button>
