@@ -27,6 +27,7 @@ export const appEnv = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    VERCEL_URL: z.string().optional(),
   },
 
   /**
@@ -61,7 +62,7 @@ export const appEnv = createEnv({
     S3_ENDPOINT: process.env.S3_ENDPOINT,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_BASE_URL: process.env.VERCEL_URL
-      ? `https://${VERCEL_URL}`
+      ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_BASE_URL,
   },
   /**
