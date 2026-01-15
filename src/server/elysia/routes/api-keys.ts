@@ -1,8 +1,6 @@
-import { eq, and, desc } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
-import { user, apiKeys } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 /**

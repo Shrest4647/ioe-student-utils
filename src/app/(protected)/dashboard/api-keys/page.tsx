@@ -1,9 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Edit, Eye, EyeOff, Plus, Search, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { Edit, Eye, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useDebounceValue } from "usehooks-ts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,97 +25,99 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
-// Import authClient to check available methods
-const authClient: any = require('@/lib/auth-client').authClient;
-
-if (!authClient || !authClient.apiKey) {
-  throw new Error("apiKey plugin not found in auth client");
+interface ApiKey {
+  id: string;
+  name: string | null;
+  prefix: string | null;
+  start: string | null;
+  enabled: boolean;
+  rateLimitEnabled: boolean;
+  rateLimitMax: number | null;
+  remaining: number | null;
+  expiresAt: string | null;
+  lastRequest: string | null;
+  permissions: Record<string, string[]> | null;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function ApiKeysDashboardPage() {
-
-export default function ApiKeysDashboardPage() {
   const [search, setSearch] = useState("");
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  const [debouncedSearch] = useDebounceValue(search, 300);
+  const [_copiedKey, setCopiedKey] = useState<string | null>(null);
+  const _queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["api-keys", debouncedSearch],
     queryFn: async () => {
-      const { data } = await authClient.apiKey.list();
-      return data?.success ? data.data : [];
+      const response = await fetch("/api/api-keys", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      const result = await response.json();
+      return result.success ? result.data : [];
     },
   });
 
   const createApiKeyMutation = useMutation({
-    mutationFn: async (data: {
+    mutationFn: async (createData: {
       name: string;
       expiresIn?: number;
       permissions?: Record<string, string[]>;
       metadata?: any;
     }) => {
-      const result = await authClient.apiKey.create(data);
-      if (result.error) {
-        toast.error(`Failed to create API key: ${result.error.message}`);
-        throw result.error;
+      const { data, error } = await authClient.apiKey.create({
+        name: createData.name,
+        expiresIn: createData.expiresIn
+          ? createData.expiresIn / (24 * 60 * 60)
+          : undefined, // Convert from days to seconds
+        permissions: createData.permissions,
+        metadata: createData.metadata,
+      });
+      if (error) {
+        toast.error(`Failed to create API key: ${error.message}`);
+        throw error;
       }
       toast.success("API key created successfully");
       refetch();
-      return result.data;
+      return data;
     },
   });
 
-  const deleteApiKeyMutation = useMutation({
+  const _deleteApiKeyMutation = useMutation({
     mutationFn: async (id: string) => {
-      const result = await authClient.apiKey.delete({ keyId: id });
-      if (result.error) {
-        toast.error(`Failed to delete API key: ${result.error.message}`);
-        throw result.error;
+      const { data, error } = await authClient.apiKey.delete({ keyId: id });
+      if (error) {
+        toast.error(`Failed to delete API key: ${error.message}`);
+        throw error;
       }
       toast.success("API key deleted successfully");
       refetch();
-      return result.data;
+      return data;
     },
   });
 
-  const regenerateApiKeyMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const result = await authClient.apiKey.regenerate({ keyId: id });
-      if (result.error) {
-        toast.error(`Failed to regenerate API key: ${result.error.message}`);
-        throw result.error;
-      }
-      toast.success("API key regenerated successfully");
-      refetch();
-      return result.data;
-    },
-  });
-
-  const copyToClipboard = async (text: string) => {
+  const _copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedKey(text);
       toast.success("API key copied to clipboard");
       setTimeout(() => setCopiedKey(null), 2000);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to copy API key");
     }
   };
 
-  const apiKeys = data?.data ? data.data : [];
-  const filteredApiKeys = apiKeys.filter((key) =>
-    key.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
+  const apiKeys = data || [];
+  const filteredApiKeys = apiKeys.filter((key: ApiKey) =>
+    key.name
+      ? key.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      : false,
   );
 
   return (
@@ -177,13 +181,13 @@ export default function ApiKeysDashboardPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredApiKeys.map((apiKey) => (
+                  filteredApiKeys.map((apiKey: ApiKey) => (
                     <TableRow key={apiKey.id}>
                       <TableCell className="font-medium">
                         {apiKey.name}
                       </TableCell>
                       <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
+                        <code className="rounded bg-muted px-2 py-1 text-xs">
                           {apiKey.prefix || "sk_"}
                         </code>
                       </TableCell>
@@ -195,14 +199,14 @@ export default function ApiKeysDashboardPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {apiKey.remaining
                             ? `${apiKey.remaining} remaining`
                             : "Unlimited"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {apiKey.expiresAt
                             ? formatDistanceToNow(new Date(apiKey.expiresAt), {
                                 addSuffix: true,
@@ -211,7 +215,7 @@ export default function ApiKeysDashboardPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {formatDistanceToNow(new Date(apiKey.createdAt), {
                             addSuffix: true,
                           })}
@@ -229,23 +233,34 @@ export default function ApiKeysDashboardPage() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              regenerateApiKeyMutation.mutate(apiKey.id)
+                              createApiKeyMutation.mutate({
+                                name: `Regenerated - ${apiKey.name}`,
+                                permissions: apiKey.permissions
+                                  ? Object.keys(
+                                      apiKey.permissions || {},
+                                    ).reduce(
+                                      (acc, key) => {
+                                        acc[key] =
+                                          apiKey.permissions?.[key] || [];
+                                        return acc;
+                                      },
+                                      {} as Record<string, string[]>,
+                                    )
+                                  : {},
+                                expiresIn: apiKey.expiresAt
+                                  ? Math.floor(
+                                      (new Date(apiKey.expiresAt).getTime() -
+                                        Date.now()) /
+                                        (24 * 60 * 60 * 1000),
+                                    )
+                                  : undefined,
+                                metadata: apiKey.metadata,
+                              })
                             }
-                            disabled={regenerateApiKeyMutation.isPending}
+                            disabled={createApiKeyMutation.isPending}
                           >
                             <Edit className="h-4 w-4" />
                             Regenerate
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              deleteApiKeyMutation.mutate(apiKey.id)
-                            }
-                            disabled={deleteApiKeyMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
                           </Button>
                         </div>
                       </TableCell>

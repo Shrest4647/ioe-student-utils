@@ -1,19 +1,12 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Copy,
-  Edit,
-  Eye,
-  EyeOff,
-  Key,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowLeft, Key, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,44 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
-import { authClient } from "@/lib/auth-client";
-
-interface ApiKeyData {
-  id: string;
-  name: string;
-  prefix: string;
-  start: string | null;
-  enabled: boolean;
-  rateLimitEnabled: boolean;
-  rateLimitMax: string | null;
-  remaining: string | null;
-  expiresAt: string | null;
-  permissions: Record<string, string[]> | null;
-  metadata: Record<string, any> | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export default function ApiKeyDetailPage({
   params,
@@ -83,41 +39,55 @@ export default function ApiKeyDetailPage({
   const [metadata, setMetadata] = useState("{}");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["api-key", params.id],
     queryFn: async () => {
-      const { data } = await authClient.apiKey.get({ id: params.id });
-      return data?.success ? data.data : null;
+      const response = await fetch(`/api/api-keys/${params.id}`, {
+        credentials: "include",
+      });
+      const result = await response.json();
+      return result.success ? result.data : null;
     },
   });
 
-  const apiKey = data?.success ? data.data : null;
+  const apiKey = data;
 
   const updateApiKeyMutation = useMutation({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const result = await authClient.apiKey.update({
-        keyId: params.id,
-        name: name.trim(),
-        enabled,
-        permissions: selectedPermissions.reduce(
-          (acc, permission) => {
-            acc[permission] = true;
-            return acc;
-          },
-          {} as Record<string, string[]>,
-        ),
-        metadata: metadata ? JSON.parse(metadata) : undefined,
+      const response = await fetch(`/api/api-keys/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: name.trim(),
+          enabled,
+          permissions: selectedPermissions.reduce(
+            (acc, permission) => {
+              acc[permission] = ["read", "write"];
+              return acc;
+            },
+            {} as Record<string, string[]>,
+          ),
+          metadata: metadata ? JSON.parse(metadata) : undefined,
+        }),
       });
 
-      if (result.error) {
-        toast.error(`Failed to update API key: ${result.error.message}`);
-        throw result.error;
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(
+          `Failed to update API key: ${result.error?.message || "Unknown error"}`,
+        );
+        throw new Error(result.error?.message || "Unknown error");
       }
 
       toast.success("API key updated successfully!");
       setIsUpdating(false);
+      refetch();
     },
   });
 
@@ -125,13 +95,22 @@ export default function ApiKeyDetailPage({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const result = await authClient.apiKey.regenerate({ keyId: params.id });
-      if (result.error) {
-        toast.error(`Failed to regenerate API key: ${result.error.message}`);
-        throw result.error;
+      const response = await fetch(`/api/api-keys/${params.id}/regenerate`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(
+          `Failed to regenerate API key: ${result.error?.message || "Unknown error"}`,
+        );
+        throw new Error(result.error?.message || "Unknown error");
       }
 
       toast.success("API key regenerated successfully!");
+      refetch();
     },
   });
 
@@ -139,10 +118,18 @@ export default function ApiKeyDetailPage({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const result = await authClient.apiKey.delete({ keyId: params.id });
-      if (result.error) {
-        toast.error(`Failed to delete API key: ${result.error.message}`);
-        throw result.error;
+      const response = await fetch(`/api/api-keys/${params.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(
+          `Failed to delete API key: ${result.error?.message || "Unknown error"}`,
+        );
+        throw new Error(result.error?.message || "Unknown error");
       }
 
       toast.success("API key deleted successfully!");
@@ -150,22 +137,22 @@ export default function ApiKeyDetailPage({
     },
   });
 
-  const copyToClipboard = async (text: string) => {
+  const _copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success("API key copied to clipboard");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to copy API key");
     }
   };
 
-  if (!apiKey) {
+  if (!apiKey && !isLoading) {
     return (
-      <div className="container mx-auto py-8 max-w-2xl">
+      <div className="container mx-auto max-w-2xl py-8">
         <div className="mb-8">
           <Link
             href="/dashboard/api-keys"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+            className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to API Keys
@@ -173,7 +160,7 @@ export default function ApiKeyDetailPage({
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold">API Key Not Found</h1>
+          <h1 className="font-bold text-2xl">API Key Not Found</h1>
           <p className="text-muted-foreground">
             The API key you&apos;re looking for does not exist or you don&apos;t
             have permission to view it.
@@ -185,7 +172,7 @@ export default function ApiKeyDetailPage({
 
   // Update state when data loads
   if (apiKey && !name) {
-    setName(apiKey.name);
+    setName(apiKey.name || "");
     setEnabled(apiKey.enabled);
     setExpiresIn(
       apiKey.expiresAt
@@ -195,28 +182,49 @@ export default function ApiKeyDetailPage({
           )
         : 30,
     );
-    setSelectedPermissions(apiKey.permissions || []);
+    setSelectedPermissions(
+      apiKey.permissions ? Object.keys(apiKey.permissions) : [],
+    );
     setMetadata(apiKey.metadata ? JSON.stringify(apiKey.metadata) : "{}");
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-2xl py-8">
+        <div className="mb-8">
+          <Link
+            href="/dashboard/api-keys"
+            className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to API Keys
+          </Link>
+        </div>
+        <div className="text-center">
+          <h1 className="font-bold text-2xl">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 max-w-2xl">
+    <div className="container mx-auto max-w-2xl py-8">
       <div className="mb-8">
         <Link
           href="/dashboard/api-keys"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to API Keys
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Key className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold">API Key Details</span>
+              <span className="font-bold text-xl">API Key Details</span>
             </CardTitle>
             <CardDescription>
               View and manage your API key settings.
@@ -294,21 +302,21 @@ export default function ApiKeyDetailPage({
             <div className="space-y-4">
               <div>
                 <Label>Usage Statistics</Label>
-                <div className="bg-muted/50 border rounded-lg p-4">
+                <div className="rounded-lg border bg-muted/50 p-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">
-                        {apiKey.remaining || "Unlimited"}
+                      <p className="font-bold text-2xl text-primary">
+                        {apiKey?.remaining || "Unlimited"}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         Requests Remaining
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">
-                        {apiKey.rateLimitMax || "No Limit"}
+                      <p className="font-bold text-2xl text-green-600">
+                        {apiKey?.rateLimitMax || "No Limit"}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         Rate Limit per Day
                       </p>
                     </div>
@@ -318,7 +326,7 @@ export default function ApiKeyDetailPage({
 
               <div>
                 <Label>Permissions</Label>
-                <div className="bg-muted/50 border rounded-lg p-4">
+                <div className="rounded-lg border bg-muted/50 p-4">
                   <div className="space-y-2">
                     {[
                       { resource: "scholarships", label: "Scholarships" },
@@ -352,12 +360,12 @@ export default function ApiKeyDetailPage({
                           />
                           <Label
                             htmlFor={resource}
-                            className="text-sm font-normal"
+                            className="font-normal text-sm"
                           >
                             {label}
                           </Label>
                         </div>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {selectedPermissions.includes(resource)
                             ? "Granted"
                             : "Not Granted"}
@@ -370,24 +378,34 @@ export default function ApiKeyDetailPage({
 
               <div>
                 <Label>Created</Label>
-                <div className="bg-muted/50 border rounded-lg p-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatDistanceToNow(new Date(apiKey.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Created On</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatDistanceToNow(new Date(apiKey.updatedAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Last Updated
-                    </p>
+                <div className="rounded-lg border bg-muted/50 p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="font-bold text-2xl text-blue-600">
+                        {formatDistanceToNow(
+                          new Date(apiKey?.createdAt || ""),
+                          {
+                            addSuffix: true,
+                          },
+                        )}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        Created On
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-2xl text-green-600">
+                        {formatDistanceToNow(
+                          new Date(apiKey?.updatedAt || ""),
+                          {
+                            addSuffix: true,
+                          },
+                        )}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        Last Updated
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

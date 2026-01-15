@@ -1,6 +1,6 @@
 import {
-  apiKeyClient,
   anonymousClient,
+  apiKeyClient,
   emailOTPClient,
   genericOAuthClient,
   inferAdditionalFields,

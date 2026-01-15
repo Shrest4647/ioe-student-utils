@@ -27,6 +27,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allCountries };
     },
     {
+      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all countries" },
     },
   )
@@ -39,6 +40,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allDegrees };
     },
     {
+      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all degree levels" },
     },
   )
@@ -51,6 +53,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allFields };
     },
     {
+      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all fields of study" },
     },
   )
@@ -213,6 +216,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       };
     },
     {
+      auth: true, // Accepts both session and API key authentication
       query: t.Object({
         search: t.Optional(t.String()),
         country: t.Optional(t.String()),

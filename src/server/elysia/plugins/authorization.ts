@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { auth } from "@/server/better-auth";
+import { db } from "@/server/db";
 
 type Role = "user" | "admin";
 
@@ -7,14 +8,22 @@ type Role = "user" | "admin";
  * Authorization plugin for Elysia
  *
  * Provides reusable authentication and authorization patterns:
- * - `auth: true` - Requires authentication
+ * - `auth: true` - Requires authentication (session or API key)
+ * - `apiKey: true` - Requires API key authentication only
+ * - `sessionAuth: true` - Requires session authentication only (no API keys)
  * - `role: "admin"` - Requires specific role
  * - `ownerOnly: true` - User can only access their own resources (uses `id` or `userId` param)
  * - `adminOrOwner: true` - Admin users can access any resource, or user can access their own resource
  *
  * @example
- * # Require authentication
+ * # Require authentication (session or API key)
  * .get("/profile", handler, { auth: true })
+ *
+ * # Require API key authentication only
+ * .get("/api/data", handler, { apiKey: true })
+ *
+ * # Require session authentication only
+ * .get("/dashboard", handler, { sessionAuth: true })
  *
  * # Require admin role
  * .get("/admin/users", handler, { auth: true, role: "admin" })
@@ -28,11 +37,101 @@ type Role = "user" | "admin";
 export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
   auth: {
     async resolve({ status, request: { headers } }) {
+      // First try session authentication
+      const session = await auth.api.getSession({ headers });
+      if (session) {
+        return {
+          user: session.user,
+          session: session.session,
+          authType: "session",
+        };
+      }
+
+      // Then try API key authentication
+      const apiKey =
+        headers.get("x-api-key") ||
+        headers.get("authorization")?.replace("Bearer ", "");
+      if (apiKey) {
+        try {
+          const keyValidation = await auth.api.verifyApiKey({
+            body: {
+              key: apiKey,
+            },
+          });
+
+          if (keyValidation?.valid && keyValidation.key) {
+            // Get the user from the API key
+            const user = await db.query.user.findFirst({
+              where: {
+                id: keyValidation.key.userId,
+              },
+            });
+
+            if (user) {
+              return {
+                user,
+                apiKey: keyValidation.key,
+                authType: "apiKey",
+              };
+            }
+          }
+        } catch (_error) {
+          // Invalid API key
+          return status(401);
+        }
+      }
+
+      return status(401);
+    },
+  },
+  apiKey: {
+    async resolve({ status, request: { headers } }) {
+      const apiKey =
+        headers.get("x-api-key") ||
+        headers.get("authorization")?.replace("Bearer ", "");
+      if (!apiKey) {
+        return status(401);
+      }
+
+      try {
+        const keyValidation = await auth.api.verifyApiKey({
+          body: {
+            key: apiKey,
+          },
+        });
+
+        if (keyValidation?.valid && keyValidation.key) {
+          // Get the user from the API key's userId
+          const user = await db.query.user.findFirst({
+            where: {
+              id: keyValidation.key.userId,
+            },
+          });
+
+          if (user) {
+            return {
+              user,
+              apiKey: keyValidation.key,
+              authType: "apiKey",
+            };
+          }
+        }
+      } catch (_error) {
+        // Invalid API key
+        return status(401);
+      }
+
+      return status(401);
+    },
+  },
+  sessionAuth: {
+    async resolve({ status, request: { headers } }) {
       const session = await auth.api.getSession({ headers });
       if (!session) return status(401);
       return {
         user: session.user,
         session: session.session,
+        authType: "session",
       };
     },
   },
