@@ -1173,3 +1173,35 @@ export const gpaConversions = pgTable("gpa_conversion", {
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
 });
+
+// --- API Key Management ---
+
+export const apiKeys = pgTable("api_key", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  start: text("start"), // Starting characters for UI display
+  prefix: text("prefix"),
+  key: text("key").notNull().unique(), // Hashed API key
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  enabled: boolean("enabled").default(true).notNull(),
+  rateLimitEnabled: boolean("rate_limit_enabled").default(true).notNull(),
+  rateLimitTimeWindow: timestamp("rate_limit_time_window"), // Time window for rate limiting
+  rateLimitMax: text("rate_limit_max"), // Max requests per window
+  requestCount: text("request_count").default("0").notNull(), // Number of requests in current window
+  lastRequest: timestamp("last_request"), // Timestamp of last request
+  remaining: text("remaining"), // Requests remaining before refill/expiry
+  refillInterval: timestamp("refill_interval"), // Interval for refilling requests
+  refillAmount: text("refill_amount"), // Amount to refill on interval
+  lastRefillAt: timestamp("last_refill_at"), // Last time refilled
+  expiresAt: timestamp("expires_at"), // Key expiration time
+  permissions: jsonb("permissions"), // JSON object of permissions
+  metadata: jsonb("metadata"), // Additional metadata
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});

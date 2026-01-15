@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
   anonymous,
+  apiKey,
   emailOTP,
   genericOAuth,
   magicLink,
@@ -51,6 +52,32 @@ export const auth = betterAuth({
     openAPI(),
     anonymous(),
     username(),
+    apiKey({
+      keyExpiration: {
+        defaultExpiresIn: 60 * 60 * 24 * 30, // 30 days default
+        minExpiresIn: 60 * 60 * 24, // 1 day minimum
+        maxExpiresIn: 60 * 60 * 24 * 365, // 1 year maximum
+      },
+      rateLimit: {
+        enabled: true,
+        timeWindow: 60 * 60 * 60 * 24, // 1 day window
+        maxRequests: 1000, // 1000 requests per day
+      },
+      permissions: {
+        defaultPermissions: {
+          scholarships: ["read", "write"],
+          universities: ["read"],
+          colleges: ["read"],
+          departments: ["read"],
+          programs: ["read"],
+          courses: ["read"],
+          resources: ["read", "write"],
+          recommendations: ["read", "write"],
+          resumes: ["read", "write"],
+          ratings: ["read"],
+        },
+      },
+    }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         await sendMagicLink({
