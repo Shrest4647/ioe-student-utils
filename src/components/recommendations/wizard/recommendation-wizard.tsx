@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,28 +56,67 @@ interface WizardData {
   finalContent?: string;
 }
 
-const steps = [
-  { id: 1, title: "Choose Template", description: "Select a template" },
-  { id: 2, title: "Recommender", description: "Who is recommending you?" },
-  { id: 3, title: "Target", description: "Where are you applying?" },
-  {
-    id: 4,
-    title: "Template Details",
-    description: "Fill in template variables",
-  },
-  { id: 5, title: "Custom Content", description: "Add extra details" },
-  { id: 6, title: "Review", description: "Review and edit" },
-];
+interface RecommendationWizardProps {
+  editMode?: boolean;
+  letterId?: string;
+}
 
-export function RecommendationWizard() {
+export function RecommendationWizard({
+  editMode,
+  letterId,
+}: RecommendationWizardProps = {}) {
+  const getSteps = () => {
+    const baseSteps = [
+      { id: 1, title: "Choose Template", description: "Select a template" },
+      { id: 2, title: "Recommender", description: "Who is recommending you?" },
+      { id: 3, title: "Target", description: "Where are you applying?" },
+      {
+        id: 4,
+        title: "Template Details",
+        description: "Fill in template variables",
+      },
+      { id: 5, title: "Custom Content", description: "Add extra details" },
+      { id: 6, title: "Review", description: "Review and edit" },
+    ];
+
+    // Skip template selection step in edit mode
+    if (editMode) {
+      return baseSteps.slice(1);
+    }
+
+    return baseSteps;
+  };
+
+  const steps = getSteps();
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("templateId");
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(editMode ? 2 : 1); // Skip template selection in edit mode
   const [wizardData, setWizardData] = useState<Partial<WizardData>>(
-    templateId ? { templateId } : {},
+    editMode ? {} : templateId ? { templateId } : {},
   );
+
+  // Fetch letter data if in edit mode
+  const { data: existingLetter } = useQuery({
+    queryKey: ["recommendation-letter", letterId],
+    queryFn: async () => {
+      if (!editMode || !letterId) return null;
+
+      const { data, error } = await apiClient.api.recommendations
+        .letters({
+          id: letterId,
+        })
+        .get();
+
+      if (error) {
+        throw new Error("Failed to fetch letter");
+      }
+
+      return data?.data;
+    },
+    enabled: editMode && !!letterId,
+  });
 
   // Fetch template for validation
   const { data: template } = useQuery({
@@ -99,6 +138,33 @@ export function RecommendationWizard() {
     },
     enabled: !!wizardData.templateId,
   });
+
+  // Pre-fill wizard data when editing
+  useEffect(() => {
+    if (editMode && existingLetter) {
+      setWizardData({
+        templateId: existingLetter.templateId,
+        recommenderName: existingLetter.recommenderName,
+        recommenderTitle: existingLetter.recommenderTitle,
+        recommenderInstitution: existingLetter.recommenderInstitution,
+        recommenderEmail: existingLetter.recommenderEmail,
+        recommenderDepartment: existingLetter.recommenderDepartment,
+        relationship: existingLetter.relationship,
+        contextOfMeeting: existingLetter.contextOfMeeting,
+        targetInstitution: existingLetter.targetInstitution,
+        targetProgram: existingLetter.targetProgram,
+        targetDepartment: existingLetter.targetDepartment,
+        targetCountry: existingLetter.targetCountry,
+        purpose: existingLetter.purpose,
+        studentAchievements: existingLetter.studentAchievements,
+        researchExperience: existingLetter.researchExperience,
+        academicPerformance: existingLetter.academicPerformance,
+        personalQualities: existingLetter.personalQualities,
+        customContent: existingLetter.customContent,
+        finalContent: existingLetter.finalContent,
+      });
+    }
+  }, [editMode, existingLetter]);
 
   const updateData = useCallback((field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
@@ -168,7 +234,7 @@ export function RecommendationWizard() {
     }
   };
 
-  const createLetterMutation = useMutation({
+  const letterMutation = useMutation({
     mutationFn: async () => {
       // Extract template variables (all fields that aren't predefined)
       const predefinedFields = [
@@ -204,7 +270,7 @@ export function RecommendationWizard() {
         }
       });
 
-      const { data, error } = await apiClient.api.recommendations.letters.post({
+      const mutationBody = {
         templateId: wizardData.templateId || "",
         title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
         recommenderName: wizardData.recommenderName || "",
@@ -225,38 +291,72 @@ export function RecommendationWizard() {
         personalQualities: wizardData.personalQualities,
         customContent: wizardData.customContent,
         templateVariables,
-      });
+      };
+
+      let data, error;
+
+      if (editMode && letterId) {
+        // Update existing letter
+        const response = await apiClient.api.recommendations
+          .letters({ id: letterId })
+          .put(mutationBody);
+        data = response.data;
+        error = response.error;
+      } else {
+        // Create new letter
+        const response =
+          await apiClient.api.recommendations.letters.post(mutationBody);
+        data = response.data;
+        error = response.error;
+      }
 
       if (error) {
-        throw new Error("Failed to create letter");
+        const errorMessage = editMode
+          ? "Failed to update letter"
+          : "Failed to create letter";
+        throw new Error(errorMessage);
       }
 
       return data;
     },
     onSuccess: (data) => {
-      toast.success("Recommendation letter created successfully!");
+      const successMessage = editMode
+        ? "Recommendation letter updated successfully!"
+        : "Recommendation letter created successfully!";
+      toast.success(successMessage);
       // Redirect to the letter detail page
       if (data?.data?.id) {
         router.push(`/dashboard/recommendations/${data.data.id}`);
       }
     },
     onError: (error) => {
-      console.error("Error creating letter:", error);
+      console.error(
+        `Error ${editMode ? "updating" : "creating"} letter:`,
+        error,
+      );
       toast.error(
-        error instanceof Error ? error.message : "Failed to create letter",
+        error instanceof Error
+          ? error.message
+          : `Failed to ${editMode ? "update" : "create"} letter`,
       );
     },
   });
 
   const handleSubmit = () => {
-    createLetterMutation.mutate();
+    letterMutation.mutate();
   };
 
-  const progress = (currentStep / 6) * 100;
+  const progress = (currentStep / steps.length) * 100;
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
+        if (editMode) {
+          // Skip template selection in edit mode, go directly to recommender info
+          return (
+            <Step2RecommenderInfo data={wizardData} updateData={updateData} />
+          );
+        }
         return (
           <Step0TemplateSelection data={wizardData} updateData={updateData} />
         );
@@ -282,7 +382,7 @@ export function RecommendationWizard() {
             data={wizardData}
             updateData={updateData}
             onSubmit={handleSubmit}
-            isSubmitting={createLetterMutation.isPending}
+            isSubmitting={letterMutation.isPending}
           />
         );
       default:
