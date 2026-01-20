@@ -205,6 +205,10 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
             sortOrder: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Ratings Admin"],
+            summary: "Create rating category",
+          },
         },
       )
       .patch(
@@ -225,6 +229,10 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
             sortOrder: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Ratings Admin"],
+            summary: "Update rating category",
+          },
         },
       )
       .delete(
@@ -235,6 +243,10 @@ export const ratingRoutes = new Elysia({ prefix: "/ratings" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Ratings Admin"],
+            summary: "Delete rating category",
+          },
         },
       ),
   );

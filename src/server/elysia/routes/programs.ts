@@ -328,6 +328,10 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
             ),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Programs Admin"],
+            summary: "Create program",
+          },
         },
       )
       .patch(
@@ -359,6 +363,10 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
             ),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Programs Admin"],
+            summary: "Update program",
+          },
         },
       )
       .post(
@@ -374,6 +382,10 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Programs Admin"],
+            summary: "Add program to college department",
+          },
         },
       )
       .delete(
@@ -386,6 +398,10 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Programs Admin"],
+            summary: "Delete program from college department",
+          },
         },
       ),
   );
@@ -659,6 +675,10 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
             credits: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Courses Admin"],
+            summary: "Create course",
+          },
         },
       )
       .patch(
@@ -679,6 +699,10 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
             credits: t.Optional(t.String()),
             isActive: t.Optional(t.Boolean()),
           }),
+          detail: {
+            tags: ["Courses Admin"],
+            summary: "Update course",
+          },
         },
       )
       .post(
@@ -694,6 +718,10 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Courses Admin"],
+            summary: "Add course to program",
+          },
         },
       )
       .delete(
@@ -706,6 +734,10 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
         },
         {
           role: "admin",
+          detail: {
+            tags: ["Courses Admin"],
+            summary: "Delete course from program",
+          },
         },
       ),
   );

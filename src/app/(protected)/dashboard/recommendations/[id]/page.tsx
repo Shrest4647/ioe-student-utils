@@ -1,7 +1,14 @@
 "use client";
 
-import { ArrowLeftIcon, DownloadIcon, EditIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  EditIcon,
+  LoaderIcon,
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 import { LetterPreview } from "@/components/recommendations/letter-preview";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { apiClient } from "@/lib/eden";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -20,17 +28,76 @@ interface PageProps {
 
 export default function LetterDetailPage({ params }: PageProps) {
   const { id } = use(params);
+  const router = useRouter();
 
-  // TODO: Fetch letter data from API
-  // const { data: letter, isLoading } = useLetter(id);
+  const {
+    data: letter,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["recommendation-letter", id],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api.recommendations
+        .letters({
+          id,
+        })
+        .get();
 
-  // if (isLoading) {
-  //   return <div>Loading...</div>;
-  // }
+      if (error) {
+        throw new Error("Failed to fetch letter");
+      }
 
-  // if (!letter) {
-  //   notFound();
-  // }
+      return data?.data;
+    },
+  });
+
+  const handleEdit = () => {
+    router.push(`/dashboard/recommendations/${id}/edit`);
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(
+        `/api/recommendations/letters/${id}/download`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to download PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${letter?.title || "recommendation-letter"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoaderIcon className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !letter) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="text-muted-foreground">Letter not found</p>
+        <Link href="/dashboard/recommendations">
+          <Button variant="outline" className="mt-4">
+            Back to Letters
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -44,22 +111,22 @@ export default function LetterDetailPage({ params }: PageProps) {
           </Link>
           <div>
             <h1 className="font-bold text-3xl tracking-tight">
-              PhD Recommendation - Stanford
+              {letter.title}
             </h1>
             <div className="mt-1 flex items-center gap-2">
-              <Badge variant="outline">Draft</Badge>
+              <Badge variant="outline">{letter.status}</Badge>
               <p className="text-muted-foreground text-sm">
-                Created on Jan 13, 2025
+                Created on {new Date(letter.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleEdit}>
             <EditIcon className="mr-2 h-4 w-4" />
             Edit
           </Button>
-          <Button>
+          <Button onClick={handleDownload}>
             <DownloadIcon className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
@@ -87,22 +154,29 @@ export default function LetterDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div>
-              <span className="font-medium">Name:</span> Dr. John Smith
+              <span className="font-medium">Name:</span>{" "}
+              {letter.recommenderName}
             </div>
             <div>
-              <span className="font-medium">Title:</span> Professor of Computer
-              Science
+              <span className="font-medium">Title:</span>{" "}
+              {letter.recommenderTitle}
             </div>
             <div>
-              <span className="font-medium">Institution:</span> IOE
+              <span className="font-medium">Institution:</span>{" "}
+              {letter.recommenderInstitution}
             </div>
-            <div>
-              <span className="font-medium">Department:</span> Computer
-              Engineering
-            </div>
-            <div>
-              <span className="font-medium">Email:</span> john.smith@ioe.edu.np
-            </div>
+            {letter.recommenderDepartment && (
+              <div>
+                <span className="font-medium">Department:</span>{" "}
+                {letter.recommenderDepartment}
+              </div>
+            )}
+            {letter.recommenderEmail && (
+              <div>
+                <span className="font-medium">Email:</span>{" "}
+                {letter.recommenderEmail}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -112,18 +186,25 @@ export default function LetterDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div>
-              <span className="font-medium">Institution:</span> Stanford
-              University
+              <span className="font-medium">Institution:</span>{" "}
+              {letter.targetInstitution}
             </div>
             <div>
-              <span className="font-medium">Program:</span> PhD in Computer
-              Science
+              <span className="font-medium">Program:</span>{" "}
+              {letter.targetProgram}
+            </div>
+            {letter.targetDepartment && (
+              <div>
+                <span className="font-medium">Department:</span>{" "}
+                {letter.targetDepartment}
+              </div>
+            )}
+            <div>
+              <span className="font-medium">Country:</span>{" "}
+              {letter.targetCountry}
             </div>
             <div>
-              <span className="font-medium">Country:</span> USA
-            </div>
-            <div>
-              <span className="font-medium">Purpose:</span> Admission
+              <span className="font-medium">Purpose:</span> {letter.purpose}
             </div>
           </CardContent>
         </Card>

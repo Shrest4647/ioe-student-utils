@@ -188,6 +188,9 @@ export function Navbar() {
                         >
                           Build and manage your resumes.
                         </ListItem>
+                        <ListItem href="/dashboard/api-keys" title="API Keys">
+                          Manage API keys for programmatic access.
+                        </ListItem>
                         <ListItem href="/dashboard/settings" title="Settings">
                           Configure your account settings.
                         </ListItem>

@@ -1,5 +1,6 @@
 import {
   anonymousClient,
+  apiKeyClient,
   emailOTPClient,
   genericOAuthClient,
   inferAdditionalFields,
@@ -17,6 +18,7 @@ export const authClient = createAuthClient({
     magicLinkClient(),
     emailOTPClient(),
     twoFactorClient(),
+    apiKeyClient(),
   ],
 });
 

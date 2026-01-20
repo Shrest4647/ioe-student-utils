@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,28 +56,72 @@ interface WizardData {
   finalContent?: string;
 }
 
-const steps = [
-  { id: 1, title: "Choose Template", description: "Select a template" },
-  { id: 2, title: "Recommender", description: "Who is recommending you?" },
-  { id: 3, title: "Target", description: "Where are you applying?" },
-  {
-    id: 4,
-    title: "Template Details",
-    description: "Fill in template variables",
-  },
-  { id: 5, title: "Custom Content", description: "Add extra details" },
-  { id: 6, title: "Review", description: "Review and edit" },
-];
+interface RecommendationWizardProps {
+  editMode?: boolean;
+  letterId?: string;
+}
 
-export function RecommendationWizard() {
+export function RecommendationWizard({
+  editMode,
+  letterId,
+}: RecommendationWizardProps = {}) {
+  const getSteps = () => {
+    const baseSteps = [
+      { id: 1, title: "Choose Template", description: "Select a template" },
+      { id: 2, title: "Recommender", description: "Who is recommending you?" },
+      { id: 3, title: "Target", description: "Where are you applying?" },
+      {
+        id: 4,
+        title: "Template Details",
+        description: "Fill in template variables",
+      },
+      { id: 5, title: "Custom Content", description: "Add extra details" },
+      { id: 6, title: "Review", description: "Review and edit" },
+    ];
+
+    // Skip template selection step in edit mode
+    if (editMode) {
+      return baseSteps.slice(1);
+    }
+
+    return baseSteps;
+  };
+
+  const steps = getSteps();
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("templateId");
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(editMode ? 2 : 1); // Skip template selection in edit mode
+
+  // Helper function to get the current step object
+  const getCurrentStepObject = () => {
+    return steps.find((step) => step.id === currentStep) || steps[0];
+  };
   const [wizardData, setWizardData] = useState<Partial<WizardData>>(
-    templateId ? { templateId } : {},
+    editMode ? {} : templateId ? { templateId } : {},
   );
+
+  // Fetch letter data if in edit mode
+  const { data: existingLetter } = useQuery({
+    queryKey: ["recommendation-letter", letterId],
+    queryFn: async () => {
+      if (!editMode || !letterId) return null;
+
+      const { data, error } = await apiClient.api.recommendations
+        .letters({
+          id: letterId,
+        })
+        .get();
+
+      if (error) {
+        throw new Error("Failed to fetch letter");
+      }
+
+      return data?.data;
+    },
+    enabled: editMode && !!letterId,
+  });
 
   // Fetch template for validation
   const { data: template } = useQuery({
@@ -99,6 +143,34 @@ export function RecommendationWizard() {
     },
     enabled: !!wizardData.templateId,
   });
+
+  // Pre-fill wizard data when editing
+  useEffect(() => {
+    if (editMode && existingLetter) {
+      setWizardData({
+        templateId: existingLetter.templateId,
+        recommenderName: existingLetter.recommenderName,
+        recommenderTitle: existingLetter.recommenderTitle,
+        recommenderInstitution: existingLetter.recommenderInstitution,
+        recommenderEmail: existingLetter.recommenderEmail ?? undefined,
+        recommenderDepartment:
+          existingLetter.recommenderDepartment ?? undefined,
+        relationship: existingLetter.relationship,
+        contextOfMeeting: existingLetter.contextOfMeeting ?? undefined,
+        targetInstitution: existingLetter.targetInstitution,
+        targetProgram: existingLetter.targetProgram,
+        targetDepartment: existingLetter.targetDepartment ?? undefined,
+        targetCountry: existingLetter.targetCountry,
+        purpose: existingLetter.purpose,
+        studentAchievements: existingLetter.studentAchievements ?? undefined,
+        researchExperience: existingLetter.researchExperience ?? undefined,
+        academicPerformance: existingLetter.academicPerformance ?? undefined,
+        personalQualities: existingLetter.personalQualities ?? undefined,
+        customContent: existingLetter.customContent ?? undefined,
+        finalContent: existingLetter.finalContent,
+      });
+    }
+  }, [editMode, existingLetter]);
 
   const updateData = useCallback((field: string, value: string) => {
     setWizardData((prev) => ({ ...prev, [field]: value }));
@@ -157,18 +229,18 @@ export function RecommendationWizard() {
       }
     }
 
-    if (currentStep < 6) {
+    if (currentStep < Math.max(...steps.map((s) => s.id))) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > Math.min(...steps.map((s) => s.id))) {
       setCurrentStep((prev) => prev - 1);
     }
   };
 
-  const createLetterMutation = useMutation({
+  const letterMutation = useMutation({
     mutationFn: async () => {
       // Extract template variables (all fields that aren't predefined)
       const predefinedFields = [
@@ -204,7 +276,7 @@ export function RecommendationWizard() {
         }
       });
 
-      const { data, error } = await apiClient.api.recommendations.letters.post({
+      const mutationBody = {
         templateId: wizardData.templateId || "",
         title: `${wizardData.targetProgram || ""} - ${wizardData.targetInstitution || ""}`,
         recommenderName: wizardData.recommenderName || "",
@@ -225,38 +297,74 @@ export function RecommendationWizard() {
         personalQualities: wizardData.personalQualities,
         customContent: wizardData.customContent,
         templateVariables,
-      });
+      };
+
+      let data: any, error: any;
+
+      if (editMode && letterId) {
+        // Update existing letter
+        const response = await apiClient.api.recommendations
+          .letters({ id: letterId })
+          .put(mutationBody);
+        data = response.data;
+        error = response.error;
+      } else {
+        // Create new letter
+        const response =
+          await apiClient.api.recommendations.letters.post(mutationBody);
+        data = response.data;
+        error = response.error;
+      }
 
       if (error) {
-        throw new Error("Failed to create letter");
+        const errorMessage = editMode
+          ? "Failed to update letter"
+          : "Failed to create letter";
+        throw new Error(errorMessage);
       }
 
       return data;
     },
     onSuccess: (data) => {
-      toast.success("Recommendation letter created successfully!");
+      const successMessage = editMode
+        ? "Recommendation letter updated successfully!"
+        : "Recommendation letter created successfully!";
+      toast.success(successMessage);
       // Redirect to the letter detail page
       if (data?.data?.id) {
         router.push(`/dashboard/recommendations/${data.data.id}`);
       }
     },
     onError: (error) => {
-      console.error("Error creating letter:", error);
+      console.error(
+        `Error ${editMode ? "updating" : "creating"} letter:`,
+        error,
+      );
       toast.error(
-        error instanceof Error ? error.message : "Failed to create letter",
+        error instanceof Error
+          ? error.message
+          : `Failed to ${editMode ? "update" : "create"} letter`,
       );
     },
   });
 
   const handleSubmit = () => {
-    createLetterMutation.mutate();
+    letterMutation.mutate();
   };
 
-  const progress = (currentStep / 6) * 100;
+  const progress =
+    ((steps.findIndex((step) => step.id === currentStep) + 1) / steps.length) *
+    100;
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
+        if (editMode) {
+          // Skip template selection in edit mode, go directly to recommender info
+          return (
+            <Step2RecommenderInfo data={wizardData} updateData={updateData} />
+          );
+        }
         return (
           <Step0TemplateSelection data={wizardData} updateData={updateData} />
         );
@@ -282,7 +390,7 @@ export function RecommendationWizard() {
             data={wizardData}
             updateData={updateData}
             onSubmit={handleSubmit}
-            isSubmitting={createLetterMutation.isPending}
+            isSubmitting={letterMutation.isPending}
           />
         );
       default:
@@ -307,9 +415,12 @@ export function RecommendationWizard() {
         <CardContent className="py-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Step {currentStep} of 6</span>
+              <span className="font-medium">
+                Step {steps.findIndex((step) => step.id === currentStep) + 1} of{" "}
+                {steps.length}
+              </span>
               <span className="text-muted-foreground">
-                {steps[currentStep - 1].title}
+                {getCurrentStepObject().title}
               </span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -330,24 +441,26 @@ export function RecommendationWizard() {
       {/* Step Content */}
       <Card>
         <CardHeader>
-          <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+          <CardTitle>{getCurrentStepObject().title}</CardTitle>
         </CardHeader>
         <CardContent>{renderStep()}</CardContent>
       </Card>
 
       {/* Navigation */}
-      {currentStep < 6 && (
+      {currentStep < Math.max(...steps.map((s) => s.id)) && (
         <div className="flex justify-between">
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={currentStep === 1}
+            disabled={currentStep === Math.min(...steps.map((s) => s.id))}
           >
             <ChevronLeftIcon className="mr-2 h-4 w-4" />
             Back
           </Button>
           <Button onClick={handleNext}>
-            {currentStep === 5 ? "Review" : "Next"}
+            {currentStep === Math.max(...steps.map((s) => s.id)) - 1
+              ? "Review"
+              : "Next"}
             <ChevronRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>
