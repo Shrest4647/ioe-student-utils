@@ -26,6 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+/**
+ * Render the API Key detail and management page for a given API key ID.
+ *
+ * Displays the API key's details, allows editing name, status, expiration, metadata and permissions,
+ * and provides actions to regenerate or delete the key.
+ *
+ * @param params - Route parameters object
+ * @param params.id - The API key identifier to load and manage
+ * @returns The page JSX element that displays API key details and management actions
+ */
 export default function ApiKeyDetailPage({
   params,
 }: {

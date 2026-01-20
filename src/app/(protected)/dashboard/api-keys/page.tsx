@@ -44,6 +44,14 @@ interface ApiKey {
   updatedAt: string;
 }
 
+/**
+ * Render the API Keys dashboard that lists, searches, and manages API keys.
+ *
+ * The page displays a searchable table of API keys, supports creating and regenerating keys,
+ * deleting keys, copying key values to the clipboard, and shows statuses, usage, and relative timestamps.
+ *
+ * @returns The rendered dashboard React element
+ */
 export default function ApiKeysDashboardPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 300);
