@@ -13,7 +13,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
   .get(
     "/",
     async ({ user: currentUser }) => {
-      const userApiKeys = await db.query.apiKeys.findMany({
+      const userApiKeys = await db.query.apikey.findMany({
         where: {
           userId: currentUser.id,
         },
@@ -57,9 +57,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
     async ({ user: currentUser, body }) => {
       const { name, expiresIn, permissions, metadata } = body;
 
-      // Create API key using Better Auth's built-in method
       const apiKey = await auth.api.createApiKey({
-        headers: new Headers(),
         body: {
           name,
           expiresIn,
@@ -94,7 +92,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
     async ({ user: currentUser, params }) => {
       const { id } = params;
 
-      const apiKey = await db.query.apiKeys.findFirst({
+      const apiKey = await db.query.apikey.findFirst({
         where: {
           id,
           userId: currentUser.id,
@@ -150,8 +148,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
       const { id } = params;
       const { name, enabled, permissions, metadata } = body;
 
-      // Find the API key
-      const existingKey = await db.query.apiKeys.findFirst({
+      const existingKey = await db.query.apikey.findFirst({
         where: {
           id,
         },
@@ -167,7 +164,6 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Check ownership (user can update their own, admin can update any)
       if (
         currentUser.role !== "admin" &&
         existingKey.userId !== currentUser.id
@@ -181,9 +177,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Update the API key using Better Auth
       const updatedKey = await auth.api.updateApiKey({
-        headers: new Headers(),
         body: {
           keyId: id,
           name,
@@ -221,8 +215,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
     async ({ user: currentUser, params }) => {
       const { id } = params;
 
-      // Find the API key
-      const existingKey = await db.query.apiKeys.findFirst({
+      const existingKey = await db.query.apikey.findFirst({
         where: {
           id,
         },
@@ -238,7 +231,6 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Check ownership (user can delete their own, admin can delete any)
       if (
         currentUser.role !== "admin" &&
         existingKey.userId !== currentUser.id
@@ -252,9 +244,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Delete the API key using Better Auth
       await auth.api.deleteApiKey({
-        headers: new Headers(),
         body: {
           keyId: id,
         },
@@ -282,8 +272,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
     async ({ user: currentUser, params }) => {
       const { id } = params;
 
-      // Find the API key
-      const existingKey = await db.query.apiKeys.findFirst({
+      const existingKey = await db.query.apikey.findFirst({
         where: {
           id,
         },
@@ -299,7 +288,6 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Check ownership (user can regenerate their own, admin can regenerate any)
       if (
         currentUser.role !== "admin" &&
         existingKey.userId !== currentUser.id
@@ -313,25 +301,24 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
-      // Create new API key with same properties
       const newApiKey = await auth.api.createApiKey({
-        headers: new Headers(),
         body: {
-          name: existingKey.name,
+          name:
+            existingKey.name ?? `Regenerated Key (${new Date().toISOString()})`,
           expiresIn: existingKey.expiresAt
             ? Math.floor((existingKey.expiresAt.getTime() - Date.now()) / 1000)
             : undefined,
           userId: existingKey.userId,
-          permissions: existingKey.permissions as
-            | Record<string, string[]>
-            | undefined,
-          metadata: existingKey.metadata,
+          permissions: existingKey.permissions
+            ? (JSON.parse(existingKey.permissions) as Record<string, string[]>)
+            : undefined,
+          metadata: existingKey.metadata
+            ? (JSON.parse(existingKey.metadata) as Record<string, any>)
+            : undefined,
         },
       });
 
-      // Delete old key
       await auth.api.deleteApiKey({
-        headers: new Headers(),
         body: {
           keyId: id,
         },

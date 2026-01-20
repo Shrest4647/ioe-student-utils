@@ -1,10 +1,15 @@
 "use client";
 
-import { ArrowLeftIcon, DownloadIcon, EditIcon } from "lucide-react";
-import Link from "next/link";
-import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  EditIcon,
+  LoaderIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 import { LetterPreview } from "@/components/recommendations/letter-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +21,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/eden";
-import { LoaderIcon } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;

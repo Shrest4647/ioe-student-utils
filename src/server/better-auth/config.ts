@@ -54,9 +54,9 @@ export const auth = betterAuth({
     username(),
     apiKey({
       keyExpiration: {
-        defaultExpiresIn: 60 * 60 * 24 * 30, // 30 days default
-        minExpiresIn: 60 * 60 * 24, // 1 day minimum
-        maxExpiresIn: 60 * 60 * 24 * 365, // 1 year maximum
+        defaultExpiresIn: 1000 * 60 * 60 * 24 * 7, // 7 days default (in ms)
+        minExpiresIn: 1, // 1 day minimum (in days)
+        maxExpiresIn: 365, // 1 year maximum (in days)
       },
       rateLimit: {
         enabled: true,
@@ -77,6 +77,7 @@ export const auth = betterAuth({
           ratings: ["read"],
         },
       },
+      enableMetadata: true,
     }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {

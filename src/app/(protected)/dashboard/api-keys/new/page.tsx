@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiClient } from "@/lib/eden";
 
 const _PERMISSION_OPTIONS = [
   { id: "read", label: "Read Only" },
@@ -57,38 +58,32 @@ export default function NewApiKeyPage() {
 
       setIsCreating(true);
       try {
-        const response = await fetch("/api/api-keys", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: name.trim(),
-            expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
-            permissions: selectedPermissions.reduce(
-              (acc, permission) => {
-                acc[permission] = ["read", "write"];
-                return acc;
-              },
-              {} as Record<string, string[]>,
-            ),
-            metadata: metadata ? JSON.parse(metadata) : undefined,
-          }),
+        const response = await apiClient.api["api-keys"].post({
+          name: name.trim(),
+          expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
+          permissions: selectedPermissions.reduce(
+            (acc, permission) => {
+              acc[permission] = ["read", "write"];
+              return acc;
+            },
+            {} as Record<string, string[]>,
+          ),
         });
 
-        const result = await response.json();
-
-        if (!result.success) {
-          toast.error(
-            `Failed to create API key: ${result.error?.message || "Unknown error"}`,
-          );
-          throw new Error(result.error?.message || "Unknown error");
+        const result = response.data;
+        const error = response.error;
+        if (!result || !result.success) {
+          toast.error("Failed to create API key: No response from server");
+          console.error("Failed to create API key", error);
+          return;
         }
 
         setCreatedApiKey(result.data);
         setShowApiKey(true);
         toast.success("API key created successfully!");
+      } catch (error) {
+        toast.error("Failed to create API key");
+        console.error("Error creating API key:", error);
       } finally {
         setIsCreating(false);
       }

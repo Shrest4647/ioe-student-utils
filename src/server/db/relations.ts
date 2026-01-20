@@ -3,13 +3,21 @@ import * as schema from "./schema";
 
 export const relations = defineRelations(schema, (r) => ({
   user: {
-    account: r.many.account({
+    accounts: r.many.account({
       from: r.user.id,
       to: r.account.userId,
     }),
-    session: r.many.session({
+    sessions: r.many.session({
       from: r.user.id,
       to: r.session.userId,
+    }),
+    apikeys: r.many.apikey({
+      from: r.user.id,
+      to: r.apikey.userId,
+    }),
+    twoFactors: r.many.twoFactor({
+      from: r.user.id,
+      to: r.twoFactor.userId,
     }),
     profile: r.one.userProfile({
       from: r.user.id,
@@ -41,6 +49,18 @@ export const relations = defineRelations(schema, (r) => ({
   session: {
     user: r.one.user({
       from: r.session.userId,
+      to: r.user.id,
+    }),
+  },
+  apikey: {
+    user: r.one.user({
+      from: r.apikey.userId,
+      to: r.user.id,
+    }),
+  },
+  twoFactor: {
+    user: r.one.user({
+      from: r.twoFactor.userId,
       to: r.user.id,
     }),
   },

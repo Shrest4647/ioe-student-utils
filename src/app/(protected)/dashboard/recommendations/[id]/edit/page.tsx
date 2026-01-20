@@ -1,5 +1,5 @@
-import { RecommendationWizard } from "@/components/recommendations/wizard/recommendation-wizard";
 import { use } from "react";
+import { RecommendationWizard } from "@/components/recommendations/wizard/recommendation-wizard";
 
 interface PageProps {
   params: Promise<{ id: string }>;
