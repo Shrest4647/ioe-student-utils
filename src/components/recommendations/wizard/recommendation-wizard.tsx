@@ -93,6 +93,11 @@ export function RecommendationWizard({
   const templateId = searchParams.get("templateId");
 
   const [currentStep, setCurrentStep] = useState(editMode ? 2 : 1); // Skip template selection in edit mode
+
+  // Helper function to get the current step object
+  const getCurrentStepObject = () => {
+    return steps.find((step) => step.id === currentStep) || steps[0];
+  };
   const [wizardData, setWizardData] = useState<Partial<WizardData>>(
     editMode ? {} : templateId ? { templateId } : {},
   );
@@ -224,13 +229,13 @@ export function RecommendationWizard({
       }
     }
 
-    if (currentStep < 6) {
+    if (currentStep < Math.max(...steps.map((s) => s.id))) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > Math.min(...steps.map((s) => s.id))) {
       setCurrentStep((prev) => prev - 1);
     }
   };
@@ -347,7 +352,9 @@ export function RecommendationWizard({
     letterMutation.mutate();
   };
 
-  const progress = (currentStep / steps.length) * 100;
+  const progress =
+    ((steps.findIndex((step) => step.id === currentStep) + 1) / steps.length) *
+    100;
 
   const renderStep = () => {
     switch (currentStep) {
@@ -408,9 +415,12 @@ export function RecommendationWizard({
         <CardContent className="py-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Step {currentStep} of 6</span>
+              <span className="font-medium">
+                Step {steps.findIndex((step) => step.id === currentStep) + 1} of{" "}
+                {steps.length}
+              </span>
               <span className="text-muted-foreground">
-                {steps[currentStep - 1].title}
+                {getCurrentStepObject().title}
               </span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -431,24 +441,26 @@ export function RecommendationWizard({
       {/* Step Content */}
       <Card>
         <CardHeader>
-          <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+          <CardTitle>{getCurrentStepObject().title}</CardTitle>
         </CardHeader>
         <CardContent>{renderStep()}</CardContent>
       </Card>
 
       {/* Navigation */}
-      {currentStep < 6 && (
+      {currentStep < Math.max(...steps.map((s) => s.id)) && (
         <div className="flex justify-between">
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={currentStep === 1}
+            disabled={currentStep === Math.min(...steps.map((s) => s.id))}
           >
             <ChevronLeftIcon className="mr-2 h-4 w-4" />
             Back
           </Button>
           <Button onClick={handleNext}>
-            {currentStep === 5 ? "Review" : "Next"}
+            {currentStep === Math.max(...steps.map((s) => s.id)) - 1
+              ? "Review"
+              : "Next"}
             <ChevronRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>

@@ -7,7 +7,17 @@ import { authorizationPlugin } from "../plugins/authorization";
  * API Key management routes
  */
 
-export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
+// Helper function to safely parse JSON fields
+const parseJSONFields = <T>(key: any, field: string): T | null => {
+  if (!key[field]) return null;
+  try {
+    return JSON.parse(key[field]);
+  } catch {
+    return null;
+  }
+};
+
+export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   .use(authorizationPlugin)
   // List user's API keys
   .get(
@@ -38,9 +48,19 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         },
       });
 
+      // Parse permissions and metadata from JSON strings
+      const parsedApiKeys = userApiKeys.map((key) => ({
+        ...key,
+        permissions: parseJSONFields<Record<string, string[]>>(
+          key,
+          "permissions",
+        ),
+        metadata: parseJSONFields<Record<string, any>>(key, "metadata"),
+      }));
+
       return {
         success: true,
-        data: userApiKeys,
+        data: parsedApiKeys,
       };
     },
     {
@@ -125,9 +145,19 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         };
       }
 
+      // Parse permissions and metadata from JSON strings
+      const parsedApiKey = {
+        ...apiKey,
+        permissions: parseJSONFields<Record<string, string[]>>(
+          apiKey,
+          "permissions",
+        ),
+        metadata: parseJSONFields<Record<string, any>>(apiKey, "metadata"),
+      };
+
       return {
         success: true,
-        data: apiKey,
+        data: parsedApiKey,
       };
     },
     {
@@ -146,7 +176,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
     "/:id",
     async ({ user: currentUser, body, params }) => {
       const { id } = params;
-      const { name, enabled, permissions, metadata } = body;
+      const { name, enabled, permissions, metadata, expiresIn } = body;
 
       const existingKey = await db.query.apikey.findFirst({
         where: {
@@ -184,6 +214,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
           enabled,
           permissions: permissions as Record<string, string[]> | undefined,
           metadata,
+          expiresIn,
         },
       });
 
@@ -202,6 +233,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
         enabled: t.Optional(t.Boolean()),
         permissions: t.Optional(t.Record(t.String(), t.Array(t.String()))),
         metadata: t.Optional(t.Record(t.String(), t.Any())),
+        expiresIn: t.Optional(t.Number()),
       }),
       detail: {
         tags: ["API Keys"],
@@ -309,12 +341,14 @@ export const apiKeyRoutes = new Elysia({ prefix: "/api-keys" })
             ? Math.floor((existingKey.expiresAt.getTime() - Date.now()) / 1000)
             : undefined,
           userId: existingKey.userId,
-          permissions: existingKey.permissions
-            ? (JSON.parse(existingKey.permissions) as Record<string, string[]>)
-            : undefined,
-          metadata: existingKey.metadata
-            ? (JSON.parse(existingKey.metadata) as Record<string, any>)
-            : undefined,
+          permissions:
+            parseJSONFields<Record<string, string[]>>(
+              existingKey,
+              "permissions",
+            ) || undefined,
+          metadata:
+            parseJSONFields<Record<string, any>>(existingKey, "metadata") ||
+            undefined,
         },
       });
 

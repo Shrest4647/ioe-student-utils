@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiClient } from "@/lib/eden";
 
 export default function ApiKeyDetailPage({
   params,
@@ -42,11 +43,15 @@ export default function ApiKeyDetailPage({
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["api-key", params.id],
     queryFn: async () => {
-      const response = await fetch(`/api/api-keys/${params.id}`, {
-        credentials: "include",
-      });
-      const result = await response.json();
-      return result.success ? result.data : null;
+      const { data, error } = await apiClient.api
+        .apikeys({
+          id: params.id,
+        })
+        .get();
+      if (error) {
+        throw error;
+      }
+      return data?.data || null;
     },
   });
 
@@ -56,15 +61,14 @@ export default function ApiKeyDetailPage({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const response = await fetch(`/api/api-keys/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
+      const { error } = await apiClient.api
+        .apikeys({
+          id: params.id,
+        })
+        .put({
           name: name.trim(),
           enabled,
+          expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
           permissions: selectedPermissions.reduce(
             (acc, permission) => {
               acc[permission] = ["read", "write"];
@@ -73,16 +77,11 @@ export default function ApiKeyDetailPage({
             {} as Record<string, string[]>,
           ),
           metadata: metadata ? JSON.parse(metadata) : undefined,
-        }),
-      });
+        });
 
-      const result = await response.json();
-
-      if (!result.success) {
-        toast.error(
-          `Failed to update API key: ${result.error?.message || "Unknown error"}`,
-        );
-        throw new Error(result.error?.message || "Unknown error");
+      if (error) {
+        toast.error(`Failed to update API key: ${error || "Unknown error"}`);
+        throw error;
       }
 
       toast.success("API key updated successfully!");
@@ -95,18 +94,19 @@ export default function ApiKeyDetailPage({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const response = await fetch(`/api/api-keys/${params.id}/regenerate`, {
-        method: "POST",
-        credentials: "include",
-      });
+      const { error } = await apiClient.api
+        .apikeys({
+          id: params.id,
+        })
+        .regenerate.post({
+          params: { id: params.id },
+        });
 
-      const result = await response.json();
-
-      if (!result.success) {
+      if (error) {
         toast.error(
-          `Failed to regenerate API key: ${result.error?.message || "Unknown error"}`,
+          `Failed to regenerate API key: ${error || "Unknown error"}`,
         );
-        throw new Error(result.error?.message || "Unknown error");
+        throw error;
       }
 
       toast.success("API key regenerated successfully!");
@@ -118,33 +118,33 @@ export default function ApiKeyDetailPage({
     mutationFn: async () => {
       if (!apiKey) return;
 
-      const response = await fetch(`/api/api-keys/${params.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const { error } = await apiClient.api
+        .apikeys({
+          id: params.id,
+        })
+        .put({
+          name: name.trim(),
+          enabled,
+          expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
+          permissions: selectedPermissions.reduce(
+            (acc, permission) => {
+              acc[permission] = ["read", "write"];
+              return acc;
+            },
+            {} as Record<string, string[]>,
+          ),
+          metadata: metadata ? JSON.parse(metadata) : undefined,
+        });
 
-      const result = await response.json();
-
-      if (!result.success) {
-        toast.error(
-          `Failed to delete API key: ${result.error?.message || "Unknown error"}`,
-        );
-        throw new Error(result.error?.message || "Unknown error");
+      if (error) {
+        toast.error(`Failed to delete API key: ${error || "Unknown error"}`);
+        throw error;
       }
 
       toast.success("API key deleted successfully!");
       router.push("/dashboard/api-keys");
     },
   });
-
-  const _copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("API key copied to clipboard");
-    } catch (_error) {
-      toast.error("Failed to copy API key");
-    }
-  };
 
   if (!apiKey && !isLoading) {
     return (
@@ -173,7 +173,7 @@ export default function ApiKeyDetailPage({
   // Update state when data loads
   if (apiKey && !name) {
     setName(apiKey.name || "");
-    setEnabled(apiKey.enabled);
+    setEnabled(apiKey.enabled || false);
     setExpiresIn(
       apiKey.expiresAt
         ? Math.floor(

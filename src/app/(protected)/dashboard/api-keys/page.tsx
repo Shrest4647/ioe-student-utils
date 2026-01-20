@@ -26,23 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authClient } from "@/lib/auth-client";
-
-interface ApiKey {
-  id: string;
-  name: string | null;
-  prefix: string | null;
-  start: string | null;
-  enabled: boolean;
-  rateLimitEnabled: boolean;
-  rateLimitMax: number | null;
-  remaining: number | null;
-  expiresAt: string | null;
-  lastRequest: string | null;
-  permissions: Record<string, string[]> | null;
-  metadata: Record<string, any> | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { apiClient } from "@/lib/eden";
 
 export default function ApiKeysDashboardPage() {
   const [search, setSearch] = useState("");
@@ -53,18 +37,15 @@ export default function ApiKeysDashboardPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["api-keys", debouncedSearch],
     queryFn: async () => {
-      const response = await fetch("/api/api-keys", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      const result = await response.json();
-      return result.success ? result.data : [];
+      const { data, error } = await apiClient.api.apikeys.get();
+      if (error) {
+        throw error;
+      }
+      return data?.data || [];
     },
   });
 
-  const createApiKeyMutation = useMutation({
+  const _createApiKeyMutation = useMutation({
     mutationFn: async (createData: {
       name: string;
       expiresIn?: number;
@@ -74,7 +55,7 @@ export default function ApiKeysDashboardPage() {
       const { data, error } = await authClient.apiKey.create({
         name: createData.name,
         expiresIn: createData.expiresIn
-          ? createData.expiresIn / (24 * 60 * 60)
+          ? createData.expiresIn * 24 * 60 * 60
           : undefined, // Convert from days to seconds
         permissions: createData.permissions,
         metadata: createData.metadata,
@@ -102,6 +83,27 @@ export default function ApiKeysDashboardPage() {
     },
   });
 
+  const regenerateApiKeyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await apiClient.api
+        .apikeys({
+          id: id,
+        })
+        .regenerate.post();
+
+      if (error) {
+        toast.error(
+          `Failed to regenerate API key: ${error || "Unknown error"}`,
+        );
+        throw error;
+      }
+
+      toast.success("API key regenerated successfully");
+      refetch();
+      return data;
+    },
+  });
+
   const _copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -114,7 +116,7 @@ export default function ApiKeysDashboardPage() {
   };
 
   const apiKeys = data || [];
-  const filteredApiKeys = apiKeys.filter((key: ApiKey) =>
+  const filteredApiKeys = apiKeys.filter((key) =>
     key.name
       ? key.name.toLowerCase().includes(debouncedSearch.toLowerCase())
       : false,
@@ -181,7 +183,7 @@ export default function ApiKeysDashboardPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredApiKeys.map((apiKey: ApiKey) => (
+                  filteredApiKeys.map((apiKey) => (
                     <TableRow key={apiKey.id}>
                       <TableCell className="font-medium">
                         {apiKey.name}
@@ -193,9 +195,11 @@ export default function ApiKeysDashboardPage() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={apiKey.enabled ? "default" : "secondary"}
+                          variant={
+                            apiKey.enabled === true ? "default" : "secondary"
+                          }
                         >
-                          {apiKey.enabled ? "Active" : "Disabled"}
+                          {apiKey.enabled === true ? "Active" : "Disabled"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -233,31 +237,9 @@ export default function ApiKeysDashboardPage() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              createApiKeyMutation.mutate({
-                                name: `Regenerated - ${apiKey.name}`,
-                                permissions: apiKey.permissions
-                                  ? Object.keys(
-                                      apiKey.permissions || {},
-                                    ).reduce(
-                                      (acc, key) => {
-                                        acc[key] =
-                                          apiKey.permissions?.[key] || [];
-                                        return acc;
-                                      },
-                                      {} as Record<string, string[]>,
-                                    )
-                                  : {},
-                                expiresIn: apiKey.expiresAt
-                                  ? Math.floor(
-                                      (new Date(apiKey.expiresAt).getTime() -
-                                        Date.now()) /
-                                        (24 * 60 * 60 * 1000),
-                                    )
-                                  : undefined,
-                                metadata: apiKey.metadata,
-                              })
+                              regenerateApiKeyMutation.mutate(apiKey.id)
                             }
-                            disabled={createApiKeyMutation.isPending}
+                            disabled={regenerateApiKeyMutation.isPending}
                           >
                             <Edit className="h-4 w-4" />
                             Regenerate

@@ -58,7 +58,19 @@ export default function NewApiKeyPage() {
 
       setIsCreating(true);
       try {
-        const response = await apiClient.api["api-keys"].post({
+        // Parse metadata JSON
+        let parsedMetadata: Record<string, any> | undefined;
+        if (metadata && metadata.trim() !== "{}") {
+          try {
+            parsedMetadata = JSON.parse(metadata);
+          } catch (_parseError) {
+            throw new Error(
+              "Invalid JSON in metadata field. Please check your input.",
+            );
+          }
+        }
+
+        const response = await apiClient.api.apikeys.post({
           name: name.trim(),
           expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
           permissions: selectedPermissions.reduce(
@@ -68,6 +80,7 @@ export default function NewApiKeyPage() {
             },
             {} as Record<string, string[]>,
           ),
+          metadata: parsedMetadata,
         });
 
         const result = response.data;
