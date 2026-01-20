@@ -53,6 +53,7 @@ export const auth = betterAuth({
     anonymous(),
     username(),
     apiKey({
+      defaultPrefix: "ik_",
       keyExpiration: {
         defaultExpiresIn: 1000 * 60 * 60 * 24 * 7, // 7 days default (in ms)
         minExpiresIn: 1, // 1 day minimum (in days)

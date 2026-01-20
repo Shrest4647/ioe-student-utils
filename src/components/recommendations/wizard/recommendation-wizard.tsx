@@ -147,20 +147,21 @@ export function RecommendationWizard({
         recommenderName: existingLetter.recommenderName,
         recommenderTitle: existingLetter.recommenderTitle,
         recommenderInstitution: existingLetter.recommenderInstitution,
-        recommenderEmail: existingLetter.recommenderEmail,
-        recommenderDepartment: existingLetter.recommenderDepartment,
+        recommenderEmail: existingLetter.recommenderEmail ?? undefined,
+        recommenderDepartment:
+          existingLetter.recommenderDepartment ?? undefined,
         relationship: existingLetter.relationship,
-        contextOfMeeting: existingLetter.contextOfMeeting,
+        contextOfMeeting: existingLetter.contextOfMeeting ?? undefined,
         targetInstitution: existingLetter.targetInstitution,
         targetProgram: existingLetter.targetProgram,
-        targetDepartment: existingLetter.targetDepartment,
+        targetDepartment: existingLetter.targetDepartment ?? undefined,
         targetCountry: existingLetter.targetCountry,
         purpose: existingLetter.purpose,
-        studentAchievements: existingLetter.studentAchievements,
-        researchExperience: existingLetter.researchExperience,
-        academicPerformance: existingLetter.academicPerformance,
-        personalQualities: existingLetter.personalQualities,
-        customContent: existingLetter.customContent,
+        studentAchievements: existingLetter.studentAchievements ?? undefined,
+        researchExperience: existingLetter.researchExperience ?? undefined,
+        academicPerformance: existingLetter.academicPerformance ?? undefined,
+        personalQualities: existingLetter.personalQualities ?? undefined,
+        customContent: existingLetter.customContent ?? undefined,
         finalContent: existingLetter.finalContent,
       });
     }
@@ -293,7 +294,7 @@ export function RecommendationWizard({
         templateVariables,
       };
 
-      let data, error;
+      let data: any, error: any;
 
       if (editMode && letterId) {
         // Update existing letter

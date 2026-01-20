@@ -188,7 +188,7 @@ export default function ApiKeysDashboardPage() {
                       </TableCell>
                       <TableCell>
                         <code className="rounded bg-muted px-2 py-1 text-xs">
-                          {apiKey.prefix || "sk_"}
+                          {apiKey.prefix || "No prefix"}
                         </code>
                       </TableCell>
                       <TableCell>
