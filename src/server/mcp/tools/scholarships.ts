@@ -58,20 +58,8 @@ export function registerScholarshipTools(server: McpServer): void {
     "fetch_scholarships",
     {
       title: "Fetch Scholarships",
-      description: `
-        Retrieve scholarships from IOESU database with optional filtering.
-        
-        Use this tool to:
-        - Search for scholarships by name or description
-        - Filter by country, field of study, or degree level
-        - Filter by funding type or status
-        - Get paginated results with limit and offset
-        
-        Returns scholarships with details including:
-        - Basic information (name, provider, funding type)
-        - Description and website URL
-        - Creation and update timestamps
-      `.trim(),
+      description:
+        "Retrieve scholarships from IOESU database with optional filtering (search, country, degree, funding, status).",
       inputSchema: scholarshipFilterSchema,
     },
     async (params, requestContext) => {
@@ -221,17 +209,7 @@ export function registerScholarshipTools(server: McpServer): void {
     "create_scholarship",
     {
       title: "Create Scholarship",
-      description: `
-        Create a new scholarship with full metadata.
-        
-        Use this tool to add a scholarship to the database including:
-        - Basic information (name, slug, description)
-        - Provider details (provider name, website URL)
-        - Funding configuration (funding type, status)
-        - Related entities (countries, fields of study, degrees)
-        
-        Returns the created scholarship with its ID.
-      `.trim(),
+      description: "Create a new scholarship record with full metadata.",
       inputSchema: scholarshipCreateSchema,
     },
     async (params, requestContext) => {
@@ -312,14 +290,7 @@ export function registerScholarshipTools(server: McpServer): void {
     "bulk_create_scholarships",
     {
       title: "Bulk Create Scholarships",
-      description: `
-        Create multiple scholarships efficiently.
-        
-        Use this tool to create multiple scholarships in a single operation.
-        The tool handles iteration internally, reducing token usage for AI agents.
-        
-        Returns detailed results including success/failure for each scholarship.
-      `.trim(),
+      description: "Create multiple scholarships in a single batch operation.",
       inputSchema: scholarshipBulkCreateSchema,
     },
     async (params, requestContext) => {
@@ -395,16 +366,7 @@ export function registerScholarshipTools(server: McpServer): void {
     "update_scholarship",
     {
       title: "Update Scholarship",
-      description: `
-        Update an existing scholarship's details.
-        
-        Use this tool to modify scholarship information including:
-        - Basic information (name, description)
-        - Provider details
-        - Funding configuration
-        - Related entities (countries, degrees, fields)
-        - Active status
-      `.trim(),
+      description: "Update an existing scholarship's details.",
       inputSchema: scholarshipUpdateSchema,
     },
     async (params, requestContext) => {
@@ -484,14 +446,7 @@ export function registerScholarshipTools(server: McpServer): void {
     "bulk_update_scholarships",
     {
       title: "Bulk Update Scholarships",
-      description: `
-        Update multiple scholarships efficiently.
-        
-        Use this tool to update multiple scholarships in a single operation.
-        The tool handles iteration internally, reducing token usage for AI agents.
-        
-        Returns detailed results including success/failure for each scholarship.
-      `.trim(),
+      description: "Update multiple scholarships in a single batch operation.",
       inputSchema: z.object({
         updates: z
           .array(scholarshipUpdateSchema)
@@ -573,14 +528,9 @@ export function registerScholarshipTools(server: McpServer): void {
     "delete_scholarship",
     {
       title: "Delete Scholarship",
-      description: `
-        Archive (soft delete) a scholarship.
-        
-        Use this tool to mark a scholarship as archived instead of permanently deleting it.
-        This preserves data for reference and auditing.
-      `.trim(),
+      description: "Permanently delete a scholarship and its related data.",
       inputSchema: z.object({
-        id: z.string().describe("Scholarship ID to archive"),
+        id: z.string().describe("Scholarship ID to delete"),
       }),
     },
     async (params, requestContext) => {
@@ -595,10 +545,8 @@ export function registerScholarshipTools(server: McpServer): void {
 
         const response = await api.api.scholarships
           .admin({ id: params.id })
-          .patch(
-            {
-              status: "archived",
-            },
+          .delete(
+            {},
             {
               headers: {
                 Authorization: `Bearer ${apiKey}`,
@@ -609,7 +557,7 @@ export function registerScholarshipTools(server: McpServer): void {
         if (response.error || !response.data?.success) {
           throw new Error(
             response.error?.value?.message ||
-              "Failed to archive scholarship via API",
+              "Failed to delete scholarship via API",
           );
         }
 
@@ -619,7 +567,7 @@ export function registerScholarshipTools(server: McpServer): void {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                message: "Scholarship archived successfully",
+                message: "Scholarship deleted successfully",
               }),
             },
           ],
@@ -636,7 +584,7 @@ export function registerScholarshipTools(server: McpServer): void {
                 error:
                   error instanceof Error
                     ? error.message
-                    : "Failed to archive scholarship",
+                    : "Failed to delete scholarship",
               }),
             },
           ],
@@ -650,18 +598,12 @@ export function registerScholarshipTools(server: McpServer): void {
     "bulk_delete_scholarships",
     {
       title: "Bulk Delete Scholarships",
-      description: `
-        Archive multiple scholarships efficiently.
-        
-        Use this tool to archive multiple scholarships in a single operation.
-        The tool handles iteration internally, reducing token usage for AI agents.
-        
-        Returns detailed results including success/failure for each scholarship.
-      `.trim(),
+      description:
+        "Permanently delete multiple scholarships in a single batch operation.",
       inputSchema: z.object({
         ids: z
           .array(z.string())
-          .describe("Array of scholarship IDs to archive"),
+          .describe("Array of scholarship IDs to delete"),
         onError: z
           .enum(["continue", "abort"])
           .default("continue")
@@ -681,10 +623,8 @@ export function registerScholarshipTools(server: McpServer): void {
         const result = await bulkOperation(
           params.ids,
           async (id) => {
-            return await api.api.scholarships.admin({ id }).patch(
-              {
-                status: "archived",
-              },
+            return await api.api.scholarships.admin({ id }).delete(
+              {},
               {
                 headers: {
                   Authorization: `Bearer ${apiKey}`,
@@ -715,7 +655,7 @@ export function registerScholarshipTools(server: McpServer): void {
                 error:
                   error instanceof Error
                     ? error.message
-                    : "Failed to bulk archive scholarships",
+                    : "Failed to bulk delete scholarships",
               }),
             },
           ],
@@ -729,12 +669,8 @@ export function registerScholarshipTools(server: McpServer): void {
     "get_scholarship_by_id",
     {
       title: "Get Scholarship by ID",
-      description: `
-        Retrieve a single scholarship with full relations by its ID or slug.
-        
-        Use this tool to get detailed information about a specific scholarship
-        including related rounds and events.
-      `.trim(),
+      description:
+        "Retrieve a single scholarship with full relations (rounds, events) by its ID or slug.",
       inputSchema: z.object({
         slug: z.string().describe("Scholarship slug"),
         includeRounds: z

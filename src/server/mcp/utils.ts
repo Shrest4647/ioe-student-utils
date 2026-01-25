@@ -124,6 +124,31 @@ export function formatDate(date: Date | string | null): string | null {
 }
 
 /**
+ * Extract error message from API response error value
+ *
+ * @param errorValue - Error value from API response (can be string or object)
+ * @param fallback - Fallback message if extraction fails
+ * @returns Error message string
+ */
+export function extractErrorMessage(
+  errorValue: unknown,
+  fallback = "Unknown API error",
+): string {
+  if (typeof errorValue === "string") {
+    return errorValue;
+  }
+  if (
+    errorValue &&
+    typeof errorValue === "object" &&
+    "message" in errorValue &&
+    typeof errorValue.message === "string"
+  ) {
+    return errorValue.message;
+  }
+  return fallback;
+}
+
+/**
  * Extract user ID from context
  *
  * @param context - MCP server context

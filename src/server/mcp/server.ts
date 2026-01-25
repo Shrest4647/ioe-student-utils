@@ -1,12 +1,18 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { auth } from "@/server/better-auth";
+import { registerAcademicTools } from "./tools/academic";
+import { registerCollegeTools } from "./tools/colleges";
 import { registerCountryTools } from "./tools/countries";
 import { registerDataQualityTools } from "./tools/data-quality";
 import { registerDegreeTools } from "./tools/degrees";
+import { registerDepartmentTools } from "./tools/departments";
 import { registerFieldTools } from "./tools/fields-of-study";
+import { registerRatingTools } from "./tools/ratings";
+import { registerResourceTools } from "./tools/resources";
 import { registerRoundEventTools } from "./tools/rounds-events";
 import { registerScholarshipTools } from "./tools/scholarships";
 import { registerTaxonomyTools } from "./tools/taxonomy";
+import { registerUniversityTools } from "./tools/universities";
 
 /**
  * MCP Server Configuration
@@ -14,13 +20,32 @@ import { registerTaxonomyTools } from "./tools/taxonomy";
 
 const mcpHandler = createMcpHandler(
   async (server) => {
+    // Core scholarship tools
     registerScholarshipTools(server);
+    registerRoundEventTools(server);
+
+    // Taxonomy tools
     registerCountryTools(server);
     registerDegreeTools(server);
     registerFieldTools(server);
+    registerDepartmentTools(server);
     registerTaxonomyTools(server);
+
+    // University and college tools
+    registerUniversityTools(server);
+    registerCollegeTools(server);
+
+    // Academic tools (programs and courses)
+    registerAcademicTools(server);
+
+    // Resource library tools
+    registerResourceTools(server);
+
+    // Rating system tools
+    registerRatingTools(server);
+
+    // Data quality tools
     registerDataQualityTools(server);
-    registerRoundEventTools(server);
   },
   {
     serverInfo: {

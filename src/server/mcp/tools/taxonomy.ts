@@ -6,15 +6,8 @@ export function registerTaxonomyTools(server: McpServer): void {
   server.registerTool(
     "lookup_taxonomy",
     {
-      title: "Lookup Taxonomy Values",
-      description: `
-        Look up country codes, degree levels, or field of study IDs
-        by their names. Use this tool to convert user-provided names
-        (e.g., "Germany", "Masters", "Computer Science") to their
-        corresponding IDs required for scholarship creation.
-
-        Returns mapping of names to IDs that can be used in create_scholarship.
-      `.trim(),
+      title: "Lookup Taxonomy",
+      description: "Lookup IDs for countries, degrees, or fields by name (fuzzy search).",
       inputSchema: z.object({
         type: z
           .enum(["country", "degree", "field"])

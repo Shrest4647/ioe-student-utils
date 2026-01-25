@@ -602,6 +602,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/:id",
+        async ({ params: { id } }) => {
+          await db.delete(scholarships).where(eq(scholarships.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete scholarship",
+          },
+        },
+      )
       .patch(
         "/:id",
         async ({ params: { id }, body, user }) => {

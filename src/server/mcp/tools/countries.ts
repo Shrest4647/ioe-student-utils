@@ -7,16 +7,7 @@ export function registerCountryTools(server: McpServer): void {
     "fetch_countries",
     {
       title: "Fetch Countries",
-      description: `
-        Retrieve all countries from the database.
-
-        Use this tool to:
-        - Get list of all available countries
-        - Populate dropdowns for country selection
-        - Get country codes and names for filtering
-
-        Returns countries with code, name, and region.
-      `.trim(),
+      description: "Retrieve all countries from the database.",
       inputSchema: z.object({}),
     },
     async (_params, requestContext) => {
@@ -85,16 +76,7 @@ export function registerCountryTools(server: McpServer): void {
     "create_country",
     {
       title: "Create Country",
-      description: `
-        Add a new country to the database.
-
-        Use this tool to add a new country with:
-        - ISO 2-letter code
-        - Country name
-        - Optional region
-
-        Returns the created country record.
-      `.trim(),
+      description: "Add a new country to the database.",
       inputSchema: countryCreateSchema,
     },
     async (params, requestContext) => {
@@ -167,15 +149,7 @@ export function registerCountryTools(server: McpServer): void {
     "update_country",
     {
       title: "Update Country",
-      description: `
-        Update an existing country's details.
-
-        Use this tool to modify country information including:
-        - Country name
-        - Region
-
-        Returns the updated country record.
-      `.trim(),
+      description: "Update an existing country's details.",
       inputSchema: countryUpdateSchema,
     },
     async (params, requestContext) => {
@@ -245,12 +219,7 @@ export function registerCountryTools(server: McpServer): void {
     "delete_country",
     {
       title: "Delete Country",
-      description: `
-        Delete a country from the database.
-
-        Use this tool to remove a country by its code.
-        Warning: This action cannot be undone.
-      `.trim(),
+      description: "Delete a country from the database.",
       inputSchema: z.object({
         code: z
           .string()

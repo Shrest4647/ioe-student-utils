@@ -61,18 +61,7 @@ export function registerDataQualityTools(server: McpServer): void {
     "check_duplicate_scholarship",
     {
       title: "Check Duplicate Scholarship",
-      description: `
-        Verify if a scholarship already exists in the database.
-
-        Checks for:
-        - Exact name match
-        - Similar name (80% similarity using string distance)
-        - Provider + year combination
-        - Website URL match
-        - Slug patterns (e.g., daad-2024 vs daad-2025)
-
-        Returns information about potential duplicates and confidence score.
-      `.trim(),
+      description: "Verify if a scholarship already exists in the database.",
       inputSchema: z.object({
         name: z.string().describe("Scholarship name"),
         providerName: z
@@ -211,17 +200,8 @@ export function registerDataQualityTools(server: McpServer): void {
     "validate_scholarship_data",
     {
       title: "Validate Scholarship Data",
-      description: `
-        Validate scholarship data for completeness and accuracy before creation.
-
-        Validations:
-        - Required Fields: name, slug
-        - Data Format: websiteUrl (valid URL), fundingType, status enums
-        - Taxonomy Existence: countryCodes, degreeIds, fieldIds existence
-        - Date Format: openDate, deadlineDate (ISO 8601)
-
-        Returns detailed validation results with errors and warnings.
-      `.trim(),
+      description:
+        "Validate scholarship data for completeness and accuracy before creation.",
       inputSchema: scholarshipValidationSchema,
     },
     async (params, requestContext) => {

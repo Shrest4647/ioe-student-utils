@@ -8,12 +8,7 @@ export function registerRoundEventTools(server: McpServer): void {
     "delete_scholarship_round",
     {
       title: "Delete Scholarship Round",
-      description: `
-        Remove an application round from database.
-
-        Use this tool to delete a round by its ID.
-        Warning: This action cannot be undone.
-      `.trim(),
+      description: "Remove an application round from database.",
       inputSchema: z.object({
         id: z.string().describe("Round ID to delete"),
       }),
@@ -77,14 +72,7 @@ export function registerRoundEventTools(server: McpServer): void {
     "bulk_delete_scholarship_rounds",
     {
       title: "Bulk Delete Scholarship Rounds",
-      description: `
-        Delete multiple application rounds efficiently.
-
-        Use this tool to delete multiple rounds in a single operation.
-        The tool handles iteration internally, reducing token usage for AI agents.
-
-        Returns detailed results including success/failure for each round.
-      `.trim(),
+      description: "Delete multiple application rounds efficiently.",
       inputSchema: z.object({
         ids: z.array(z.string()).describe("Array of round IDs to delete"),
         onError: z
@@ -149,12 +137,7 @@ export function registerRoundEventTools(server: McpServer): void {
     "fetch_events_by_round",
     {
       title: "Fetch Events by Round",
-      description: `
-        Get all events for a specific scholarship round.
-
-        Use this tool to retrieve events associated with a round.
-        Returns array of events with details.
-      `.trim(),
+      description: "Get all events for a specific scholarship round.",
       inputSchema: z.object({
         roundId: z.string().describe("Round ID to fetch events for"),
       }),
@@ -224,12 +207,7 @@ export function registerRoundEventTools(server: McpServer): void {
     "fetch_upcoming_events",
     {
       title: "Fetch Upcoming Events",
-      description: `
-        Get all upcoming events across all scholarships.
-
-        Use this tool to get events sorted by date.
-        Returns array of upcoming events.
-      `.trim(),
+      description: "Get all upcoming events across all scholarships.",
       inputSchema: z.object({
         daysAhead: z
           .number()
@@ -305,14 +283,7 @@ export function registerRoundEventTools(server: McpServer): void {
     "bulk_delete_round_events",
     {
       title: "Bulk Delete Round Events",
-      description: `
-        Delete multiple events efficiently.
-
-        Use this tool to delete multiple events in a single operation.
-        The tool handles iteration internally, reducing token usage for AI agents.
-
-        Returns detailed results including success/failure for each event.
-      `.trim(),
+      description: "Delete multiple events efficiently.",
       inputSchema: z.object({
         ids: z.array(z.string()).describe("Array of event IDs to delete"),
         onError: z

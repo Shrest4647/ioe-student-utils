@@ -6,17 +6,8 @@ export function registerDegreeTools(server: McpServer): void {
   server.registerTool(
     "fetch_degrees",
     {
-      title: "Fetch Degree Levels",
-      description: `
-        Retrieve all degree levels from database.
-
-        Use this tool to:
-        - Get list of all available degree levels (Undergraduate, Masters, PhD, etc.)
-        - Populate dropdowns for degree selection
-        - Get degree IDs and names for filtering
-
-        Returns degree levels with id, name, and rank.
-      `.trim(),
+      title: "Fetch Degrees",
+      description: "Retrieve all degree levels from the database.",
       inputSchema: z.object({}),
     },
     async (_params, requestContext) => {
@@ -82,16 +73,8 @@ export function registerDegreeTools(server: McpServer): void {
   server.registerTool(
     "create_degree",
     {
-      title: "Create Degree Level",
-      description: `
-        Add a new degree level to database.
-
-        Use this tool to add a new degree level with:
-        - Degree name
-        - Optional rank for ordering
-
-        Returns created degree level record.
-      `.trim(),
+      title: "Create Degree",
+      description: "Create a new degree level.",
       inputSchema: degreeCreateSchema,
     },
     async (params, requestContext) => {
@@ -163,15 +146,7 @@ export function registerDegreeTools(server: McpServer): void {
     "update_degree",
     {
       title: "Update Degree Level",
-      description: `
-        Update an existing degree level's details.
-
-        Use this tool to modify degree level information including:
-        - Degree name
-        - Rank for ordering
-
-        Returns updated degree level record.
-      `.trim(),
+      description: "Update an existing degree level.",
       inputSchema: degreeUpdateSchema,
     },
     async (params, requestContext) => {
@@ -240,15 +215,10 @@ export function registerDegreeTools(server: McpServer): void {
   server.registerTool(
     "delete_degree",
     {
-      title: "Delete Degree Level",
-      description: `
-        Delete a degree level from database.
-
-        Use this tool to remove a degree level by its ID.
-        Warning: This action cannot be undone.
-      `.trim(),
+      title: "Delete Degree",
+      description: "Delete a degree level from the database.",
       inputSchema: z.object({
-        id: z.string().describe("Degree level ID to delete"),
+        id: z.string().describe("Degree ID to delete"),
       }),
     },
     async (params, requestContext) => {

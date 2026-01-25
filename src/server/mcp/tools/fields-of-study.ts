@@ -7,16 +7,7 @@ export function registerFieldTools(server: McpServer): void {
     "fetch_fields_of_study",
     {
       title: "Fetch Fields of Study",
-      description: `
-        Retrieve all fields of study from database.
-
-        Use this tool to:
-        - Get list of all available fields (Computer Science, Engineering, etc.)
-        - Populate dropdowns for field selection
-        - Get field IDs and names for filtering
-
-        Returns fields with id and name.
-      `.trim(),
+      description: "Retrieve all fields of study from the database.",
       inputSchema: z.object({}),
     },
     async (_params, requestContext) => {
@@ -84,13 +75,7 @@ export function registerFieldTools(server: McpServer): void {
     "create_field_of_study",
     {
       title: "Create Field of Study",
-      description: `
-        Add a new field of study to database.
-
-        Use this tool to add a new academic discipline.
-
-        Returns created field record.
-      `.trim(),
+      description: "Add a new field of study to the database.",
       inputSchema: fieldCreateSchema,
     },
     async (params, requestContext) => {
@@ -160,13 +145,7 @@ export function registerFieldTools(server: McpServer): void {
     "update_field_of_study",
     {
       title: "Update Field of Study",
-      description: `
-        Update an existing field of study's details.
-
-        Use this tool to modify field information.
-
-        Returns updated field record.
-      `.trim(),
+      description: "Update an existing field of study's details.",
       inputSchema: fieldUpdateSchema,
     },
     async (params, requestContext) => {
@@ -235,14 +214,9 @@ export function registerFieldTools(server: McpServer): void {
     "delete_field_of_study",
     {
       title: "Delete Field of Study",
-      description: `
-        Delete a field of study from database.
-
-        Use this tool to remove a field by its ID.
-        Warning: This action cannot be undone.
-      `.trim(),
+      description: "Delete a field of study from the database.",
       inputSchema: z.object({
-        id: z.string().describe("Field of study ID to delete"),
+        id: z.string().describe("Field ID to delete"),
       }),
     },
     async (params, requestContext) => {
