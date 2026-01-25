@@ -1,6 +1,12 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { auth } from "@/server/better-auth";
+import { registerCountryTools } from "./tools/countries";
+import { registerDataQualityTools } from "./tools/data-quality";
+import { registerDegreeTools } from "./tools/degrees";
+import { registerFieldTools } from "./tools/fields-of-study";
+import { registerRoundEventTools } from "./tools/rounds-events";
 import { registerScholarshipTools } from "./tools/scholarships";
+import { registerTaxonomyTools } from "./tools/taxonomy";
 
 /**
  * MCP Server Configuration
@@ -9,6 +15,12 @@ import { registerScholarshipTools } from "./tools/scholarships";
 const mcpHandler = createMcpHandler(
   async (server) => {
     registerScholarshipTools(server);
+    registerCountryTools(server);
+    registerDegreeTools(server);
+    registerFieldTools(server);
+    registerTaxonomyTools(server);
+    registerDataQualityTools(server);
+    registerRoundEventTools(server);
   },
   {
     serverInfo: {

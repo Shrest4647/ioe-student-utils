@@ -392,6 +392,22 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/countries/:code",
+        async ({ params: { code } }) => {
+          await db
+            .delete(countries)
+            .where(eq(countries.code, code.toUpperCase()));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete country",
+          },
+        },
+      )
       // Degree Levels
       .post(
         "/degrees",
@@ -438,6 +454,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/degrees/:id",
+        async ({ params: { id } }) => {
+          await db.delete(degreeLevels).where(eq(degreeLevels.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete degree level",
+          },
+        },
+      )
       // Fields of Study
       .post(
         "/fields",
@@ -479,6 +509,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           detail: {
             tags: ["Scholarships Admin"],
             summary: "Update field of study",
+          },
+        },
+      )
+      .delete(
+        "/fields/:id",
+        async ({ params: { id } }) => {
+          await db.delete(fieldsOfStudy).where(eq(fieldsOfStudy.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete field of study",
           },
         },
       )
@@ -711,6 +755,22 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           detail: {
             tags: ["Scholarships Admin"],
             summary: "Update scholarship round",
+          },
+        },
+      )
+      .delete(
+        "/rounds/:id",
+        async ({ params: { id } }) => {
+          await db
+            .delete(scholarshipRounds)
+            .where(eq(scholarshipRounds.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete scholarship round",
           },
         },
       )
