@@ -61,7 +61,16 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, country, degree, field, page, limit } = query;
+      const {
+        search,
+        country,
+        degree,
+        field,
+        status,
+        fundingType,
+        page,
+        limit,
+      } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
@@ -125,6 +134,23 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             conditions.push({
               fields: {
                 fieldId: field,
+              },
+            });
+          }
+          if (status) {
+            conditions.push({
+              fields: {
+                status: {
+                  ilike: `%${status}%`,
+                },
+              },
+            });
+          }
+
+          if (fundingType) {
+            conditions.push({
+              fundingType: {
+                ilike: `%${fundingType}%`,
               },
             });
           }
@@ -194,6 +220,14 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           ),
         );
       }
+      if (status) {
+        coreConditions.push(ilike(scholarships.status, `%${status}%`));
+      }
+      if (fundingType) {
+        coreConditions.push(
+          ilike(scholarships.fundingType, `%${fundingType}%`),
+        );
+      }
 
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
@@ -222,6 +256,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         country: t.Optional(t.String()),
         degree: t.Optional(t.String()),
         field: t.Optional(t.String()),
+        status: t.Optional(t.String()),
+        fundingType: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
