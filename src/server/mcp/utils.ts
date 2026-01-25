@@ -31,9 +31,40 @@ export interface MCPRequestLog {
  */
 export async function logMCPRequest(log: MCPRequestLog): Promise<void> {
   if (process.env.NODE_ENV === "production") {
-    // In production, send to logging service
-    // await logToService(log);
-    console.log(JSON.stringify(log));
+    const sensitiveKeys = new Set([
+      "password",
+      "token",
+      "authorization",
+      "ssn",
+      "apiKey",
+      "api_key",
+      "secret",
+      "secretKey",
+      "privateKey",
+      "accessKey",
+      "creditCard",
+      "credit_card",
+      "ssn",
+      "socialSecurityNumber",
+    ]);
+
+    const sanitized = { ...log };
+
+    if (log.params && typeof log.params === "object" && log.params !== null) {
+      sanitized.params = {};
+
+      for (const [key, value] of Object.entries(
+        log.params as Record<string, unknown>,
+      )) {
+        if (sensitiveKeys.has(key.toLowerCase())) {
+          (sanitized.params as Record<string, unknown>)[key] = "[REDACTED]";
+        } else {
+          (sanitized.params as Record<string, unknown>)[key] = value;
+        }
+      }
+    }
+
+    console.log(JSON.stringify(sanitized));
   } else {
     // In development, log to console
     console.log("[MCP]", JSON.stringify(log, null, 2));
@@ -165,7 +196,22 @@ export function getUserIdFromContext(context: any): string | null {
  * @returns True if user is admin
  */
 export function isAdminUser(_context: any): boolean {
-  // This would be implemented based on user role from database
+  const user = _context?.user || _context?.currentUser || _context?.auth;
+
+  if (!user) {
+    return false;
+  }
+
+  const role = user.role || user.roles;
+
+  if (typeof role === "string") {
+    return role === "admin" || role === "mcp_admin";
+  }
+
+  if (Array.isArray(role)) {
+    return role.includes("admin") || role.includes("mcp_admin");
+  }
+
   return false;
 }
 

@@ -1,7 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { db } from "@/server/db";
-import { scholarships } from "@/server/db/schema";
 import { api } from "@/server/elysia/eden";
 
 type Match = {
@@ -72,21 +70,33 @@ export function registerDataQualityTools(server: McpServer): void {
         year: z.string().optional().describe("Scholarship year (e.g., '2026')"),
       }),
     },
-    async (params) => {
+    async (params, requestContext) => {
       try {
+        const apiKey = requestContext?.authInfo?.token;
+
+        if (!apiKey) {
+          throw new Error(
+            "MCP Authorization key is not configured. Please contact owners.",
+          );
+        }
+
         const normalizedName = normalizeString(params.name);
         const matches: Match[] = [];
 
-        const allScholarships = await db
-          .select({
-            id: scholarships.id,
-            name: scholarships.name,
-            slug: scholarships.slug,
-            providerName: scholarships.providerName,
-            websiteUrl: scholarships.websiteUrl,
-          })
-          .from(scholarships)
-          .limit(100);
+        const response = await api.api.scholarships.get({
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+          query: {
+            limit: "100",
+          },
+        });
+
+        if (response.error || !response.data?.success) {
+          throw new Error("Failed to fetch scholarships via API");
+        }
+
+        const allScholarships = (response.data as any).data || [];
 
         for (const scholarship of allScholarships) {
           const existingName = normalizeString(scholarship.name || "");
@@ -304,69 +314,111 @@ export function registerDataQualityTools(server: McpServer): void {
         }
 
         if (params.countryCodes) {
-          const countriesResponse = await api.api.scholarships.countries.get({
-            headers: { Authorization: `Bearer ${apiKey}` },
-          });
+          try {
+            const countriesResponse = await api.api.scholarships.countries.get({
+              headers: { Authorization: `Bearer ${apiKey}` },
+            });
 
-          if (countriesResponse.data?.success) {
-            const validCodes = new Set(
-              (countriesResponse.data.data || []).map((c) =>
-                c.code.toLowerCase(),
-              ),
-            );
+            if (!countriesResponse.data?.success) {
+              errors.push({
+                field: "countryCodes",
+                message: "Failed to validate countryCodes: lookup failed",
+                severity: "error",
+              });
+            } else {
+              const validCodes = new Set(
+                (countriesResponse.data.data || []).map((c) =>
+                  c.code.toLowerCase(),
+                ),
+              );
 
-            params.countryCodes.forEach((code) => {
-              if (!validCodes.has(code.toLowerCase())) {
-                errors.push({
-                  field: "countryCodes",
-                  message: `Country code '${code}' does not exist in database`,
-                  severity: "error",
-                });
-              }
+              params.countryCodes.forEach((code) => {
+                if (!validCodes.has(code.toLowerCase())) {
+                  errors.push({
+                    field: "countryCodes",
+                    message: `Country code '${code}' does not exist in database`,
+                    severity: "error",
+                  });
+                }
+              });
+            }
+          } catch {
+            errors.push({
+              field: "countryCodes",
+              message: "Failed to validate countryCodes: lookup failed",
+              severity: "error",
             });
           }
         }
 
         if (params.degreeIds) {
-          const degreesResponse = await api.api.scholarships.degrees.get({
-            headers: { Authorization: `Bearer ${apiKey}` },
-          });
+          try {
+            const degreesResponse = await api.api.scholarships.degrees.get({
+              headers: { Authorization: `Bearer ${apiKey}` },
+            });
 
-          if (degreesResponse.data?.success) {
-            const validIds = new Set(
-              (degreesResponse.data.data || []).map((d) => d.id),
-            );
+            if (!degreesResponse.data?.success) {
+              errors.push({
+                field: "degreeIds",
+                message: "Failed to validate degreeIds: lookup failed",
+                severity: "error",
+              });
+            } else {
+              const validIds = new Set(
+                (degreesResponse.data.data || []).map((d) => d.id),
+              );
 
-            params.degreeIds.forEach((id) => {
-              if (!validIds.has(id)) {
-                errors.push({
-                  field: "degreeIds",
-                  message: `Degree ID '${id}' does not exist in database`,
-                  severity: "error",
-                });
-              }
+              params.degreeIds.forEach((id) => {
+                if (!validIds.has(id)) {
+                  errors.push({
+                    field: "degreeIds",
+                    message: `Degree ID '${id}' does not exist in database`,
+                    severity: "error",
+                  });
+                }
+              });
+            }
+          } catch {
+            errors.push({
+              field: "degreeIds",
+              message: "Failed to validate degreeIds: lookup failed",
+              severity: "error",
             });
           }
         }
 
         if (params.fieldIds) {
-          const fieldsResponse = await api.api.scholarships.fields.get({
-            headers: { Authorization: `Bearer ${apiKey}` },
-          });
+          try {
+            const fieldsResponse = await api.api.scholarships.fields.get({
+              headers: { Authorization: `Bearer ${apiKey}` },
+            });
 
-          if (fieldsResponse.data?.success) {
-            const validIds = new Set(
-              (fieldsResponse.data.data || []).map((f) => f.id),
-            );
+            if (!fieldsResponse.data?.success) {
+              errors.push({
+                field: "fieldIds",
+                message: "Failed to validate fieldIds: lookup failed",
+                severity: "error",
+              });
+            } else {
+              const validIds = new Set(
+                (fieldsResponse.data.data || []).map((f) => f.id),
+              );
 
-            params.fieldIds.forEach((id) => {
-              if (!validIds.has(id)) {
-                errors.push({
-                  field: "fieldIds",
-                  message: `Field ID '${id}' does not exist in database`,
-                  severity: "error",
-                });
-              }
+              params.fieldIds.forEach((id) => {
+                if (!validIds.has(id)) {
+                  errors.push({
+                    field: "fieldIds",
+                    message: `Field ID '${id}' does not exist in database`,
+                    severity: "error",
+                  });
+                }
+              });
+            }
+          } catch {
+            errors.push({
+              field: "fieldIds",
+              message: "Failed to validate fieldIds: lookup failed",
+              severity: "error",
             });
           }
         }

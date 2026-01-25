@@ -284,6 +284,10 @@ export function registerScholarshipTools(server: McpServer): void {
 
   const scholarshipBulkCreateSchema = z.object({
     scholarships: z.array(scholarshipCreateSchema),
+    onError: z
+      .enum(["continue", "abort"])
+      .default("continue")
+      .describe("Behavior on error: 'continue' or 'abort'"),
   });
 
   server.registerTool(
@@ -320,12 +324,22 @@ export function registerScholarshipTools(server: McpServer): void {
               fieldIds: scholarship.fieldIds,
             };
 
-            return await api.api.scholarships.admin.post(body, {
+            const response = await api.api.scholarships.admin.post(body, {
               headers: {
                 Authorization: `Bearer ${apiKey}`,
               },
             });
+
+            if (response.error || !response.data?.success) {
+              throw new Error(
+                response.error?.value?.message ||
+                  `Failed to create scholarship: ${scholarship.name}`,
+              );
+            }
+
+            return response.data;
           },
+          params.onError,
         );
 
         return {
@@ -470,26 +484,37 @@ export function registerScholarshipTools(server: McpServer): void {
         const result = await bulkOperation(
           params.updates,
           async (update) => {
-            return await api.api.scholarships.admin({ id: update.id }).patch(
-              {
-                name: update.name,
-                slug: update.slug,
-                description: update.description,
-                providerName: update.providerName,
-                websiteUrl: update.websiteUrl,
-                fundingType: update.fundingType,
-                isActive: update.isActive,
-                status: update.status,
-                countryCodes: update.countryCodes,
-                degreeIds: update.degreeIds,
-                fieldIds: update.fieldIds,
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${apiKey}`,
+            const response = await api.api.scholarships
+              .admin({ id: update.id })
+              .patch(
+                {
+                  name: update.name,
+                  slug: update.slug,
+                  description: update.description,
+                  providerName: update.providerName,
+                  websiteUrl: update.websiteUrl,
+                  fundingType: update.fundingType,
+                  isActive: update.isActive,
+                  status: update.status,
+                  countryCodes: update.countryCodes,
+                  degreeIds: update.degreeIds,
+                  fieldIds: update.fieldIds,
                 },
-              },
-            );
+                {
+                  headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                  },
+                },
+              );
+
+            if (response.error || !response.data?.success) {
+              throw new Error(
+                response.error?.value?.message ||
+                  `Failed to update scholarship: ${update.id}`,
+              );
+            }
+
+            return response.data;
           },
           params.onError,
         );
@@ -621,7 +646,7 @@ export function registerScholarshipTools(server: McpServer): void {
         const result = await bulkOperation(
           params.ids,
           async (id) => {
-            return await api.api.scholarships.admin({ id }).delete(
+            const response = await api.api.scholarships.admin({ id }).delete(
               {},
               {
                 headers: {
@@ -629,6 +654,15 @@ export function registerScholarshipTools(server: McpServer): void {
                 },
               },
             );
+
+            if (response.error || !response.data?.success) {
+              throw new Error(
+                response.error?.value?.message ||
+                  `Failed to delete scholarship: ${id}`,
+              );
+            }
+
+            return response.data;
           },
           params.onError,
         );
@@ -898,7 +932,7 @@ export function registerScholarshipTools(server: McpServer): void {
         const result = await bulkOperation(
           roundsWithScholarshipId,
           async (round) => {
-            return await api.api.scholarships.admin.rounds.post(
+            const response = await api.api.scholarships.admin.rounds.post(
               {
                 scholarshipId: round.scholarshipId,
                 roundName: round.roundName,
@@ -914,6 +948,15 @@ export function registerScholarshipTools(server: McpServer): void {
                 },
               },
             );
+
+            if (response.error || !response.data?.success) {
+              throw new Error(
+                response.error?.value?.message ||
+                  `Failed to create round: ${round.roundName || "unknown"}`,
+              );
+            }
+
+            return response.data;
           },
           params.onError,
         );
@@ -1188,7 +1231,7 @@ export function registerScholarshipTools(server: McpServer): void {
         const result = await bulkOperation(
           eventsWithRoundId,
           async (event) => {
-            return await api.api.scholarships.admin
+            const response = await api.api.scholarships.admin
               .rounds({ id: params.roundId })
               .events.post(
                 {
@@ -1203,6 +1246,15 @@ export function registerScholarshipTools(server: McpServer): void {
                   },
                 },
               );
+
+            if (response.error || !response.data?.success) {
+              throw new Error(
+                response.error?.value?.message ||
+                  `Failed to create event: ${event.name}`,
+              );
+            }
+
+            return response.data;
           },
           params.onError,
         );

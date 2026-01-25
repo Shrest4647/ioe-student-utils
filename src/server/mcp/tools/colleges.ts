@@ -619,8 +619,13 @@ export function registerCollegeTools(server: McpServer): void {
     },
   );
 
-  const collegeUpdateSchema = collegeCreateSchema.extend({
+  const collegeUpdateSchema = z.object({
     id: z.string().describe("College ID to update"),
+    name: z.string().optional().describe("College name"),
+    description: z.string().optional().describe("College description"),
+    websiteUrl: z.string().optional().describe("College website URL"),
+    location: z.string().optional().describe("Location"),
+    isActive: z.boolean().optional().describe("Active status"),
   });
 
   server.registerTool(
@@ -640,20 +645,24 @@ export function registerCollegeTools(server: McpServer): void {
           );
         }
 
-        const response = await api.api.colleges.admin({ id: params.id }).patch(
-          {
-            name: params.name,
-            description: params.description,
-            websiteUrl: params.websiteUrl,
-            location: params.location,
-            isActive: params.isActive,
-          },
-          {
+        const patchPayload: Record<string, unknown> = {};
+        if (params.name !== undefined) patchPayload.name = params.name;
+        if (params.description !== undefined)
+          patchPayload.description = params.description;
+        if (params.websiteUrl !== undefined)
+          patchPayload.websiteUrl = params.websiteUrl;
+        if (params.location !== undefined)
+          patchPayload.location = params.location;
+        if (params.isActive !== undefined)
+          patchPayload.isActive = params.isActive;
+
+        const response = await api.api.colleges
+          .admin({ id: params.id })
+          .patch(patchPayload, {
             headers: {
               Authorization: `Bearer ${apiKey}`,
             },
-          },
-        );
+          });
 
         if (response.error || !response.data?.success) {
           throw new Error(
@@ -723,22 +732,24 @@ export function registerCollegeTools(server: McpServer): void {
         const result = await bulkOperation(
           params.updates,
           async (update) => {
+            const patchPayload: Record<string, unknown> = {};
+            if (update.name !== undefined) patchPayload.name = update.name;
+            if (update.description !== undefined)
+              patchPayload.description = update.description;
+            if (update.websiteUrl !== undefined)
+              patchPayload.websiteUrl = update.websiteUrl;
+            if (update.location !== undefined)
+              patchPayload.location = update.location;
+            if (update.isActive !== undefined)
+              patchPayload.isActive = update.isActive;
+
             const response = await api.api.colleges
               .admin({ id: update.id })
-              .patch(
-                {
-                  name: update.name,
-                  description: update.description,
-                  websiteUrl: update.websiteUrl,
-                  location: update.location,
-                  isActive: update.isActive,
+              .patch(patchPayload, {
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
                 },
-                {
-                  headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                  },
-                },
-              );
+              });
 
             if (response.error || !response.data?.success) {
               throw new Error(
@@ -824,7 +835,7 @@ export function registerCollegeTools(server: McpServer): void {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                message: "College deactivated successfully",
+                data: response.data,
               }),
             },
           ],

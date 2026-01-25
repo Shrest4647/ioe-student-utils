@@ -16,6 +16,8 @@
  * @module mcp/auth
  */
 
+import { auth } from "@/server/better-auth";
+
 /**
  * Authentication result interface
  */
@@ -76,23 +78,9 @@ export async function authenticateMCPRequest(
     }
 
     // Verify API key with Better Auth (server-side)
-    // Note: Using direct API verification via headers
-    const result = await fetch(
-      new URL(
-        "/api/api-key/verify",
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      ).href,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ key: apiKey }),
-      },
-    );
-
-    const data = await result.json();
+    const data = await auth.api.verifyApiKey({
+      body: { key: apiKey },
+    });
 
     if (!data?.valid || !data?.key) {
       return {
@@ -108,7 +96,7 @@ export async function authenticateMCPRequest(
     let permissions: Record<string, string[]> = {};
     if (keyData.permissions) {
       try {
-        permissions = JSON.parse(keyData.permissions as string);
+        permissions = keyData.permissions;
       } catch (error) {
         console.error("Failed to parse permissions:", error);
       }

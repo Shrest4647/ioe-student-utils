@@ -139,10 +139,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           }
           if (status) {
             conditions.push({
-              fields: {
-                status: {
-                  ilike: `%${status}%`,
-                },
+              status: {
+                ilike: `%${status}%`,
               },
             });
           }

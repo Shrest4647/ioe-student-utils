@@ -15,6 +15,11 @@ export async function withRetries<T>(
   const maxTries = retry + 1;
 
   for (let attempt = 0; attempt < maxTries; attempt++) {
+    if (signal?.aborted) {
+      abortHandler?.();
+      throw new Error("Retries aborted.");
+    }
+
     if (attempt > 0) {
       if (signal?.aborted) {
         abortHandler?.();
