@@ -47,3 +47,4 @@ yarn-error.log*
 
 # rustfs data and logs
 .rustfs
+opencode.jsonc
