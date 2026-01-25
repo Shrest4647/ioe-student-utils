@@ -79,7 +79,7 @@ export function TwoFactorVerification() {
           });
         }
       } catch (error) {
-        console.log("error", error);
+        console.error("error", error);
         alert("Failed to verify code. Please try again.");
       } finally {
         setLoading(false);

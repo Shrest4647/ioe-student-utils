@@ -143,17 +143,53 @@ export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
       status: (code: number) => void;
       request: { headers: Headers };
     }) {
+      // First try session authentication
       const session = await auth.api.getSession({ headers });
-      if (!session) return status(401);
-
-      if (session.user.role !== requiredRole) {
-        return status(403);
+      if (session) {
+        if (session.user.role !== requiredRole) {
+          return status(403);
+        }
+        return {
+          user: session.user,
+          session: session.session,
+        };
       }
 
-      return {
-        user: session.user,
-        session: session.session,
-      };
+      // Then try API key authentication
+      const apiKey =
+        headers.get("x-api-key") ||
+        headers.get("authorization")?.replace("Bearer ", "");
+      if (apiKey) {
+        try {
+          const keyValidation = await auth.api.verifyApiKey({
+            body: {
+              key: apiKey,
+            },
+          });
+
+          if (keyValidation?.valid && keyValidation.key) {
+            // Get user from API key
+            const user = await db.query.user.findFirst({
+              where: {
+                id: keyValidation.key.userId,
+              },
+            });
+
+            if (user && user.role === requiredRole) {
+              return {
+                user,
+                apiKey: keyValidation.key,
+                authType: "apiKey",
+              };
+            }
+          }
+        } catch (_error) {
+          // Invalid API key
+          return status(401);
+        }
+      }
+
+      return status(401);
     },
   }),
   ownerOnly: {

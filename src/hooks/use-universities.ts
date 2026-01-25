@@ -187,7 +187,7 @@ export function useRatingCategories(entityType?: string) {
     queryKey: ["rating-categories", entityType],
     queryFn: async () => {
       const response = await apiClient.api.ratings.categories.get({
-        query: entityType ? { entityType: entityType as any } : undefined,
+        query: entityType ? { entityType: entityType } : undefined,
       });
 
       if (response.data?.success) {

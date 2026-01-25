@@ -28,6 +28,8 @@ export const appEnv = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     VERCEL_URL: z.string().optional(),
+    MCP_URL: z.string().optional(),
+    MCP_API_KEY: z.string().optional(),
   },
 
   /**
@@ -64,6 +66,9 @@ export const appEnv = createEnv({
     NEXT_PUBLIC_BASE_URL: process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_BASE_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
+    MCP_URL: process.env.MCP_URL,
+    MCP_API_KEY: process.env.MCP_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

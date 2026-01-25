@@ -103,7 +103,6 @@ export default function UniversityEditPage() {
     },
     enabled: !isNew && !!universityQuery.data?.id,
   });
-  console.log(universityQuery.data?.id, collegesQuery.data);
 
   const saveMutation = useMutation({
     mutationFn: async (values: z.infer<typeof universitySchema>) => {

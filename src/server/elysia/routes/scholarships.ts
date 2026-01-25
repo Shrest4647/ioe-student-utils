@@ -61,7 +61,16 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
   .get(
     "/",
     async ({ query }) => {
-      const { search, country, degree, field, page, limit } = query;
+      const {
+        search,
+        country,
+        degree,
+        field,
+        status,
+        fundingType,
+        page,
+        limit,
+      } = query;
 
       const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
@@ -127,6 +136,32 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
                 fieldId: field,
               },
             });
+          }
+          const validStatuses = ["active", "inactive", "archived"] as const;
+          if (status) {
+            if ((validStatuses as readonly string[]).includes(status)) {
+              conditions.push({
+                status: status as "active" | "inactive" | "archived",
+              });
+            }
+          }
+
+          const validFundingTypes = [
+            "fully_funded",
+            "partial",
+            "tuition_only",
+          ] as const;
+          if (fundingType) {
+            if (
+              (validFundingTypes as readonly string[]).includes(fundingType)
+            ) {
+              conditions.push({
+                fundingType: fundingType as
+                  | "fully_funded"
+                  | "partial"
+                  | "tuition_only",
+              });
+            }
           }
 
           return conditions.length > 0 ? { AND: conditions } : undefined;
@@ -194,6 +229,19 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           ),
         );
       }
+      if (status) {
+        coreConditions.push(
+          eq(scholarships.status, status as "active" | "inactive" | "archived"),
+        );
+      }
+      if (fundingType) {
+        coreConditions.push(
+          eq(
+            scholarships.fundingType,
+            fundingType as "fully_funded" | "partial" | "tuition_only",
+          ),
+        );
+      }
 
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
@@ -222,6 +270,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         country: t.Optional(t.String()),
         degree: t.Optional(t.String()),
         field: t.Optional(t.String()),
+        status: t.Optional(t.String()),
+        fundingType: t.Optional(t.String()),
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
       }),
@@ -305,6 +355,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       },
     },
   )
+
   // --- Admin Taxonomy Management ---
   .group("/admin", (app) =>
     app
@@ -356,6 +407,22 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/countries/:code",
+        async ({ params: { code } }) => {
+          await db
+            .delete(countries)
+            .where(eq(countries.code, code.toUpperCase()));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete country",
+          },
+        },
+      )
       // Degree Levels
       .post(
         "/degrees",
@@ -402,6 +469,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/degrees/:id",
+        async ({ params: { id } }) => {
+          await db.delete(degreeLevels).where(eq(degreeLevels.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete degree level",
+          },
+        },
+      )
       // Fields of Study
       .post(
         "/fields",
@@ -443,6 +524,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           detail: {
             tags: ["Scholarships Admin"],
             summary: "Update field of study",
+          },
+        },
+      )
+      .delete(
+        "/fields/:id",
+        async ({ params: { id } }) => {
+          await db.delete(fieldsOfStudy).where(eq(fieldsOfStudy.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete field of study",
           },
         },
       )
@@ -519,6 +614,20 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           detail: {
             tags: ["Scholarships Admin"],
             summary: "Create scholarship",
+          },
+        },
+      )
+      .delete(
+        "/:id",
+        async ({ params: { id } }) => {
+          await db.delete(scholarships).where(eq(scholarships.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete scholarship",
           },
         },
       )
@@ -678,6 +787,22 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       )
+      .delete(
+        "/rounds/:id",
+        async ({ params: { id } }) => {
+          await db
+            .delete(scholarshipRounds)
+            .where(eq(scholarshipRounds.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete scholarship round",
+          },
+        },
+      )
       // Round Events
       .post(
         "/rounds/:id/events",
@@ -749,5 +874,86 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             summary: "Update round event",
           },
         },
+      )
+      .delete(
+        "/rounds/events/:id",
+        async ({ params: { id } }) => {
+          await db.delete(roundEvents).where(eq(roundEvents.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete round event",
+          },
+        },
       ),
+  )
+  .get(
+    "/rounds/:id",
+    async ({ params: { id }, set }) => {
+      const round = await db.query.scholarshipRounds.findFirst({
+        where: { id },
+        with: {
+          events: {
+            orderBy: {
+              date: "asc",
+            },
+          },
+        },
+      });
+
+      if (!round) {
+        set.status = 404;
+        return { success: false, error: "Round not found" };
+      }
+
+      return { success: true, data: round };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get scholarship round by ID",
+      },
+    },
+  )
+  .get(
+    "/rounds/:id/events",
+    async ({ params: { id } }) => {
+      const events = await db.query.roundEvents.findMany({
+        where: {
+          roundId: id,
+        },
+      });
+      return { success: true, data: events };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get round events",
+      },
+    },
+  )
+  .get(
+    "/rounds/:id/events/:eventId",
+    async ({ params: { id, eventId }, set }) => {
+      const event = await db.query.roundEvents.findFirst({
+        where: {
+          id: eventId,
+          roundId: id,
+        },
+      });
+      if (!event) {
+        set.status = 404;
+        return { success: false, error: "Round event not found" };
+      }
+      return { success: true, data: event };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get round event",
+      },
+    },
   );

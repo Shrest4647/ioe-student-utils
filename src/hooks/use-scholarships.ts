@@ -60,7 +60,7 @@ export function useScholarships(filters: ScholarshipFilters) {
       if (response.data?.success) {
         // Transform dates if necessary, though Drizzle might return Date objects or strings depending on driver.
         // Eden treaty usually preserves types if configured, but let's be safe for pure JSON serialization.
-        const transformedData = (response.data.data as any[]).map((item) => ({
+        const transformedData = response.data.data.map((item) => ({
           ...item,
           // deep transformation not strictly needed if frontend handles ISO strings,
           // but Scholarship type expects Date | string.

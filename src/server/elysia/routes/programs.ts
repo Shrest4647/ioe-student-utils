@@ -472,13 +472,13 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
           ? { name: { ilike: `%${search}%` } }
           : {};
 
-        results = (await db.query.academicCourses.findMany({
+        results = await db.query.academicCourses.findMany({
           where:
             Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
           limit: l,
           offset,
           orderBy: { name: "asc" },
-        })) as any[];
+        });
 
         const totalResult = await db
           .select({ count: sql<number>`count(*)` })

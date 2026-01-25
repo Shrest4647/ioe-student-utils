@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Markdown } from "@/components/ui/markdown";
 import { db } from "@/server/db";
 
 export default async function ScholarshipDetailsPage({
@@ -27,7 +28,7 @@ export default async function ScholarshipDetailsPage({
 }) {
   const { slug } = await params;
 
-  const scholarship = (await db.query.scholarships.findFirst({
+  const scholarship = await db.query.scholarships.findFirst({
     where: { slug },
     with: {
       countries: { with: { country: true } },
@@ -42,14 +43,14 @@ export default async function ScholarshipDetailsPage({
         orderBy: (rounds, { desc }) => [desc(rounds.createdAt)],
       },
     },
-  })) as any;
+  });
 
   if (!scholarship) {
     notFound();
   }
 
   const activeRound =
-    scholarship.rounds.find((r: any) => r.isActive) || scholarship.rounds[0];
+    scholarship.rounds.find((r) => r.isActive) || scholarship.rounds[0];
   const deadline = activeRound?.deadlineDate
     ? new Date(activeRound.deadlineDate)
     : null;
@@ -100,8 +101,10 @@ export default async function ScholarshipDetailsPage({
               <CardTitle className="text-lg">About this Scholarship</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                {scholarship.description || "No description provided."}
+              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
+                <Markdown>
+                  {scholarship.description || "No description provided."}
+                </Markdown>
               </div>
             </CardContent>
           </Card>

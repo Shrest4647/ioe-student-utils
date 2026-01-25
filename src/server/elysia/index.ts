@@ -4,6 +4,7 @@ import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
 import { apiKeyRoutes } from "./routes/api-keys";
+import { betterUploadRoutes } from "./routes/better-upload";
 import { certificationRoutes } from "./routes/certifications";
 import { collegeRoutes } from "./routes/colleges";
 import { departmentRoutes } from "./routes/departments";
@@ -54,6 +55,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(recommendationRoutes)
   .use(savedRecommendationsRoutes)
   .use(gpaConverterRoutes)
+  .use(betterUploadRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],

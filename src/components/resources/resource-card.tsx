@@ -37,7 +37,7 @@ export type Resource = {
   title: string;
   description: string | null;
   s3Url: string;
-  fileFormat: string;
+  fileFormat?: string;
   contentType: {
     id: string;
     name: string;
@@ -46,8 +46,8 @@ export type Resource = {
     id: string;
     name: string;
     description: string | null;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: string | Date | null;
+    updatedAt: string | Date | null;
   }[];
   uploader: {
     id: string;
@@ -99,7 +99,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   const primaryAttachment = resource.attachments?.[0];
   const fileFormat = primaryAttachment?.fileFormat || resource.fileFormat;
   const primaryUrl = primaryAttachment?.url || resource.s3Url;
-  const FormatIcon = formatIcons[fileFormat?.toLowerCase()] || FileText;
+  const FormatIcon = fileFormat
+    ? formatIcons[fileFormat.toLowerCase()] || FileText
+    : FileText;
 
   return (
     <motion.div
