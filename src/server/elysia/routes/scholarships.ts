@@ -137,20 +137,31 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
               },
             });
           }
+          const validStatuses = ["active", "inactive", "archived"] as const;
           if (status) {
-            conditions.push({
-              status: {
-                ilike: `%${status}%`,
-              },
-            });
+            if ((validStatuses as readonly string[]).includes(status)) {
+              conditions.push({
+                status: status as "active" | "inactive" | "archived",
+              });
+            }
           }
 
+          const validFundingTypes = [
+            "fully_funded",
+            "partial",
+            "tuition_only",
+          ] as const;
           if (fundingType) {
-            conditions.push({
-              fundingType: {
-                ilike: `%${fundingType}%`,
-              },
-            });
+            if (
+              (validFundingTypes as readonly string[]).includes(fundingType)
+            ) {
+              conditions.push({
+                fundingType: fundingType as
+                  | "fully_funded"
+                  | "partial"
+                  | "tuition_only",
+              });
+            }
           }
 
           return conditions.length > 0 ? { AND: conditions } : undefined;
@@ -219,11 +230,16 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         );
       }
       if (status) {
-        coreConditions.push(ilike(scholarships.status, `%${status}%`));
+        coreConditions.push(
+          eq(scholarships.status, status as "active" | "inactive" | "archived"),
+        );
       }
       if (fundingType) {
         coreConditions.push(
-          ilike(scholarships.fundingType, `%${fundingType}%`),
+          eq(
+            scholarships.fundingType,
+            fundingType as "fully_funded" | "partial" | "tuition_only",
+          ),
         );
       }
 
@@ -876,7 +892,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
   )
   .get(
     "/rounds/:id",
-    async ({ params: { id } }) => {
+    async ({ params: { id }, set }) => {
       const round = await db.query.scholarshipRounds.findFirst({
         where: { id },
         with: {
@@ -889,6 +905,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       });
 
       if (!round) {
+        set.status = 404;
         return { success: false, error: "Round not found" };
       }
 
@@ -920,12 +937,17 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
   )
   .get(
     "/rounds/:id/events/:eventId",
-    async ({ params: { eventId } }) => {
+    async ({ params: { id, eventId }, set }) => {
       const event = await db.query.roundEvents.findFirst({
         where: {
           id: eventId,
+          roundId: id,
         },
       });
+      if (!event) {
+        set.status = 404;
+        return { success: false, error: "Round event not found" };
+      }
       return { success: true, data: event };
     },
     {

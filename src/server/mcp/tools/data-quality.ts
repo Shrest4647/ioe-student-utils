@@ -61,7 +61,7 @@ export function registerDataQualityTools(server: McpServer): void {
       title: "Check Duplicate Scholarship",
       description: "Verify if a scholarship already exists in the database.",
       inputSchema: z.object({
-        name: z.string().describe("Scholarship name"),
+        name: z.string().trim().min(1).describe("Scholarship name"),
         providerName: z
           .string()
           .optional()
@@ -255,7 +255,14 @@ export function registerDataQualityTools(server: McpServer): void {
 
         if (params.websiteUrl) {
           try {
-            new URL(params.websiteUrl);
+            const url = new URL(params.websiteUrl);
+            if (url.protocol !== "http:" && url.protocol !== "https:") {
+              errors.push({
+                field: "websiteUrl",
+                message: "Invalid website URL format",
+                severity: "error",
+              });
+            }
           } catch {
             errors.push({
               field: "websiteUrl",

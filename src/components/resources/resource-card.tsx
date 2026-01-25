@@ -100,7 +100,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   const fileFormat = primaryAttachment?.fileFormat || resource.fileFormat;
   const primaryUrl = primaryAttachment?.url || resource.s3Url;
   const FormatIcon = fileFormat
-    ? formatIcons[fileFormat.toLowerCase()]
+    ? formatIcons[fileFormat.toLowerCase()] || FileText
     : FileText;
 
   return (
