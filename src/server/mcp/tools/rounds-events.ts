@@ -163,22 +163,19 @@ export function registerRoundEventTools(server: McpServer): void {
           );
         }
 
-        const response = (await api.api.scholarships.admin
+        const response = await api.api.scholarships
           .rounds({ id: params.roundId })
-          .patch(
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-              },
+          .get({
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
             },
-          )) as any;
+          });
 
         if (response.error || !response.data?.success) {
-          throw new Error("Failed to fetch calendar events via API");
+          throw new Error("Failed to fetch round via API");
         }
 
-        const events = (response.data as any).data?.events || [];
+        const events = response.data?.data?.events || [];
 
         return {
           content: [
@@ -187,6 +184,82 @@ export function registerRoundEventTools(server: McpServer): void {
               text: JSON.stringify({
                 success: true,
                 data: events,
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("fetch_events_by_round error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: false,
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to fetch events",
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "fetch_upcoming_events",
+    {
+      title: "Fetch Upcoming Events",
+      description: "Get all upcoming events across all scholarships.",
+      inputSchema: z.object({
+        daysAhead: z
+          .number()
+          .int()
+          .min(1)
+          .max(365)
+          .default(30)
+          .describe("Number of days ahead to look for events (default: 30)"),
+      }),
+    },
+    async (params, requestContext) => {
+      try {
+        const apiKey = requestContext?.authInfo?.token;
+
+        if (!apiKey) {
+          throw new Error(
+            "MCP Authorization key is not configured. Please contact the owners.",
+          );
+        }
+
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + params.daysAhead);
+
+        const response = await api.api.scholarships.calendar.get({
+          query: {
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+          },
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
+
+        if (response.error || !response.data?.success) {
+          throw new Error("Failed to fetch calendar events via API");
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: true,
+                data: response.data.data,
               }),
             },
           ],

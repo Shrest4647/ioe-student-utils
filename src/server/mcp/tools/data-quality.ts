@@ -96,7 +96,7 @@ export function registerDataQualityTools(server: McpServer): void {
           throw new Error("Failed to fetch scholarships via API");
         }
 
-        const allScholarships = (response.data as any).data || [];
+        const allScholarships = response.data.data || [];
 
         for (const scholarship of allScholarships) {
           const existingName = normalizeString(scholarship.name || "");

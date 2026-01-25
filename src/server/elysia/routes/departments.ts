@@ -75,7 +75,7 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
           ? { name: { ilike: `%${search}%` } }
           : {};
 
-        results = (await db.query.departments.findMany({
+        results = await db.query.departments.findMany({
           where:
             Object.keys(whereConditions).length > 0
               ? whereConditions
@@ -83,7 +83,7 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
           limit: l,
           offset,
           orderBy: { name: "asc" },
-        })) as any[];
+        });
 
         const totalResult = await db
           .select({ count: sql<number>`count(*)` })

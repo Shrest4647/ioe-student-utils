@@ -85,7 +85,7 @@ export function useCollegeDepartmentProgramFilters(
   return {
     filters: {
       search: searchParams?.get("search") ?? "",
-      degreeLevel: (searchParams?.get("degreeLevel") as any) ?? undefined,
+      degreeLevel: searchParams?.get("degreeLevel") ?? undefined,
       page: Number(searchParams?.get("page")) || 1,
     },
     setFilter,

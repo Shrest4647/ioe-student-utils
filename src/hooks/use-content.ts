@@ -50,7 +50,7 @@ export function useColleges(filters: CollegeFilters) {
       });
 
       if (response.data?.success) {
-        const transformedData = (response.data.data as any[]).map((item) => ({
+        const transformedData = response.data.data.map((item) => ({
           ...item,
           createdAt: item.createdAt?.toISOString?.() || item.createdAt,
           updatedAt: item.updatedAt?.toISOString?.() || item.updatedAt,
@@ -139,7 +139,7 @@ export function useDepartments(filters: DepartmentFilters) {
       });
 
       if (response.data?.success) {
-        const transformedData = (response.data.data as any[]).map((item) => ({
+        const transformedData = response.data.data.map((item) => ({
           ...item,
           createdAt: item.createdAt?.toISOString?.() || item.createdAt,
           updatedAt: item.updatedAt?.toISOString?.() || item.updatedAt,

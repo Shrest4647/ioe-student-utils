@@ -339,6 +339,7 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       },
     },
   )
+
   // --- Admin Taxonomy Management ---
   .group("/admin", (app) =>
     app
@@ -872,4 +873,65 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
           },
         },
       ),
+  )
+  .get(
+    "/rounds/:id",
+    async ({ params: { id } }) => {
+      const round = await db.query.scholarshipRounds.findFirst({
+        where: { id },
+        with: {
+          events: {
+            orderBy: {
+              date: "asc",
+            },
+          },
+        },
+      });
+
+      if (!round) {
+        return { success: false, error: "Round not found" };
+      }
+
+      return { success: true, data: round };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get scholarship round by ID",
+      },
+    },
+  )
+  .get(
+    "/rounds/:id/events",
+    async ({ params: { id } }) => {
+      const events = await db.query.roundEvents.findMany({
+        where: {
+          roundId: id,
+        },
+      });
+      return { success: true, data: events };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get round events",
+      },
+    },
+  )
+  .get(
+    "/rounds/:id/events/:eventId",
+    async ({ params: { eventId } }) => {
+      const event = await db.query.roundEvents.findFirst({
+        where: {
+          id: eventId,
+        },
+      });
+      return { success: true, data: event };
+    },
+    {
+      detail: {
+        tags: ["Scholarships"],
+        summary: "Get round event",
+      },
+    },
   );

@@ -243,7 +243,7 @@ export const gpaConverterRoutes = new Elysia({ prefix: "/gpa-converter" })
         totalCredits: totalCredits.toString(),
         totalQualityPoints: totalQualityPoints.toString(),
         courseCount: courses.length.toString(),
-        calculationData: courses as any, // Store as JSONB
+        calculationData: courses, // Store as JSONB
       });
 
       return {

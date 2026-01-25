@@ -35,11 +35,32 @@ export function useResources(filters: ResourceFilters) {
       });
 
       if (response.data?.success) {
-        // Transform the data to match our Resource type
-        const transformedData = (response.data.data as any[]).map((item) => ({
+        // Transform data to match our Resource type
+        const transformedData = response.data.data.map((item) => ({
           ...item,
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
+          categories: (item.categories || []).map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            description: cat.description,
+            createdAt: cat.createdAt
+              ? new Date(cat.createdAt).toISOString()
+              : undefined,
+            updatedAt: cat.updatedAt
+              ? new Date(cat.updatedAt).toISOString()
+              : undefined,
+          })),
+          contentType: item.contentType
+            ? {
+                id: item.contentType.id,
+                name: item.contentType.name,
+              }
+            : null,
+          createdAt: item.createdAt
+            ? new Date(item.createdAt).toISOString()
+            : undefined,
+          updatedAt: item.updatedAt
+            ? new Date(item.updatedAt).toISOString()
+            : undefined,
         }));
 
         return {
