@@ -803,7 +803,8 @@ export function registerResourceTools(server: McpServer): void {
     "bulk_delete_resources",
     {
       title: "Bulk Delete Resources",
-      description: "Permanently delete multiple resources in a single batch operation.",
+      description:
+        "Permanently delete multiple resources in a single batch operation.",
       inputSchema: z.object({
         ids: z.array(z.string()).describe("Array of resource IDs to delete"),
         onError: z
@@ -955,7 +956,8 @@ export function registerResourceTools(server: McpServer): void {
     "bulk_create_resource_categories",
     {
       title: "Bulk Create Resource Categories",
-      description: "Create multiple resource categories in a single batch operation.",
+      description:
+        "Create multiple resource categories in a single batch operation.",
       inputSchema: z.object({
         categories: z.array(categoryCreateSchema),
         onError: z

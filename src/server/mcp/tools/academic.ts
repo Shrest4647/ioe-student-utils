@@ -54,7 +54,8 @@ export function registerAcademicTools(server: McpServer): void {
     "fetch_programs",
     {
       title: "Fetch Programs",
-      description: "Retrieve academic programs from IOESU database with optional filtering.",
+      description:
+        "Retrieve academic programs from IOESU database with optional filtering.",
       inputSchema: programFilterSchema,
     },
     async (params, requestContext) => {

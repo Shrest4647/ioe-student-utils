@@ -1,8 +1,9 @@
 import Link from "next/link";
-import Markdown from "react-markdown";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BlurFade } from "@/components/ui/blur-fade";
+import { Markdown } from "@/components/ui/markdown";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { DATA } from "@/data/resume";
 import { HackathonCard } from "./hackathon-card";

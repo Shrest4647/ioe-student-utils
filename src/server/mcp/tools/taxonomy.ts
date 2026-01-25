@@ -7,7 +7,8 @@ export function registerTaxonomyTools(server: McpServer): void {
     "lookup_taxonomy",
     {
       title: "Lookup Taxonomy",
-      description: "Lookup IDs for countries, degrees, or fields by name (fuzzy search).",
+      description:
+        "Lookup IDs for countries, degrees, or fields by name (fuzzy search).",
       inputSchema: z.object({
         type: z
           .enum(["country", "degree", "field"])

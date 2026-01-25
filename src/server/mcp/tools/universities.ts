@@ -649,7 +649,8 @@ export function registerUniversityTools(server: McpServer): void {
     "bulk_delete_universities",
     {
       title: "Bulk Delete Universities",
-      description: "Deactivate multiple universities in a single batch operation.",
+      description:
+        "Deactivate multiple universities in a single batch operation.",
       inputSchema: z.object({
         ids: z
           .array(z.string())

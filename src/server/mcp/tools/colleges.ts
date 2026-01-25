@@ -42,7 +42,8 @@ export function registerCollegeTools(server: McpServer): void {
     "fetch_colleges",
     {
       title: "Fetch Colleges",
-      description: "Retrieve colleges from IOESU database with optional filtering.",
+      description:
+        "Retrieve colleges from IOESU database with optional filtering.",
       inputSchema: collegeFilterSchema,
     },
     async (params, requestContext) => {

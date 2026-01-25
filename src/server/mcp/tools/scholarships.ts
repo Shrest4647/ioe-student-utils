@@ -601,9 +601,7 @@ export function registerScholarshipTools(server: McpServer): void {
       description:
         "Permanently delete multiple scholarships in a single batch operation.",
       inputSchema: z.object({
-        ids: z
-          .array(z.string())
-          .describe("Array of scholarship IDs to delete"),
+        ids: z.array(z.string()).describe("Array of scholarship IDs to delete"),
         onError: z
           .enum(["continue", "abort"])
           .default("continue")
