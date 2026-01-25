@@ -1131,37 +1131,6 @@ export function registerDomainTools(server: McpServer): void {
 
 ## MCP Resources
 
-### Data Export Resources
-
-**`scholarships_export`**
-- URI: `export://scholarships`
-- Description: Export all scholarships as JSON
-- Optional filters: country, field, degree, fundingType, status
-- Implementation: Use `fetch_scholarships` tool with filters, return raw JSON
-
-**`universities_export`**
-- URI: `export://universities`
-- Description: Export universities with colleges
-- Includes: Departments, programs, courses hierarchy
-- Implementation: Fetch universities, then fetch related entities for each
-
-**`resources_export`**
-- URI: `export://resources`
-- Description: Export resource library
-- Includes: Categories, attachments
-- Implementation: Fetch resources, categories, combine in structured JSON
-
-**`users_export`**
-- URI: `export://users`
-- Description: Export user data (admin only)
-- Filters: role, registration date
-- Implementation: Use `fetch_users` with pagination, combine all pages
-
-**`analytics_summary`**
-- URI: `analytics://summary`
-- Description: Current analytics snapshot
-- Includes: Counts, trends, top items
-- Implementation: Call all analytics tools, combine in summary
 
 ### Schema Resources
 
@@ -1343,7 +1312,6 @@ src/server/mcp/
 │   ├── validation.ts              # Data validation
 │   └── analytics.ts               # Analytics and reporting
 ├── resources/
-│   ├── exports.ts                 # Data export resources
 │   ├── schema.ts                  # Schema resources
 │   └── docs.ts                   # Documentation resources
 └── prompts/
@@ -1351,75 +1319,7 @@ src/server/mcp/
     ├── generation.ts              # Content generation
     └── quality.ts                # Data quality prompts
 ```
-
----
-
-## Bulk Operations Pattern
-
-### Standard Bulk Response Format
-
-```typescript
-interface BulkOperationResult<T> {
-  success: boolean;
-  results: Array<{
-    index: number;
-    success?: true;
-    data?: T;
-    error?: string;
-  }>;
-  summary: {
-    total: number;
-    successful: number;
-    failed: number;
-  };
-}
-```
-
-### Bulk Implementation Example
-
-```typescript
-async function bulkCreateOperation<T>(
-  items: T[],
-  apiCall: (item: T) => Promise<{ data?: { success?: boolean; data?: T }; error?: any }>,
-  onError: 'continue' | 'abort' = 'continue'
-): Promise<BulkOperationResult<T>> {
-  const results = [];
-  let successful = 0;
-  let failed = 0;
-
-  for (let i = 0; i < items.length; i++) {
-    try {
-      const response = await apiCall(items[i]);
-      if (response.data?.success && response.data.data) {
-        results.push({ index: i, success: true, data: response.data.data });
-        successful++;
-      } else {
-        const error = response.error?.value?.message || 'Unknown error';
-        results.push({ index: i, error });
-        failed++;
-
-        if (onError === 'abort') break;
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      results.push({ index: i, error: message });
-      failed++;
-
-      if (onError === 'abort') break;
-    }
-  }
-
-  return {
-    success: failed === 0 || onError === 'continue',
-    results,
-    summary: {
-      total: items.length,
-      successful,
-      failed
-    }
-  };
-}
-```
+a
 
 ---
 
@@ -1439,7 +1339,7 @@ async function bulkCreateOperation<T>(
 - Database operations (via API)
 
 ### E2E Testing
-- HTTPStreaming transport with Claude Desktop
+- HTTPStreaming transport with Claude, Opencode
 - Bulk operations (create, update, delete)
 - Multi-tool workflows
 - Error recovery
@@ -1473,6 +1373,8 @@ async function bulkCreateOperation<T>(
 - **✅ All tools MUST use Eden API client** from `@/server/elysia/eden.ts`
 - **❌ NEVER access database directly** in MCP tools
 - **✅ Infer types from Eden API** for type safety (see scholarships.ts pattern)
+- **❌ TRY not to use any type annotations**
+- **✅ New Drizzle Query Syntax** - check the docs at @docs/drizzle-v1-changes.md, @docs/drizzle-queries.md
 - **✅ Handle bulk operations internally** - abstract looping from AI agents
 - **✅ Follow `scholarships.ts` pattern** for type inference, API calls, responses
 - **✅ Use consistent error handling** and response formatting
