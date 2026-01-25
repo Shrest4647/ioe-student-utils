@@ -138,8 +138,6 @@ export default function CollegeEditPage() {
     enabled: !isNew && !!collegeQuery.data?.id,
   });
 
-  console.log("collegeDepts", collegeDepartmentsQuery.data);
-
   const saveMutation = useMutation({
     mutationFn: async (values: z.infer<typeof collegeSchema>) => {
       if (isNew) {

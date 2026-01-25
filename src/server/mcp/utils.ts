@@ -143,3 +143,140 @@ export function isAdminUser(_context: any): boolean {
   // This would be implemented based on user role from database
   return false;
 }
+
+type AsyncFactory<T> = () => Promise<T>;
+
+export async function withArrayReduceAll<T>(
+  promiseFactories: AsyncFactory<T>[],
+): Promise<T[]> {
+  const accPromise = promiseFactories.reduce<Promise<T[]>>(
+    (acc, factory) =>
+      acc.then((results) =>
+        factory().then((response) => [...results, response]),
+      ),
+    Promise.resolve([]),
+  );
+
+  return accPromise;
+}
+
+type SettledResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: unknown };
+
+export async function withArrayReduceSettled<T>(
+  promiseFactories: Array<() => Promise<T>>,
+): Promise<SettledResult<T>[]> {
+  return promiseFactories.reduce<Promise<SettledResult<T>[]>>(
+    async (acc, factory) => {
+      const results = await acc;
+      try {
+        const data = await factory();
+        return [...results, { success: true, data }];
+      } catch (error) {
+        return [...results, { success: false, error }];
+      }
+    },
+    Promise.resolve([]),
+  );
+}
+
+export type ApiResponse<U> = {
+  data?: {
+    success: boolean;
+    data?: U;
+  };
+  error?: {
+    value?: {
+      message?: string;
+    };
+  };
+};
+
+export type BulkSuccessResult<U> = {
+  index: number;
+  success: true;
+  data: U;
+};
+
+export type BulkFailureResult = {
+  index: number;
+  success: false;
+  error: string;
+};
+
+export type BulkOperationItemResult<U> =
+  | BulkSuccessResult<U>
+  | BulkFailureResult;
+
+export type BulkOperationResult<U> = {
+  success: boolean;
+  results: BulkOperationItemResult<U>[];
+  summary: {
+    total: number;
+    successful: number;
+    failed: number;
+  };
+};
+
+export async function bulkOperation<T>(
+  items: T[],
+  promiseFactory: (item: T, index: number) => Promise<unknown>,
+  onError: "continue" | "abort" = "continue",
+): Promise<BulkOperationResult<T>> {
+  let successful = 0;
+  let failed = 0;
+
+  const factories: Array<() => Promise<BulkOperationItemResult<T>>> = items.map(
+    (item, index) => async () => {
+      try {
+        await promiseFactory(item, index);
+        successful++;
+
+        return {
+          index,
+          success: true,
+          data: item,
+        };
+      } catch (err) {
+        failed++;
+
+        const error = err instanceof Error ? err.message : "Unknown error";
+
+        const result: BulkFailureResult = {
+          index,
+          success: false,
+          error,
+        };
+
+        if (onError === "abort") {
+          throw result;
+        }
+
+        return result;
+      }
+    },
+  );
+
+  let results: BulkOperationItemResult<T>[];
+
+  try {
+    results = await withArrayReduceAll(factories);
+  } catch (err) {
+    // Abort path – preserve the failure that caused it
+    results =
+      err && typeof err === "object" && "index" in err
+        ? [err as BulkFailureResult]
+        : [];
+  }
+
+  return {
+    success: failed === 0 || onError === "continue",
+    results,
+    summary: {
+      total: items.length,
+      successful,
+      failed,
+    },
+  };
+}

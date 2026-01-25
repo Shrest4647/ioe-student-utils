@@ -1,6 +1,6 @@
 # MCP Server Implementation Summary
 
-## Date: 2025-01-24
+## Date: 2026-01-25
 
 ## What Was Implemented
 
@@ -13,10 +13,10 @@
    - Configurable base path, timeout, and logging
 
 2. **Authentication System** (`src/lib/mcp/auth.ts`)
-   - API key extraction from request headers
-   - Server-side API key verification
-   - Permission-based access control
-   - Tool permission mapping
+   - API key extraction from request headers (`requestContext.authInfo.token`)
+   - Server-side API key verification via `verifyToken`
+   - Propagation of user credentials to underlying Elysia/Eden API calls
+   - Permission-based access control (WIP)
 
 3. **Utilities** (`src/lib/mcp/utils.ts`)
    - Request logging with structured format
@@ -36,16 +36,12 @@
 **Purpose**: Retrieve scholarships from IOESU database with optional filtering and pagination.
 
 **Features**:
+- Complete CRUD operations for scholarships, rounds, and events
+- Bulk operations for creation, updates, and archival
 - Pagination support (limit/offset)
-- Full-text search on name field
-- Filter by:
-  - Country codes (ISO 2-letter)
-  - Field of study IDs
-  - Degree level IDs
-  - Funding type (fully_funded, partial, tuition_only)
-  - Scholarship status (active, inactive, archived)
-  - Active status (boolean)
-- Return formatted response with metadata
+- Full-text search and extensive filtering
+- Type inference from Elysia/Eden API for robust development
+- Bearer token propagation for secure user-acting requests
 
 **Parameters**:
 - `limit` (1-100, default: 20): Maximum results to return
@@ -241,26 +237,11 @@ All tool invocations logged with:
 
 ### Immediate Next Steps
 
-1. **Add more scholarship tools**:
-   - `create_scholarship`: Add new scholarships
-   - `update_scholarship`: Modify existing
-   - `delete_scholarship`: Soft delete
-   - `get_scholarship_by_id`: Get single with relations
-
-2. **Add university tools** (`universities.ts`):
-   - `fetch_universities`
-   - `create_university`
-   - `update_university`
-
-3. **Add event tools** (`events.ts`):
-   - `fetch_round_events`
-   - `create_round_event`
-   - `update_event`
-
-4. **Add resource tools** (`resources.ts`):
-   - `fetch_resources`
-   - `create_resource`
-   - `update_resource`
+1. **Add scholarship tools**: ✅ Completed! (CRUD + Bulk)
+2. **Add university tools** (`universities.ts`): ⏳ Next up
+3. **Add event tools** (`events.ts`): ✅ Completed inside `scholarships.ts`
+4. **Add resource tools** (`resources.ts`): ⏳ Planned
+5. **Add taxonomy tools** (`taxonomy.ts`): ⏳ Planned
 
 5. **Add relation support**:
    - Fetch related countries for scholarships

@@ -785,5 +785,19 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
             summary: "Update round event",
           },
         },
+      )
+      .delete(
+        "/rounds/events/:id",
+        async ({ params: { id } }) => {
+          await db.delete(roundEvents).where(eq(roundEvents.id, id));
+          return { success: true };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Scholarships Admin"],
+            summary: "Delete round event",
+          },
+        },
       ),
   );
