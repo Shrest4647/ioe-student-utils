@@ -1,3 +1,5 @@
+"use client";
+
 import { marked } from "marked";
 import { memo, useId, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
