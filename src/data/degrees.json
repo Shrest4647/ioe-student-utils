@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Certificate",
+    "rank": "1"
+  },
+  {
+    "name": "Diploma",
+    "rank": "2"
+  },
+  {
+    "name": "Associate",
+    "rank": "3"
+  },
+  {
+    "name": "Undergraduate",
+    "rank": "4"
+  },
+  {
+    "name": "Postgraduate",
+    "rank": "5"
+  },
+  {
+    "name": "Doctoral",
+    "rank": "6"
+  },
+  {
+    "name": "Postdoctoral",
+    "rank": "7"
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "name": "Oxford - Reach Oxford Scholarship"
+  },
+  {
+    "id": 2,
+    "name": "Cambridge - Gates Cambridge Scholarship"
+  },
+  {
+    "id": 3,
+    "name": "Stanford Graduate Fellowship"
+  },
+  {
+    "id": 4,
+    "name": "Harvard Academy Scholars"
+  },
+  {
+    "id": 5,
+    "name": "MIT - Presidential Fellowship"
+  },
+  {
+    "id": 6,
+    "name": "Yale - Graduate Fellowship"
+  },
+  {
+    "id": 7,
+    "name": "Princeton - Fellowship"
+  },
+  {
+    "id": 8,
+    "name": "ETH Zurich - Excellence Scholarship"
+  },
+  {
+    "id": 9,
+    "name": "EPFL - Fellowship"
+  },
+  {
+    "id": 10,
+    "name": "University of Melbourne - RTP"
+  },
+  {
+    "id": 11,
+    "name": "ANU - RTP Scholarship"
+  },
+  {
+    "id": 12,
+    "name": "University of Sydney - RTP"
+  },
+  {
+    "id": 13,
+    "name": "NUS - Research Scholarship"
+  },
+  {
+    "id": 14,
+    "name": "NTU - Nanyang President's Graduate Scholarship"
+  },
+  {
+    "id": 15,
+    "name": "KAUST - Fellowship"
+  },
+  {
+    "id": 16,
+    "name": "University of Tokyo - MEXT Scholarship"
+  },
+  {
+    "id": 17,
+    "name": "National University of Singapore"
+  },
+  {
+    "id": 18,
+    "name": "University of British Columbia - Four Year Doctoral Fellowship"
+  },
+  {
+    "id": 19,
+    "name": "University of Toronto - Fellowship"
+  },
+  {
+    "id": 20,
+    "name": "McGill University - Fellowship"
+  },
+  {
+    "id": 21,
+    "name": "VLIR-UOS Scholarship"
+  },
+  {
+    "id": 22,
+    "name": "ARES Scholarships"
+  },
+  {
+    "id": 23,
+    "name": "Warwick Chancellor's International Scholarships"
+  },
+  {
+    "id": 24,
+    "name": "Nanyang President's Graduate Scholarship (NPGS)"
+  },
+  {
+    "id": 25,
+    "name": "Gates Millennium Scholarship"
+  },
+  {
+    "id": 26,
+    "name": "New Zealand International Doctoral Research Scholarships"
+  },
+  {
+    "id": 27,
+    "name": "Swedish Institute Scholarships"
+  },
+  {
+    "id": 28,
+    "name": "Maastricht University Scholarships"
+  },
+  {
+    "id": 29,
+    "name": "University of Twente Scholarship (UTS)"
+  },
+  {
+    "id": 30,
+    "name": "Edinburgh Doctoral College Scholarships"
+  },
+  {
+    "id": 31,
+    "name": "Fulbright Foreign Student Program"
+  },
+  {
+    "id": 32,
+    "name": "Joint Japan/World Bank Graduate Scholarship Program (JJ/WBGSP)"
+  },
+  {
+    "id": 33,
+    "name": "Taiwan ICDF Higher Education Scholarship"
+  },
+  {
+    "id": 34,
+    "name": "Aga Khan Foundation International Scholarship"
+  },
+  {
+    "id": 35,
+    "name": "Chinese Government Scholarship Program"
+  },
+  {
+    "id": 36,
+    "name": "Australia Awards Scholarships"
+  },
+  {
+    "id": 37,
+    "name": "Chevening Scholarships (UK)"
+  },
+  {
+    "id": 38,
+    "name": "Commonwealth Scholarships"
+  },
+  {
+    "id": 39,
+    "name": "Erasmus Mundus Joint Doctorates"
+  },
+  {
+    "id": 40,
+    "name": "DAAD Scholarships (Germany)"
+  },
+  {
+    "id": 41,
+    "name": "Eiffel Excellence Scholarships (France)"
+  },
+  {
+    "id": 42,
+    "name": "Swiss Government Excellence Scholarships"
+  },
+  {
+    "id": 43,
+    "name": "Netherlands Fellowship Program"
+  },
+  {
+    "id": 44,
+    "name": "Italian Government Scholarships"
+  },
+  {
+    "id": 45,
+    "name": "Japanese Government (MEXT) Scholarships"
+  },
+  {
+    "id": 46,
+    "name": "Korean Government Scholarship Program"
+  },
+  {
+    "id": 47,
+    "name": "Singapore International Graduate Award (SINGA)"
+  },
+  {
+    "id": 48,
+    "name": "Turkey Scholarships"
+  },
+  {
+    "id": 49,
+    "name": "Hungarian Government Scholarships"
+  },
+  {
+    "id": 50,
+    "name": "Russian Government Scholarships"
+  }
+]
