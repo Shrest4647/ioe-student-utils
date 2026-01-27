@@ -206,7 +206,12 @@ export const departmentRoutes = new Elysia({ prefix: "/departments" })
       );
 
       const collegesList = collegeDepartmentsList.map((cd) => ({
-        ...cd.college,
+        id: cd.college?.id,
+        name: cd.college?.name,
+        slug: cd.college?.slug,
+        description: cd.college?.description,
+        websiteUrl: cd.college?.websiteUrl,
+        university: cd.college?.university,
       }));
 
       return { success: true, data: collegesList };
