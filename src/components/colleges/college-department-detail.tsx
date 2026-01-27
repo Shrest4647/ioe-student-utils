@@ -33,7 +33,7 @@ export function CollegeDepartmentDetail() {
   }
 
   const collegeDepartmentData = {
-    id: collegeDepartment.id,
+    id: collegeDepartment.department?.id || collegeDepartment.id,
     name: collegeDepartment.department?.name || "",
     slug: collegeDepartment.department?.slug || "",
     description:
