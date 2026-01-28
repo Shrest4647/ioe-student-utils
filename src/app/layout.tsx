@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "@/styles/globals.css";
@@ -146,6 +147,7 @@ export default function RootLayout({
           <Toaster />
           <VibeKanbanCompanion />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
