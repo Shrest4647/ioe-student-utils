@@ -14,20 +14,20 @@ export function CollegeDepartmentDetail() {
     departmentSlug as string,
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   if (!collegeDepartment) {
     return (
       <div className="flex min-h-125 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20">
-        <div className="text-center">
-          <p className="text-lg text-muted-foreground">Department not found</p>
-        </div>
+        {!isLoading ? (
+          <div className="text-center">
+            <p className="text-lg text-muted-foreground">
+              Department not found
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
       </div>
     );
   }
