@@ -410,7 +410,7 @@ export function ProgramDetail({
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="line-clamp-2 text-muted-foreground text-xs">
                           {course.description || "No description available"}
                         </p>
                       </CardContent>

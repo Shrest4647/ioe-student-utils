@@ -354,7 +354,7 @@ export function DepartmentDetail({
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="line-clamp-2 text-xs">
                           {college.description || "No description available"}
                         </p>
                       </CardContent>
@@ -396,7 +396,7 @@ export function DepartmentDetail({
                             {program.name}
                           </Link>
                         </CardTitle>
-                        <CardDescription className="flex flex-wrap gap-2">
+                        <CardDescription className="line-clamp-2 flex flex-wrap gap-2 text-xs">
                           {program.code && (
                             <Badge variant="outline">{program.code}</Badge>
                           )}

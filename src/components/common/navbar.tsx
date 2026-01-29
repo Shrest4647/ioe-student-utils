@@ -31,6 +31,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
+/**
+ * Render the site's responsive top navigation bar with desktop and mobile layouts.
+ *
+ * Renders brand link, navigation items (Universities, Resources, Scholarships, GPA Converter), a user menu, and a collapsible mobile menu. Dashboard sections are included when the current user is authenticated.
+ *
+ * @returns The Navbar React element
+ */
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const { isAuthenticated } = useAuth();

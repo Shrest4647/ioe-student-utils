@@ -5,6 +5,12 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Render the RecommendationWizard in edit mode for the specified letter.
+ *
+ * @param params - Object with an `id` string identifying the letter to edit
+ * @returns The page element containing the recommendation editor for that letter
+ */
 export default function EditLetterPage({ params }: PageProps) {
   const { id } = use(params);
 

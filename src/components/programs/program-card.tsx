@@ -107,7 +107,7 @@ export function ProgramCard({
             <CardTitle className="line-clamp-1 text-lg">
               <Link
                 href={
-                  entityType === "program" && slug && departmentSlug
+                  entityType === "program" || !(slug && departmentSlug)
                     ? `/programs/${program.code}`
                     : `/colleges/${slug}/departments/${departmentSlug}/programs/${program.code}`
                 }
