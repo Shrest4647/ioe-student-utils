@@ -61,6 +61,13 @@ interface RecommendationWizardProps {
   letterId?: string;
 }
 
+/**
+ * Render a multi-step wizard for creating or editing a recommendation letter.
+ *
+ * @param editMode - If true, preload the existing letter (when `letterId` is provided) and skip the template selection step.
+ * @param letterId - The ID of the letter to load when editing; ignored when `editMode` is false or unset.
+ * @returns The wizard UI that guides the user through template selection, recommender and target details, template variables, custom content, and final review.
+ */
 export function RecommendationWizard({
   editMode,
   letterId,

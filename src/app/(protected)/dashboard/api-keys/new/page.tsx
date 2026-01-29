@@ -40,6 +40,14 @@ const EXPIRATION_OPTIONS = [
   { value: 365, label: "1 year" },
 ] as const;
 
+/**
+ * Renders the "Create New API Key" page and manages the creation flow and post-creation UI.
+ *
+ * Displays a form to configure API key name, expiration, per-resource permissions, and optional metadata;
+ * after successful creation it shows the generated key, expiration and permission summary, and actions to copy the key or create another.
+ *
+ * @returns A React element that renders the new API key creation page and its result view.
+ */
 export default function NewApiKeyPage() {
   const router = useRouter();
   const [name, setName] = useState("");

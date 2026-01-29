@@ -26,6 +26,15 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Render the recommendation letter details page for a given letter id.
+ *
+ * Fetches the letter by id and displays its title, status, creation date,
+ * a preview, recommender and target metadata, and actions to edit or download the letter.
+ *
+ * @param params - An object (resolved from route params) containing the `id` of the letter to display
+ * @returns The page UI showing letter preview, metadata, and action controls (edit, download)
+ */
 export default function LetterDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
