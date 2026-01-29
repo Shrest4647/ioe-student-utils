@@ -354,7 +354,7 @@ export function DepartmentDetail({
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <p className="line-clamp-2 text-xs">
+                        <p className="line-clamp-2 text-muted-foreground text-xs">
                           {college.description || "No description available"}
                         </p>
                       </CardContent>
