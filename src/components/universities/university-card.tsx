@@ -106,7 +106,7 @@ export function UniversityCard({ university }: UniversityCardProps) {
                 {university.name}
               </Link>
             </CardTitle>
-            <CardDescription className="line-clamp-2 text-xs">
+            <CardDescription className="line-clamp-2 overflow-hidden text-xs">
               {university.description || "No description available"}
             </CardDescription>
           </div>

@@ -69,7 +69,6 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       query: t.Object({
         search: t.Optional(t.String()),
         country: t.Optional(t.String()),
@@ -108,7 +107,6 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       return { success: true, data: university };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       params: t.Object({
         slug: t.String(),
       }),
@@ -154,7 +152,6 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       return { success: true, data: ratingsList };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       params: t.Object({
         id: t.String(),
       }),
