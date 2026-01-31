@@ -74,7 +74,7 @@ export function DailyTaskView() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -82,31 +82,38 @@ export function DailyTaskView() {
     }
   }, [user, fetchTodayTasks]);
 
-  const toggleTaskComplete = async (taskId: string, completed: boolean) => {
-    try {
-      const endpoint = completed ? "/complete" : "/uncomplete";
-      await fetch(`/api/study-tasks/${taskId}${endpoint}`, {
-        method: "PATCH",
-      });
+  const toggleTaskComplete = useCallback(
+    async (taskId: string, completed: boolean) => {
+      try {
+        const endpoint = completed ? "/complete" : "/uncomplete";
+        const response = await fetch(`/api/study-tasks/${taskId}${endpoint}`, {
+          method: "PATCH",
+        });
 
-      // Optimistic update
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId ? { ...task, completed } : task,
-        ),
-      );
-      setCompletedCount((prev) => (completed ? prev + 1 : prev - 1));
-    } catch (error) {
-      console.error("Error updating task:", error);
-      // Revert on error
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId ? { ...task, completed: !completed } : task,
-        ),
-      );
-      setCompletedCount((prev) => (completed ? prev - 1 : prev + 1));
-    }
-  };
+        if (!response.ok) {
+          throw new Error("Failed to update task");
+        }
+
+        // Update state after successful API call
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === taskId ? { ...task, completed } : task,
+          ),
+        );
+        setCompletedCount((prev) => (completed ? prev + 1 : prev - 1));
+      } catch (error) {
+        console.error("Error updating task:", error);
+        // Revert on error
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === taskId ? { ...task, completed: !completed } : task,
+          ),
+        );
+        setCompletedCount((prev) => (completed ? prev - 1 : prev + 1));
+      }
+    },
+    [],
+  );
 
   const progressPercentage =
     tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
