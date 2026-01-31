@@ -1,13 +1,17 @@
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
   pgTable,
   pgTableCreator,
   text,
+  time,
   timestamp,
   unique,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `pg-drizzle_${name}`);
@@ -1223,3 +1227,24 @@ export const gpaConversions = pgTable("gpa_conversion", {
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
 });
+
+// --- Study Planner Tables ---
+
+export const academicEvents = pgTable("academic_event", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  subjectName: varchar("subject_name", { length: 255 }).notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // 'exam', 'assignment', 'project', 'lab'
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  eventDate: date("date").notNull(),
+  eventTime: time("time"),
+  location: varchar("location", { length: 255 }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+export type AcademicEvent = typeof academicEvents.$inferSelect;
+export type NewAcademicEvent = typeof academicEvents.$inferInsert;
