@@ -1251,3 +1251,35 @@ export const academicEvents = pgTable("academic_event", {
 
 export type AcademicEvent = typeof academicEvents.$inferSelect;
 export type NewAcademicEvent = typeof academicEvents.$inferInsert;
+
+export const studyTemplates = pgTable("study_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  durationDays: integer("duration_days").notNull(),
+  difficultyLevel: varchar("difficulty_level", { length: 50 }),
+  dailyStructure: jsonb("daily_structure").notNull().$type<{
+    morning: Array<{
+      type: string;
+      template: string;
+      estimated_minutes: number;
+    }>;
+    afternoon: Array<{
+      type: string;
+      template: string;
+      estimated_minutes: number;
+    }>;
+    evening: Array<{
+      type: string;
+      template: string;
+      estimated_minutes: number;
+    }>;
+  }>(),
+  intensityCurve: jsonb("intensity_curve").notNull().$type<{
+    [key: string]: string;
+  }>(),
+  subjectArea: varchar("subject_area", { length: 100 }),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+});
+
+export type StudyTemplate = typeof studyTemplates.$inferSelect;
+export type NewStudyTemplate = typeof studyTemplates.$inferInsert;
