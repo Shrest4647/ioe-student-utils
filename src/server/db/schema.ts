@@ -1291,7 +1291,7 @@ export type NewStudyTemplate = typeof studyTemplates.$inferInsert;
 
 export const studyPlans = pgTable("study_plans", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
+  userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   templateId: uuid("template_id").references(() => studyTemplates.id),
