@@ -150,7 +150,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
   )
   .post(
     "/:id/log-time",
-    async ({ params: { id }, body, set }) => {
+    async ({ params: { id }, body, user, set }) => {
       try {
         // Get the task first
         const taskData = await db
@@ -166,10 +166,20 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
 
         const task = taskData[0];
 
+        // Get the plan to verify user owns it
+        const plan = await db.query.studyPlans.findFirst({
+          where: eq(studyPlans.id, task.studyPlanId),
+        });
+
+        if (!plan || plan.userId !== user.id) {
+          set.status = 403;
+          return { success: false, error: "Unauthorized" };
+        }
+
         // Insert study log
         await db.insert(studyLogs).values({
           taskId: id,
-          userId: body.userId,
+          userId: user.id,
           minutesSpent: body.minutes,
           notes: body.notes,
           loggedAt: new Date(),
@@ -195,7 +205,6 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
     },
     {
       body: t.Object({
-        userId: t.String(),
         minutes: t.Number(),
         notes: t.Optional(t.String()),
       }),
