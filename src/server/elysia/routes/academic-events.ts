@@ -8,43 +8,46 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
   .use(authorizationPlugin)
   .get(
     "/",
-    async ({ query, user }) => {
-      const { startDate, endDate, eventType } = query;
+    async ({ query, user, set }) => {
+      try {
+        const { startDate, endDate, eventType } = query;
 
-      // Build conditions array
-      const conditions = [eq(academicEvents.userId, user.id)];
+        // Build conditions array
+        const conditions = [eq(academicEvents.userId, user.id)];
 
-      if (startDate) {
-        conditions.push(
-          and(
-            eq(academicEvents.userId, user.id),
+        if (startDate) {
+          conditions.push(
             // @ts-ignore - drizzle ORM type
             eq(academicEvents.eventDate, startDate)
-          )
-        );
-      }
+          );
+        }
 
-      if (endDate) {
-        conditions.push(
-          and(
-            eq(academicEvents.userId, user.id),
+        if (endDate) {
+          conditions.push(
             // @ts-ignore - drizzle ORM type
             eq(academicEvents.eventDate, endDate)
-          )
-        );
+          );
+        }
+
+        if (eventType) {
+          conditions.push(eq(academicEvents.eventType, eventType));
+        }
+
+        const events = await db
+          .select()
+          .from(academicEvents)
+          .where(and(...conditions))
+          .orderBy(desc(academicEvents.eventDate));
+
+        return { success: true, data: events };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching academic events:", error);
+        return {
+          success: false,
+          error: "Failed to fetch academic events",
+        };
       }
-
-      if (eventType) {
-        conditions.push(eq(academicEvents.eventType, eventType));
-      }
-
-      const events = await db
-        .select()
-        .from(academicEvents)
-        .where(and(...conditions))
-        .orderBy(desc(academicEvents.eventDate));
-
-      return { success: true, data: events };
     },
     {
       query: t.Object({
@@ -61,19 +64,28 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
   .get(
     "/:id",
     async ({ params: { id }, user, set }) => {
-      const event = await db.query.academicEvents.findFirst({
-        where: and(
-          eq(academicEvents.id, id),
-          eq(academicEvents.userId, user.id)
-        ),
-      });
+      try {
+        const event = await db.query.academicEvents.findFirst({
+          where: and(
+            eq(academicEvents.id, id),
+            eq(academicEvents.userId, user.id)
+          ),
+        });
 
-      if (!event) {
-        set.status = 404;
-        return { success: false, error: "Academic event not found" };
+        if (!event) {
+          set.status = 404;
+          return { success: false, error: "Academic event not found" };
+        }
+
+        return { success: true, data: event };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching academic event:", error);
+        return {
+          success: false,
+          error: "Failed to fetch academic event",
+        };
       }
-
-      return { success: true, data: event };
     },
     {
       detail: {
@@ -84,17 +96,26 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
   )
   .post(
     "/",
-    async ({ body, user }) => {
-      const newEvent = await db
-        .insert(academicEvents)
-        .values({
-          ...body,
-          userId: user.id,
-          eventDate: new Date(body.eventDate),
-        })
-        .returning();
+    async ({ body, user, set }) => {
+      try {
+        const newEvent = await db
+          .insert(academicEvents)
+          .values({
+            ...body,
+            userId: user.id,
+            eventDate: new Date(body.eventDate),
+          })
+          .returning();
 
-      return { success: true, data: newEvent[0] };
+        return { success: true, data: newEvent[0] };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error creating academic event:", error);
+        return {
+          success: false,
+          error: "Failed to create academic event",
+        };
+      }
     },
     {
       body: t.Object({
@@ -115,33 +136,42 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
   .patch(
     "/:id",
     async ({ params: { id }, body, user, set }) => {
-      // First check if event exists and belongs to user
-      const existing = await db.query.academicEvents.findFirst({
-        where: and(
-          eq(academicEvents.id, id),
-          eq(academicEvents.userId, user.id)
-        ),
-      });
+      try {
+        // First check if event exists and belongs to user
+        const existing = await db.query.academicEvents.findFirst({
+          where: and(
+            eq(academicEvents.id, id),
+            eq(academicEvents.userId, user.id)
+          ),
+        });
 
-      if (!existing) {
-        set.status = 404;
-        return { success: false, error: "Academic event not found" };
+        if (!existing) {
+          set.status = 404;
+          return { success: false, error: "Academic event not found" };
+        }
+
+        const updateData: Record<string, unknown> = { ...body };
+
+        // Convert eventDate string to Date if provided
+        if (body.eventDate) {
+          updateData.eventDate = new Date(body.eventDate);
+        }
+
+        const updated = await db
+          .update(academicEvents)
+          .set(updateData)
+          .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)))
+          .returning();
+
+        return { success: true, data: updated[0] };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error updating academic event:", error);
+        return {
+          success: false,
+          error: "Failed to update academic event",
+        };
       }
-
-      const updateData: any = { ...body };
-
-      // Convert eventDate string to Date if provided
-      if (body.eventDate) {
-        updateData.eventDate = new Date(body.eventDate);
-      }
-
-      const updated = await db
-        .update(academicEvents)
-        .set(updateData)
-        .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)))
-        .returning();
-
-      return { success: true, data: updated[0] };
     },
     {
       body: t.Object({
@@ -162,24 +192,33 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
   .delete(
     "/:id",
     async ({ params: { id }, user, set }) => {
-      // First check if event exists and belongs to user
-      const existing = await db.query.academicEvents.findFirst({
-        where: and(
-          eq(academicEvents.id, id),
-          eq(academicEvents.userId, user.id)
-        ),
-      });
+      try {
+        // First check if event exists and belongs to user
+        const existing = await db.query.academicEvents.findFirst({
+          where: and(
+            eq(academicEvents.id, id),
+            eq(academicEvents.userId, user.id)
+          ),
+        });
 
-      if (!existing) {
-        set.status = 404;
-        return { success: false, error: "Academic event not found" };
+        if (!existing) {
+          set.status = 404;
+          return { success: false, error: "Academic event not found" };
+        }
+
+        await db
+          .delete(academicEvents)
+          .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)));
+
+        return { success: true };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error deleting academic event:", error);
+        return {
+          success: false,
+          error: "Failed to delete academic event",
+        };
       }
-
-      await db
-        .delete(academicEvents)
-        .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)));
-
-      return { success: true };
     },
     {
       detail: {
