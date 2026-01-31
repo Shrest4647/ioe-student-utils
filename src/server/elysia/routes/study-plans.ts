@@ -128,6 +128,27 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
           endDate,
         } = body;
 
+        // Validate dates
+        const startDateObj = new Date(startDate);
+        const examDateObj = new Date(examDate);
+        const endDateObj = new Date(endDate);
+
+        if (startDateObj >= examDateObj) {
+          set.status = 400;
+          return {
+            success: false,
+            error: "Start date must be before exam date",
+          };
+        }
+
+        if (examDateObj > endDateObj) {
+          set.status = 400;
+          return {
+            success: false,
+            error: "End date must be on or after exam date",
+          };
+        }
+
         // Generate study plan using utility
         const dailyTasks = await generateStudyPlan({
           templateId,
@@ -143,9 +164,9 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
             userId: user.id,
             templateId,
             subjectName,
-            examDate: new Date(examDate),
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            examDate: examDateObj,
+            startDate: startDateObj,
+            endDate: endDateObj,
             dailyTasks,
             status: "active",
           })
@@ -153,19 +174,20 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
 
         const plan = newPlan[0];
 
-        // Create individual study task records
-        for (const [dayNumber, tasks] of Object.entries(dailyTasks)) {
-          for (const task of tasks as GeneratedTask[]) {
-            await db.insert(studyTasks).values({
+        // Batch insert all tasks at once
+        const tasksToInsert = Object.entries(dailyTasks).flatMap(
+          ([dayNumber, tasks]) =>
+            tasks.map((task) => ({
               studyPlanId: plan.id,
               dayNumber: parseInt(dayNumber, 10),
               title: task.title,
               description: task.description,
               taskType: task.taskType,
               estimatedMinutes: task.estimatedMinutes,
-            });
-          }
-        }
+            })),
+        );
+
+        await db.insert(studyTasks).values(tasksToInsert);
 
         return { success: true, data: plan };
       } catch (error) {
@@ -293,7 +315,20 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
         examDate: t.Optional(t.String()),
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
-        dailyTasks: t.Optional(t.Any()),
+        dailyTasks: t.Optional(
+          t.Record(
+            t.String(),
+            t.Array(
+              t.Object({
+                id: t.String(),
+                title: t.String(),
+                description: t.String(),
+                taskType: t.String(),
+                estimatedMinutes: t.Number(),
+              }),
+            ),
+          ),
+        ),
         progressPercentage: t.Optional(t.String()),
         status: t.Optional(t.String()),
       }),
