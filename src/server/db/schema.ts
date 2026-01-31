@@ -769,7 +769,7 @@ export const resumeProfiles = pgTable("resume_profile", {
   github: text("github"), // GitHub URL
   web: text("web"), // Personal website URL
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()),
 });
 
 export const workExperiences = pgTable("work_experience", {
@@ -889,7 +889,7 @@ export const resumes = pgTable("resume", {
   includedSections: jsonb("included_sections").notNull(), // JSONB array of sections with order
   designTheme: jsonb("design_theme"), // JSONB metadata for themed rendering
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()),
 });
 
 // --- Recommendation Letter Generator Tables ---
@@ -1174,7 +1174,7 @@ export const gpaConversionStandards = pgTable(
       onDelete: "set null",
     }),
     createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-    updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
+    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()),
   },
   (t) => [
     index("gpa_standard_name_idx").on(t.name),
@@ -1201,7 +1201,7 @@ export const gpaConversionRanges = pgTable(
       onDelete: "set null",
     }),
     createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-    updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
+    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()),
   },
   (t) => [
     index("gpa_range_standard_id_idx").on(t.standardId),
@@ -1225,7 +1225,7 @@ export const gpaConversions = pgTable("gpa_conversion", {
   calculationData: jsonb("calculation_data").notNull(), // Array of course objects
   isDeleted: boolean("is_deleted").default(false).notNull(), // Soft delete
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()),
 });
 
 // --- Study Planner Tables ---
@@ -1243,7 +1243,7 @@ export const academicEvents = pgTable("academic_event", {
   eventTime: time("event_time"),
   location: varchar("location", { length: 255 }),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
-  updatedAt: timestamp("updated_at").$onUpdate(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()).notNull(),
 }, (t) => [
   index("academic_event_user_id_idx").on(t.userId),
   index("academic_event_date_idx").on(t.eventDate),
