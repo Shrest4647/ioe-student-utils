@@ -101,7 +101,7 @@ const features = [
     title: "Study Planner",
     description:
       "Plan and track study/application schedules, including exam dates and goals.",
-    href: "/scholarships/calendar",
+    href: "/study-planner",
   },
   {
     icon: Library,
