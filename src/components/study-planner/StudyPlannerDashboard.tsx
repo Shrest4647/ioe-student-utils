@@ -22,20 +22,25 @@ export function StudyPlannerDashboard() {
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreator, setShowCreator] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPlans = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/study-plans?userId=${user.id}`);
 
       if (response.ok) {
         const data = await response.json();
         setPlans(data.plans || []);
+      } else {
+        setError("Failed to load study plans. Please try again.");
       }
-    } catch (error) {
-      console.error("Error fetching study plans:", error);
+    } catch (err) {
+      console.error("Error fetching study plans:", err);
+      setError("Failed to load study plans. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -97,6 +102,18 @@ export function StudyPlannerDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Error State */}
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="py-8 text-center">
+            <p className="mb-4 text-destructive">{error}</p>
+            <Button onClick={fetchPlans} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
