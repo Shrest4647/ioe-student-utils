@@ -15,6 +15,24 @@ import {
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
+// Type for calendar events (unified from roundEvents and round dates)
+interface CalendarEvent {
+  id: string;
+  name: string;
+  date: Date;
+  type: "webinar" | "interview" | "result_announcement" | "deadline" | "open";
+  description: string | null;
+  round: {
+    id: string;
+    roundName: string | null;
+    scholarship: {
+      id: string;
+      name: string;
+      slug: string;
+    } | null;
+  } | null;
+}
+
 export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
   .use(authorizationPlugin)
   // --- Taxonomy Endpoints (for filters) ---
@@ -27,7 +45,6 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allCountries };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all countries" },
     },
   )
@@ -40,7 +57,6 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allDegrees };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all degree levels" },
     },
   )
@@ -53,7 +69,6 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       return { success: true, data: allFields };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       detail: { tags: ["Scholarships"], summary: "List all fields of study" },
     },
   )
@@ -264,7 +279,6 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
       };
     },
     {
-      auth: true, // Accepts both session and API key authentication
       query: t.Object({
         search: t.Optional(t.String()),
         country: t.Optional(t.String()),
@@ -286,7 +300,10 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
     "/calendar",
     async ({ query }) => {
       const { start, end } = query;
-      // Fetch all active rounds within range
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      // Fetch all round events within date range
       const events = await db.query.roundEvents.findMany({
         with: {
           round: {
@@ -297,8 +314,8 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         },
         where: {
           date: {
-            gte: new Date(start),
-            lte: new Date(end),
+            gte: startDate,
+            lte: endDate,
           },
           round: {
             isActive: true,
@@ -307,7 +324,103 @@ export const scholarshipRoutes = new Elysia({ prefix: "/scholarships" })
         orderBy: (re: any, { asc }: any) => [asc(re.date)],
       });
 
-      return { success: true, data: events };
+      // Fetch active rounds with openDate or deadlineDate within range
+      const rounds = await db.query.scholarshipRounds.findMany({
+        with: {
+          scholarship: true,
+        },
+        where: {
+          isActive: true,
+          AND: [
+            {
+              OR: [
+                {
+                  openDate: {
+                    gte: startDate,
+                    lte: endDate,
+                  },
+                },
+                {
+                  deadlineDate: {
+                    gte: startDate,
+                    lte: endDate,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      // Transform rounds into calendar events
+      const roundDateEvents: CalendarEvent[] = [];
+      for (const round of rounds) {
+        // Skip rounds without a scholarship
+        if (!round.scholarship) continue;
+
+        // Add openDate event if within range
+        if (round.openDate) {
+          const openDate = new Date(round.openDate);
+          if (openDate >= startDate && openDate <= endDate) {
+            roundDateEvents.push({
+              id: `round-${round.id}-open`,
+              name: "Applications Open",
+              date: openDate,
+              type: "open",
+              description: `Application period opens for ${round.roundName || "this round"}`,
+              round: {
+                id: round.id,
+                roundName: round.roundName,
+                scholarship: {
+                  id: round.scholarship.id,
+                  name: round.scholarship.name,
+                  slug: round.scholarship.slug,
+                },
+              },
+            });
+          }
+        }
+
+        // Add deadlineDate event if within range
+        if (round.deadlineDate) {
+          const deadlineDate = new Date(round.deadlineDate);
+          if (deadlineDate >= startDate && deadlineDate <= endDate) {
+            roundDateEvents.push({
+              id: `round-${round.id}-deadline`,
+              name: "Application Deadline",
+              date: deadlineDate,
+              type: "deadline",
+              description: `Final deadline to submit applications for ${round.roundName || "this round"}`,
+              round: {
+                id: round.id,
+                roundName: round.roundName,
+                scholarship: {
+                  id: round.scholarship.id,
+                  name: round.scholarship.name,
+                  slug: round.scholarship.slug,
+                },
+              },
+            });
+          }
+        }
+      }
+
+      // Combine and sort all events
+      const allEvents: CalendarEvent[] = [
+        ...events
+          .filter((e) => e.round !== null)
+          .map((e) => ({
+            id: e.id,
+            name: e.name,
+            date: new Date(e.date),
+            type: e.type as CalendarEvent["type"],
+            description: e.description,
+            round: e.round,
+          })),
+        ...roundDateEvents,
+      ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      return { success: true, data: allEvents };
     },
     {
       query: t.Object({
