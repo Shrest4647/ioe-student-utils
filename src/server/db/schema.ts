@@ -1279,7 +1279,11 @@ export const studyTemplates = pgTable("study_templates", {
   }>(),
   subjectArea: varchar("subject_area", { length: 100 }),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
-});
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("study_templates_subject_area_idx").on(t.subjectArea),
+  index("study_templates_difficulty_idx").on(t.difficultyLevel),
+]);
 
 export type StudyTemplate = typeof studyTemplates.$inferSelect;
 export type NewStudyTemplate = typeof studyTemplates.$inferInsert;
