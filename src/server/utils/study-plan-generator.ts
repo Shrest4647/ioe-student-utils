@@ -13,6 +13,7 @@ interface GeneratePlanOptions {
   topics: StudyTopic[];
   examDate: string;
   startDate: string;
+  /** @deprecated Reserved for future use - will adjust task intensity based on available time */
   dailyHoursAvailable?: number;
 }
 
