@@ -8,6 +8,16 @@ interface StudyTopic {
   difficulty?: "easy" | "medium" | "hard";
 }
 
+interface GeneratedTask {
+  id: string;
+  title: string;
+  description: string;
+  taskType: string;
+  estimatedMinutes: number;
+}
+
+type DailyTasks = Record<string, GeneratedTask[]>;
+
 interface GeneratePlanOptions {
   templateId: string;
   topics: StudyTopic[];
@@ -17,16 +27,42 @@ interface GeneratePlanOptions {
   dailyHoursAvailable?: number;
 }
 
-export async function generateStudyPlan(options: GeneratePlanOptions) {
+// Placeholder values for template replacement
+const PLACEHOLDER_VALUES = {
+  PROBLEM_COUNT: "5",
+  RANGE: "related to this topic",
+  KEY_TERMS_COUNT: "10",
+} as const;
+
+export async function generateStudyPlan(
+  options: GeneratePlanOptions,
+): Promise<DailyTasks> {
   const template = await db.query.studyTemplates.findFirst({
-    where: eq(studyTemplates.id, options.templateId),
+    where: { id: options.templateId },
   });
 
   if (!template) {
     throw new Error("Template not found");
   }
 
-  const dailyTasks: any = {};
+  // Validate dates
+  const start = new Date(options.startDate);
+  const exam = new Date(options.examDate);
+
+  if (start >= exam) {
+    throw new Error("Start date must be before exam date");
+  }
+
+  const availableDays = Math.ceil(
+    (exam.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  if (availableDays < template.durationDays) {
+    throw new Error(
+      `Not enough days between start and exam. Template requires ${template.durationDays} days.`,
+    );
+  }
+
+  const dailyTasks: DailyTasks = {};
   const totalDays = template.durationDays;
   const topicsPerDay = Math.ceil(options.topics.length / totalDays);
 
@@ -34,44 +70,24 @@ export async function generateStudyPlan(options: GeneratePlanOptions) {
     const startIndex = (day - 1) * topicsPerDay;
     const dayTopics = options.topics.slice(
       startIndex,
-      startIndex + topicsPerDay
+      startIndex + topicsPerDay,
     );
 
-    const tasks: any[] = [];
+    const tasks: GeneratedTask[] = [];
+    const timeSlots = ["morning", "afternoon", "evening"] as const;
 
     for (const topic of dayTopics) {
-      // Generate morning tasks
-      template.dailyStructure.morning.forEach((taskPattern) => {
-        tasks.push({
-          id: crypto.randomUUID(),
-          title: replacePlaceholders(taskPattern.template, topic, day),
-          description: "",
-          taskType: taskPattern.type,
-          estimatedMinutes: taskPattern.estimated_minutes,
-        });
-      });
-
-      // Generate afternoon tasks
-      template.dailyStructure.afternoon.forEach((taskPattern) => {
-        tasks.push({
-          id: crypto.randomUUID(),
-          title: replacePlaceholders(taskPattern.template, topic, day),
-          description: "",
-          taskType: taskPattern.type,
-          estimatedMinutes: taskPattern.estimated_minutes,
-        });
-      });
-
-      // Generate evening tasks
-      template.dailyStructure.evening.forEach((taskPattern) => {
-        tasks.push({
-          id: crypto.randomUUID(),
-          title: replacePlaceholders(taskPattern.template, topic, day),
-          description: "",
-          taskType: taskPattern.type,
-          estimatedMinutes: taskPattern.estimated_minutes,
-        });
-      });
+      for (const slot of timeSlots) {
+        for (const taskPattern of template.dailyStructure[slot]) {
+          tasks.push({
+            id: crypto.randomUUID(),
+            title: replacePlaceholders(taskPattern.template, topic, day),
+            description: "",
+            taskType: taskPattern.type,
+            estimatedMinutes: taskPattern.estimated_minutes,
+          });
+        }
+      }
     }
 
     dailyTasks[day.toString()] = tasks;
@@ -83,13 +99,13 @@ export async function generateStudyPlan(options: GeneratePlanOptions) {
 function replacePlaceholders(
   template: string,
   topic: StudyTopic,
-  day: number
+  day: number,
 ): string {
   return template
     .replace("{TOPIC}", topic.name)
     .replace("{CHAPTER}", topic.chapter || "")
-    .replace("{PROBLEM_COUNT}", "5")
-    .replace("{RANGE}", "related to this topic")
-    .replace("{KEY_TERMS_COUNT}", "10")
+    .replace("{PROBLEM_COUNT}", PLACEHOLDER_VALUES.PROBLEM_COUNT)
+    .replace("{RANGE}", PLACEHOLDER_VALUES.RANGE)
+    .replace("{KEY_TERMS_COUNT}", PLACEHOLDER_VALUES.KEY_TERMS_COUNT)
     .replace("{PREVIOUS_DAY}", `Day ${day - 1}`);
 }
