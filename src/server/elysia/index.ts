@@ -3,8 +3,8 @@ import { authorizationPlugin } from "./plugins/authorization";
 import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
-import { apiKeyRoutes } from "./routes/api-keys";
 import { academicEventsRoutes } from "./routes/academic-events";
+import { apiKeyRoutes } from "./routes/api-keys";
 import { betterUploadRoutes } from "./routes/better-upload";
 import { certificationRoutes } from "./routes/certifications";
 import { collegeRoutes } from "./routes/colleges";
@@ -24,6 +24,7 @@ import { resourceRoutes } from "./routes/resources";
 import { resumeRoutes } from "./routes/resumes";
 import { scholarshipRoutes } from "./routes/scholarships";
 import { skillRoutes } from "./routes/skills";
+import { studyPlansRoutes } from "./routes/study-plans";
 import { universityRoutes } from "./routes/universities";
 import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
@@ -58,6 +59,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(gpaConverterRoutes)
   .use(betterUploadRoutes)
   .use(academicEventsRoutes)
+  .use(studyPlansRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],
