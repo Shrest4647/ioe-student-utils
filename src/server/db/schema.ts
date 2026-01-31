@@ -1345,3 +1345,22 @@ export const studyTasks = pgTable("study_tasks", {
 
 export type StudyTask = typeof studyTasks.$inferSelect;
 export type NewStudyTask = typeof studyTasks.$inferInsert;
+
+export const studyLogs = pgTable("study_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => studyTasks.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  minutesSpent: integer("minutes_spent").notNull(),
+  notes: text("notes"),
+  loggedAt: timestamp("logged_at").$defaultFn(() => new Date()).notNull(),
+}, (t) => [
+  index("study_logs_task_id_idx").on(t.taskId),
+  index("study_logs_user_id_idx").on(t.userId),
+]);
+
+export type StudyLog = typeof studyLogs.$inferSelect;
+export type NewStudyLog = typeof studyLogs.$inferInsert;
