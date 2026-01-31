@@ -8,7 +8,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
   .use(authorizationPlugin)
   .patch(
     "/:id/complete",
-    async ({ params: { id }, set }) => {
+    async ({ params: { id }, user, set }) => {
       try {
         // Get the task first
         const taskData = await db
@@ -23,6 +23,16 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
         }
 
         const task = taskData[0];
+
+        // Get the plan to verify user owns it
+        const plan = await db.query.studyPlans.findFirst({
+          where: eq(studyPlans.id, task.studyPlanId),
+        });
+
+        if (!plan || plan.userId !== user.id) {
+          set.status = 403;
+          return { success: false, error: "Unauthorized" };
+        }
 
         // Update task as complete
         const updated = await db
@@ -69,7 +79,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
   )
   .patch(
     "/:id/uncomplete",
-    async ({ params: { id }, set }) => {
+    async ({ params: { id }, user, set }) => {
       try {
         // Get the task first
         const taskData = await db
@@ -84,6 +94,16 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
         }
 
         const task = taskData[0];
+
+        // Get the plan to verify user owns it
+        const plan = await db.query.studyPlans.findFirst({
+          where: eq(studyPlans.id, task.studyPlanId),
+        });
+
+        if (!plan || plan.userId !== user.id) {
+          set.status = 403;
+          return { success: false, error: "Unauthorized" };
+        }
 
         // Update task as incomplete
         const updated = await db
