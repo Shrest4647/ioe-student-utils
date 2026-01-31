@@ -1239,12 +1239,15 @@ export const academicEvents = pgTable("academic_event", {
   eventType: varchar("event_type", { length: 50 }).notNull(), // 'exam', 'assignment', 'project', 'lab'
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  eventDate: date("date").notNull(),
-  eventTime: time("time"),
+  eventDate: date("event_date").notNull(),
+  eventTime: time("event_time"),
   location: varchar("location", { length: 255 }),
-  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
-});
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at").$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("academic_event_user_id_idx").on(t.userId),
+  index("academic_event_date_idx").on(t.eventDate),
+]);
 
 export type AcademicEvent = typeof academicEvents.$inferSelect;
 export type NewAcademicEvent = typeof academicEvents.$inferInsert;
