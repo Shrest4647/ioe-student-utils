@@ -1,7 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import { usePrograms } from "@/hooks/use-content";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useProgramFilters } from "@/hooks/use-program-filters";
 import { ProgramCard } from "./program-card";
 
@@ -14,6 +16,12 @@ export function ProgramList() {
       degreeLevel: (filters.degreeLevel as any) || undefined,
       page: String(filters.page),
     });
+
+  const observerRef = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const programs = data?.pages.flatMap((page) => page.data) || [];
   const totalCount = data?.pages[0]?.metadata.totalCount || 0;
@@ -41,22 +49,6 @@ export function ProgramList() {
     );
   }
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-    exit: { opacity: 0, scale: 0.95 },
-  };
-
   return (
     <div className="space-y-6">
       <motion.div
@@ -68,47 +60,34 @@ export function ProgramList() {
         Showing {programs.length} of {totalCount} programs
       </motion.div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
+      <div
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-        key={`list-${filters.search}-${filters.degreeLevel}-${filters.page}`}
+        key={`list-${filters.search}-${filters.degreeLevel}`}
       >
         <AnimatePresence mode="popLayout">
           {programs.map((program) => (
             <motion.div
               key={program.id}
-              variants={item}
-              layout
-              transition={{
-                layout: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
               <ProgramCard program={program} />
             </motion.div>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </div>
 
-      {hasNextPage && (
-        <motion.div
-          className="flex justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <button
-            type="button"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="text-muted-foreground text-sm transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isFetchingNextPage ? "Loading more..." : "Load more programs"}
-          </button>
-        </motion.div>
-      )}
+      <div
+        ref={observerRef}
+        className="flex h-12 items-center justify-center"
+        aria-hidden="true"
+      >
+        {isFetchingNextPage && (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        )}
+      </div>
     </div>
   );
 }

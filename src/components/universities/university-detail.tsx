@@ -117,25 +117,25 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-6 md:flex-row">
-        <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl bg-muted">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-muted">
           {university.logoUrl ? (
             <Image
               height={200}
               width={200}
               src={university.logoUrl}
               alt={university.name}
-              className="h-24 w-24 object-contain"
+              className="h-20 w-20 object-contain"
             />
           ) : (
-            <Building2 className="h-16 w-16 text-muted-foreground" />
+            <Building2 className="h-12 w-12 text-muted-foreground" />
           )}
         </div>
-        <div className="flex flex-col gap-2">
-          <h1 className="bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
+        <div className="flex flex-1 flex-col gap-3">
+          <h1 className="bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-3xl text-transparent tracking-tight lg:text-4xl">
             {university.name}
           </h1>
-          <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground text-sm">
             {university.location && (
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
@@ -151,26 +151,26 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <RatingDisplay
               rating={Number(avgRating)}
               totalReviews={ratings?.length}
             />
+            {university.websiteUrl && (
+              <a
+                href={university.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary text-sm transition-colors hover:text-primary/80"
+              >
+                <Globe className="h-4 w-4" />
+                Visit Website
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
-          {university.websiteUrl && (
-            <a
-              href={university.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-primary text-sm transition-colors hover:text-primary/80"
-            >
-              <Globe className="h-4 w-4" />
-              Visit Website
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
         </div>
-        <div className="ml-auto">
+        <div className="shrink-0 lg:self-center">
           <RateButton
             entityName={university.name}
             categories={categories || []}
@@ -232,27 +232,36 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {university.colleges.map((college) => (
-                    <div
+                    <Card
                       key={college.id}
-                      className="flex items-center gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/50"
+                      className="group cursor-pointer transition-colors hover:border-primary/50"
                     >
-                      <GraduationCap className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <Link
-                          href={`/colleges/${college.slug}`}
-                          className="hover:underline"
-                        >
-                          <div className="font-medium">{college.name}</div>
-                        </Link>
-                        {college.location && (
-                          <div className="text-muted-foreground text-sm">
-                            {college.location}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                      <CardContent className="flex items-center gap-3 p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/colleges/${college.slug}`}
+                            className="block"
+                          >
+                            <div className="truncate font-medium group-hover:text-primary">
+                              {college.name}
+                            </div>
+                          </Link>
+                          {college.location && (
+                            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate">
+                                {college.location}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </CardContent>
@@ -322,35 +331,41 @@ export function UniversityDetail({ university, user }: UniversityDetailProps) {
             </CardHeader>
             <CardContent>
               {university.colleges && university.colleges.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {university.colleges.map((college: College) => (
-                    <Card key={college.id}>
-                      <CardHeader>
-                        <CardTitle className="text-lg">
+                    <Card
+                      key={college.id}
+                      className="group cursor-pointer transition-colors hover:border-primary/50"
+                    >
+                      <CardContent className="flex items-center gap-3 p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
                           <Link
                             href={`/colleges/${college.slug}`}
-                            className="hover:underline"
+                            className="block"
                           >
-                            {college.name}
+                            <div className="truncate font-medium group-hover:text-primary">
+                              {college.name}
+                            </div>
                           </Link>
-                        </CardTitle>
-                        {college.location && (
-                          <CardDescription className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {college.location}
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground text-sm">
-                          {college.description || "No description available"}
-                        </p>
+                          {college.location && (
+                            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate">
+                                {college.location}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
               ) : (
                 <div className="py-12 text-center">
+                  <GraduationCap className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
                   <p className="text-muted-foreground">No colleges listed</p>
                 </div>
               )}
