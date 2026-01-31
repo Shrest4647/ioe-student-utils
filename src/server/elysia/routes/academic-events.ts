@@ -1,4 +1,4 @@
-import { and, eq, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { academicEvents } from "@/server/db/schema";
@@ -17,15 +17,15 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
 
         if (startDate) {
           conditions.push(
-            // @ts-ignore - drizzle ORM type
-            eq(academicEvents.eventDate, startDate)
+            // @ts-expect-error - drizzle ORM type
+            eq(academicEvents.eventDate, startDate),
           );
         }
 
         if (endDate) {
           conditions.push(
-            // @ts-ignore - drizzle ORM type
-            eq(academicEvents.eventDate, endDate)
+            // @ts-expect-error - drizzle ORM type
+            eq(academicEvents.eventDate, endDate),
           );
         }
 
@@ -59,7 +59,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         tags: ["Academic Events"],
         summary: "Get all academic events for user",
       },
-    }
+    },
   )
   .get(
     "/:id",
@@ -68,7 +68,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const event = await db.query.academicEvents.findFirst({
           where: and(
             eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id)
+            eq(academicEvents.userId, user.id),
           ),
         });
 
@@ -92,7 +92,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         tags: ["Academic Events"],
         summary: "Get academic event by ID",
       },
-    }
+    },
   )
   .post(
     "/",
@@ -131,7 +131,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         tags: ["Academic Events"],
         summary: "Create new academic event",
       },
-    }
+    },
   )
   .patch(
     "/:id",
@@ -141,7 +141,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const existing = await db.query.academicEvents.findFirst({
           where: and(
             eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id)
+            eq(academicEvents.userId, user.id),
           ),
         });
 
@@ -160,7 +160,9 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const updated = await db
           .update(academicEvents)
           .set(updateData)
-          .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)))
+          .where(
+            and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)),
+          )
           .returning();
 
         return { success: true, data: updated[0] };
@@ -187,7 +189,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         tags: ["Academic Events"],
         summary: "Update academic event",
       },
-    }
+    },
   )
   .delete(
     "/:id",
@@ -197,7 +199,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const existing = await db.query.academicEvents.findFirst({
           where: and(
             eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id)
+            eq(academicEvents.userId, user.id),
           ),
         });
 
@@ -208,7 +210,9 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
 
         await db
           .delete(academicEvents)
-          .where(and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)));
+          .where(
+            and(eq(academicEvents.id, id), eq(academicEvents.userId, user.id)),
+          );
 
         return { success: true };
       } catch (error) {
@@ -225,5 +229,5 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         tags: ["Academic Events"],
         summary: "Delete academic event",
       },
-    }
+    },
   );

@@ -1,6 +1,4 @@
-import { studyTemplates } from "../db/schema";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
 
 interface StudyTopic {
   name: string;

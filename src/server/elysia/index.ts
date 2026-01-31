@@ -25,6 +25,7 @@ import { resumeRoutes } from "./routes/resumes";
 import { scholarshipRoutes } from "./routes/scholarships";
 import { skillRoutes } from "./routes/skills";
 import { studyPlansRoutes } from "./routes/study-plans";
+import { studyTasksRoutes } from "./routes/study-tasks";
 import { universityRoutes } from "./routes/universities";
 import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
@@ -60,6 +61,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(betterUploadRoutes)
   .use(academicEventsRoutes)
   .use(studyPlansRoutes)
+  .use(studyTasksRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],

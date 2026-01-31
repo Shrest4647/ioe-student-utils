@@ -1,8 +1,7 @@
 import { db } from "../index";
-import { studyTemplates } from "../schema";
-import { eq } from "drizzle-orm";
+import { type NewStudyTemplate, studyTemplates } from "../schema";
 
-const templates = [
+const templates: NewStudyTemplate[] = [
   {
     name: "1-Day Sprint",
     durationDays: 1,
@@ -219,10 +218,7 @@ async function seedStudyTemplates() {
 
   try {
     // Check if templates already exist by selecting one
-    const existingTemplates = await db
-      .select()
-      .from(studyTemplates)
-      .limit(1);
+    const existingTemplates = await db.select().from(studyTemplates).limit(1);
 
     if (existingTemplates.length > 0) {
       console.log(`⏭️ Study templates already seeded.`);
@@ -234,7 +230,9 @@ async function seedStudyTemplates() {
       await db.insert(studyTemplates).values(template);
     }
 
-    console.log(`✅ Inserted ${templates.length} study templates successfully.`);
+    console.log(
+      `✅ Inserted ${templates.length} study templates successfully.`,
+    );
   } catch (error) {
     console.error("❌ Seeding study templates failed:", error);
     throw error;
