@@ -1320,3 +1320,28 @@ export const studyPlans = pgTable("study_plans", {
 
 export type StudyPlan = typeof studyPlans.$inferSelect;
 export type NewStudyPlan = typeof studyPlans.$inferInsert;
+
+export const studyTasks = pgTable("study_tasks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  studyPlanId: uuid("study_plan_id")
+    .notNull()
+    .references(() => studyPlans.id, { onDelete: "cascade" }),
+  dayNumber: integer("day_number").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  taskType: varchar("task_type", { length: 50 }).notNull(), // 'learn', 'practice', 'review', 'prepare'
+  estimatedMinutes: integer("estimated_minutes"),
+  completed: boolean("completed").default(false),
+  completedAt: timestamp("completed_at"),
+  actualMinutesSpent: integer("actual_minutes_spent"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("study_tasks_study_plan_id_idx").on(t.studyPlanId),
+  index("study_tasks_completed_idx").on(t.completed),
+  index("study_tasks_day_number_idx").on(t.dayNumber),
+]);
+
+export type StudyTask = typeof studyTasks.$inferSelect;
+export type NewStudyTask = typeof studyTasks.$inferInsert;
