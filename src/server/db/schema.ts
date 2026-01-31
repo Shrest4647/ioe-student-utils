@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  decimal,
   index,
   integer,
   jsonb,
@@ -1287,3 +1288,35 @@ export const studyTemplates = pgTable("study_templates", {
 
 export type StudyTemplate = typeof studyTemplates.$inferSelect;
 export type NewStudyTemplate = typeof studyTemplates.$inferInsert;
+
+export const studyPlans = pgTable("study_plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  templateId: uuid("template_id").references(() => studyTemplates.id),
+  subjectName: varchar("subject_name", { length: 255 }).notNull(),
+  examDate: date("exam_date").notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  dailyTasks: jsonb("daily_tasks").notNull().$type<{
+    [dayNumber: string]: Array<{
+      id: string;
+      title: string;
+      description: string;
+      taskType: string;
+      estimatedMinutes: number;
+    }>;
+  }>(),
+  progressPercentage: decimal("progress_percentage", { precision: 5, scale: 2 }),
+  status: varchar("status", { length: 50 }).notNull().default("active"), // 'active', 'completed', 'archived'
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("study_plans_user_id_idx").on(t.userId),
+  index("study_plans_status_idx").on(t.status),
+  index("study_plans_exam_date_idx").on(t.examDate),
+]);
+
+export type StudyPlan = typeof studyPlans.$inferSelect;
+export type NewStudyPlan = typeof studyPlans.$inferInsert;
