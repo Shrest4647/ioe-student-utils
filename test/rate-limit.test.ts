@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeAll, beforeEach } from "bun:test";
+import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
 import { Elysia } from "elysia";
 import { rateLimit, resetRateLimitStore } from "@/server/middleware/rate-limit";
 
@@ -72,7 +72,9 @@ describe("Rate Limiting", () => {
     // Exhaust the rate limit
     let blocked = false;
     for (let i = 0; i < 5; i++) {
-      const response = await testApp.handle(new Request("http://localhost/test"));
+      const response = await testApp.handle(
+        new Request("http://localhost/test"),
+      );
       if (response.status === 429) {
         blocked = true;
         break;
