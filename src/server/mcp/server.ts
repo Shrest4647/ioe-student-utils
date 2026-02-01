@@ -91,7 +91,7 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
 };
 
 export const handler = withMcpAuth(mcpHandler, verifyToken, {
-  required: true,  // ✅ Require authentication
+  required: true, // ✅ Require authentication
 });
 
 export { handler as GET, handler as POST };
