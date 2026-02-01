@@ -44,7 +44,7 @@ export function AnimatedButton({
         size={size}
         disabled={disabled || isLoading}
         className={cn(
-          "relative min-h-[44px] touch-manipulation overflow-hidden transition-all duration-300",
+          "relative min-h-11 touch-manipulation overflow-hidden transition-all duration-300",
           isLoading && "cursor-wait",
           fullWidth && "w-full",
           className,

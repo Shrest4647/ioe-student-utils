@@ -1,13 +1,15 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BookOpen, ListTodo, Plus, TrendingUp } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { apiClient } from "@/lib/eden";
 import { DailyTaskView } from "./DailyTaskView";
 import { StudyPlanCreator } from "./StudyPlanCreator";
 
@@ -165,49 +167,45 @@ function PlanCardSkeleton({ delay = 0 }: { delay?: number }) {
 
 export function StudyPlannerDashboard() {
   const { user } = useAuth();
-  const [plans, setPlans] = useState<StudyPlan[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreator, setShowCreator] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchPlans = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`/api/study-plans?userId=${user.id}`);
-
-      if (response.ok) {
-        const data = await response.json();
-        setPlans(data.plans || []);
-      } else {
-        setError("Failed to load study plans. Please try again.");
+  const {
+    data: plans,
+    isLoading: loading,
+    error: queryError,
+    refetch: fetchPlans,
+  } = useQuery({
+    queryKey: ["study-plans"],
+    queryFn: async () => {
+      const { data, error } = await apiClient.api["study-plans"].get();
+      if (error) {
+        throw new Error(
+          typeof error.value === "string"
+            ? error.value
+            : "Failed to load study plans",
+        );
       }
-    } catch (err) {
-      console.error("Error fetching study plans:", err);
-      setError("Failed to load study plans. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+      return (data?.data as StudyPlan[]) ?? [];
+    },
+    enabled: !!user,
+  });
 
-  useEffect(() => {
-    if (user) {
-      fetchPlans();
-    }
-  }, [user, fetchPlans]);
+  const error = queryError
+    ? queryError.message || "Failed to load study plans. Please try again."
+    : null;
 
   // Calculate stats
-  const activePlansCount = plans.filter((p) => p.status === "active").length;
+  const activePlansCount =
+    plans?.filter((p) => p.status === "active").length ?? 0;
 
-  const todaysTasksCount = plans.reduce((sum, plan) => {
-    const progress = parseFloat(plan.progressPercentage || "0");
-    return sum + Math.floor(progress / 10);
-  }, 0);
+  const todaysTasksCount =
+    plans?.reduce((sum, plan) => {
+      const progress = parseFloat(plan.progressPercentage || "0");
+      return sum + Math.floor(progress / 10);
+    }, 0) ?? 0;
 
   const overallProgress =
-    plans.length > 0
+    plans && plans.length > 0
       ? Math.round(
           plans.reduce(
             (sum, plan) => sum + parseFloat(plan.progressPercentage || "0"),
@@ -306,7 +304,7 @@ export function StudyPlannerDashboard() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Button
-                  onClick={fetchPlans}
+                  onClick={() => fetchPlans()}
                   variant="outline"
                   className="h-11 sm:h-10"
                 >
@@ -389,7 +387,7 @@ export function StudyPlannerDashboard() {
         <h2 className="mb-3 font-semibold text-lg sm:mb-4 sm:text-xl">
           Active Study Plans
         </h2>
-        {plans.length === 0 ? (
+        {!plans || plans.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -434,7 +432,7 @@ export function StudyPlannerDashboard() {
             animate="visible"
           >
             {plans
-              .filter((p) => p.status === "active")
+              ?.filter((p) => p.status === "active")
               .map((plan, index) => {
                 const progress = parseFloat(plan.progressPercentage || "0");
                 return (

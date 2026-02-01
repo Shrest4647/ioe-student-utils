@@ -193,13 +193,13 @@ function TaskSkeleton({ delay = 0 }: { delay?: number }) {
       <Card>
         <CardContent className="px-3 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
-            <Skeleton className="mt-0.5 size-5 flex-shrink-0 rounded-sm" />
+            <Skeleton className="mt-0.5 size-5 shrink-0 rounded-sm" />
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Skeleton className="h-5 w-16 rounded-full" />
                 <Skeleton className="h-5 w-12 rounded-full" />
               </div>
-              <Skeleton className="h-4 w-full max-w-[200px]" />
+              <Skeleton className="h-4 w-full max-w-50" />
               <Skeleton className="h-3 w-32" />
             </div>
           </div>
