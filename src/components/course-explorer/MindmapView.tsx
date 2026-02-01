@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   Node,
@@ -15,22 +15,33 @@ import {
   NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useStudyPath } from "./useStudyPath";
 
 interface MindmapViewProps {
   nodes: Node[];
   edges: Edge[];
+  path?: string;
   onNodeClick?: (node: Node) => void;
 }
 
 const nodeTypes: NodeTypes = {};
 
 export function MindmapView({
-  nodes: initialNodes,
-  edges: initialEdges,
+  nodes,
+  edges,
+  path,
   onNodeClick,
 }: MindmapViewProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { filteredNodes, filteredEdges } = useStudyPath(nodes, edges, path);
+
+  const [internalNodes, setNodes, onNodesChange] = useNodesState(filteredNodes);
+  const [internalEdges, setEdges, onEdgesChange] = useEdgesState(filteredEdges);
+
+  // Update when path changes
+  useEffect(() => {
+    setNodes(filteredNodes);
+    setEdges(filteredEdges);
+  }, [filteredNodes, filteredEdges, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -39,18 +50,18 @@ export function MindmapView({
 
   const styledNodes = useMemo(
     () =>
-      nodes.map((node) => ({
+      internalNodes.map((node) => ({
         ...node,
         style: getNodeStyle(node.data),
       })),
-    [nodes]
+    [internalNodes]
   );
 
   return (
     <div className="h-full w-full">
       <ReactFlow
         nodes={styledNodes}
-        edges={edges}
+        edges={internalEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
