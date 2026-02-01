@@ -19,10 +19,11 @@ export const rateLimit = (options: RateLimitOptions) => {
   const plugin = new Elysia({ name: "rate-limit" });
 
   plugin.onBeforeHandle(({ request, set }) => {
-    const ip =
-      request.headers.get("x-forwarded-for") ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    // Use x-forwarded-for for IP, fallback to "unknown" for local requests
+    // In production, use the actual client IP from connection info
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const ip = forwardedFor || realIp || "unknown";
 
     const now = Date.now();
     const store = rateLimitStore.get(ip);

@@ -21,3 +21,6 @@ export const courseUnits = pgTable("course_unit", {
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
+
+export type CourseUnit = typeof courseUnits.$inferSelect;
+export type NewCourseUnit = typeof courseUnits.$inferInsert;

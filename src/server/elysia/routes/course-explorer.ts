@@ -38,14 +38,19 @@ export const courseExplorerPublicRoutes = new Elysia({
 
       const results = await db.query.academicCourses.findMany({
         where: whereCondition,
-        columns: {
-          id: true,
-          slug: true,
-          name: true,
-          description: true,
-          code: true,
-          credits: true,
-          isActive: true,
+        with: {
+          units: {
+            where: { isActive: true },
+            orderBy: { sortOrder: "asc" },
+            columns: {
+              id: true,
+              slug: true,
+              name: true,
+              description: true,
+              unitType: true,
+              sortOrder: true,
+            },
+          },
         },
         limit: l,
         offset,
@@ -330,7 +335,115 @@ export const courseExplorerPublicRoutes = new Elysia({
 // Public Unit Routes
 // ============================================================================
 
-export const courseExplorerUnitRoutes = new Elysia({ prefix: "/units" })
+export const courseExplorerUnitRoutes = new Elysia({
+  prefix: "/course-explorer/units",
+})
+  .get(
+    "",
+    async ({ query }) => {
+      const { courseId, page, limit } = query;
+
+      const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
+      const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
+      const offset = (p - 1) * l;
+
+      const whereCondition: Record<string, unknown> = {};
+      if (courseId) {
+        whereCondition.courseId = courseId;
+      }
+
+      const results = await db.query.courseUnits.findMany({
+        where:
+          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+        with: {
+          course: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+          topics: {
+            columns: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
+          },
+        },
+        limit: l,
+        offset,
+        orderBy: { sortOrder: "asc" },
+      });
+
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(courseUnits)
+        .where(courseId ? eq(courseUnits.courseId, courseId) : sql`TRUE`);
+
+      const realTotal = Number(totalResult[0]?.count || 0);
+      const totalPages = Math.ceil(realTotal / l);
+
+      return {
+        success: true,
+        data: results,
+        metadata: {
+          totalCount: realTotal,
+          totalPages,
+          currentPage: p,
+          limit: l,
+          hasMore: p < totalPages,
+        },
+      };
+    },
+    {
+      query: t.Object({
+        courseId: t.Optional(t.String()),
+        page: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "List all units",
+      },
+    },
+  )
+  //Get unit by ID with topics
+  .get(
+    "/:id",
+    async ({ params: { id }, set }) => {
+      const unit = await db.query.courseUnits.findFirst({
+        where: { id, isActive: true },
+        with: {
+          course: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+          topics: {
+            columns: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
+          },
+        },
+      });
+
+      if (!unit) {
+        set.status = 404;
+        return { success: false, error: "Unit not found" };
+      }
+
+      return { success: true, data: unit };
+    },
+    {
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "Get unit by ID",
+      },
+    },
+  )
   // Get unit by slug with topics
   .get(
     "/slug/:slug",
@@ -409,7 +522,113 @@ export const courseExplorerUnitRoutes = new Elysia({ prefix: "/units" })
 // Public Topic Routes
 // ============================================================================
 
-export const courseExplorerTopicRoutes = new Elysia({ prefix: "/topics" })
+export const courseExplorerTopicRoutes = new Elysia({
+  prefix: "/course-explorer/topics",
+})
+  .get(
+    "",
+    async ({ query }) => {
+      const { unitId, page, limit } = query;
+
+      const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
+      const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
+      const offset = (p - 1) * l;
+
+      const whereCondition: Record<string, unknown> = {};
+      if (unitId) {
+        whereCondition.unitId = unitId;
+      }
+
+      const results = await db.query.courseTopics.findMany({
+        where:
+          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+        with: {
+          unit: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+          parentTopic: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        limit: l,
+        offset,
+        orderBy: { sortOrder: "asc" },
+      });
+
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(courseTopics)
+        .where(unitId ? eq(courseTopics.unitId, unitId) : sql`TRUE`);
+
+      const realTotal = Number(totalResult[0]?.count || 0);
+      const totalPages = Math.ceil(realTotal / l);
+
+      return {
+        success: true,
+        data: results,
+        metadata: {
+          totalCount: realTotal,
+          totalPages,
+          currentPage: p,
+          limit: l,
+          hasMore: p < totalPages,
+        },
+      };
+    },
+    {
+      query: t.Object({
+        unitId: t.Optional(t.String()),
+        page: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+      }),
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "List all topics",
+      },
+    },
+  )
+  //Get topic by ID with full details
+  .get(
+    "/:id",
+    async ({ params: { id }, set }) => {
+      const topic = await db.query.courseTopics.findFirst({
+        where: { id, isActive: true },
+        with: {
+          unit: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+          parentTopic: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!topic) {
+        set.status = 404;
+        return { success: false, error: "Topic not found" };
+      }
+
+      return { success: true, data: topic };
+    },
+    {
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "Get topic by ID",
+      },
+    },
+  )
   // Get topic by slug with full details
   .get(
     "/slug/:slug",
@@ -533,74 +752,6 @@ export const courseExplorerAdminRoutes = new Elysia({
   // ==========================================================================
   // Admin Course Routes
   // ==========================================================================
-  .get(
-    "/courses",
-    async ({ query }) => {
-      const { search, page, limit } = query;
-
-      const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
-      const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
-      const offset = (p - 1) * l;
-
-      const whereCondition: Record<string, unknown> = {};
-      if (search) {
-        whereCondition.name = { ilike: `%${search}%` };
-      }
-
-      const results = await db.query.academicCourses.findMany({
-        where:
-          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
-        with: {
-          units: {
-            columns: {
-              id: true,
-              name: true,
-              isActive: true,
-            },
-          },
-        },
-        limit: l,
-        offset,
-        orderBy: { createdAt: "desc" },
-      });
-
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(academicCourses)
-        .where(
-          search
-            ? sql`${academicCourses.name} ILIKE ${`%${search}%`}`
-            : sql`TRUE`,
-        );
-
-      const realTotal = Number(totalResult[0]?.count || 0);
-      const totalPages = Math.ceil(realTotal / l);
-
-      return {
-        success: true,
-        data: results,
-        metadata: {
-          totalCount: realTotal,
-          totalPages,
-          currentPage: p,
-          limit: l,
-          hasMore: p < totalPages,
-        },
-      };
-    },
-    {
-      role: "admin",
-      query: t.Object({
-        search: t.Optional(t.String()),
-        page: t.Optional(t.String()),
-        limit: t.Optional(t.String()),
-      }),
-      detail: {
-        tags: ["Course Explorer Admin"],
-        summary: "List all courses (admin)",
-      },
-    },
-  )
   .post(
     "/courses",
     async ({ body }) => {
@@ -665,79 +816,63 @@ export const courseExplorerAdminRoutes = new Elysia({
       },
     },
   )
-  // ==========================================================================
-  // Admin Unit Routes
-  // ==========================================================================
-  .get(
-    "/units",
-    async ({ query }) => {
-      const { courseId, page, limit } = query;
-
-      const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
-      const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
-      const offset = (p - 1) * l;
-
-      const whereCondition: Record<string, unknown> = {};
-      if (courseId) {
-        whereCondition.courseId = courseId;
-      }
-
-      const results = await db.query.courseUnits.findMany({
-        where:
-          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
-        with: {
-          course: {
-            columns: {
-              id: true,
-              name: true,
-            },
-          },
-          topics: {
-            columns: {
-              id: true,
-              name: true,
-              isActive: true,
-            },
-          },
-        },
-        limit: l,
-        offset,
-        orderBy: { sortOrder: "asc" },
-      });
-
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(courseUnits)
-        .where(courseId ? eq(courseUnits.courseId, courseId) : sql`TRUE`);
-
-      const realTotal = Number(totalResult[0]?.count || 0);
-      const totalPages = Math.ceil(realTotal / l);
-
-      return {
-        success: true,
-        data: results,
-        metadata: {
-          totalCount: realTotal,
-          totalPages,
-          currentPage: p,
-          limit: l,
-          hasMore: p < totalPages,
-        },
-      };
+  .delete(
+    "/courses/:id",
+    async ({ params: { id } }) => {
+      await db
+        .update(academicCourses)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(academicCourses.id, id));
+      return { success: true };
     },
     {
-      role: "admin",
-      query: t.Object({
-        courseId: t.Optional(t.String()),
-        page: t.Optional(t.String()),
-        limit: t.Optional(t.String()),
-      }),
       detail: {
         tags: ["Course Explorer Admin"],
-        summary: "List all units (admin)",
+        summary: "Soft delete course",
       },
     },
   )
+  //duplicate course
+  .post(
+    "/courses/:id/duplicate",
+    async ({ params: { id } }) => {
+      const course = await db.query.academicCourses.findFirst({
+        where: { id, isActive: true },
+      });
+
+      if (!course) {
+        return { success: false, error: "Course not found" };
+      }
+
+      const newCourse = await db
+        .insert(academicCourses)
+        .values({
+          ...course,
+          id: nanoid(),
+          slug: nanoid(),
+          name: course.name,
+          description: course.description,
+          code: course.code,
+          credits: course.credits,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      return { success: true, data: newCourse[0] };
+    },
+    {
+      detail: {
+        tags: ["Course Explorer Admin"],
+        summary: "Duplicate course",
+      },
+    },
+  )
+  // ==========================================================================
+  // Admin Unit Routes
+  // ==========================================================================
+
   .post(
     "/units",
     async ({ body }) => {
@@ -824,75 +959,7 @@ export const courseExplorerAdminRoutes = new Elysia({
   // ==========================================================================
   // Admin Topic Routes
   // ==========================================================================
-  .get(
-    "/topics",
-    async ({ query }) => {
-      const { unitId, page, limit } = query;
 
-      const p = Math.max(1, parseInt(page ?? "1", 10) || 1);
-      const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
-      const offset = (p - 1) * l;
-
-      const whereCondition: Record<string, unknown> = {};
-      if (unitId) {
-        whereCondition.unitId = unitId;
-      }
-
-      const results = await db.query.courseTopics.findMany({
-        where:
-          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
-        with: {
-          unit: {
-            columns: {
-              id: true,
-              name: true,
-            },
-          },
-          parentTopic: {
-            columns: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-        limit: l,
-        offset,
-        orderBy: { sortOrder: "asc" },
-      });
-
-      const totalResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(courseTopics)
-        .where(unitId ? eq(courseTopics.unitId, unitId) : sql`TRUE`);
-
-      const realTotal = Number(totalResult[0]?.count || 0);
-      const totalPages = Math.ceil(realTotal / l);
-
-      return {
-        success: true,
-        data: results,
-        metadata: {
-          totalCount: realTotal,
-          totalPages,
-          currentPage: p,
-          limit: l,
-          hasMore: p < totalPages,
-        },
-      };
-    },
-    {
-      role: "admin",
-      query: t.Object({
-        unitId: t.Optional(t.String()),
-        page: t.Optional(t.String()),
-        limit: t.Optional(t.String()),
-      }),
-      detail: {
-        tags: ["Course Explorer Admin"],
-        summary: "List all topics (admin)",
-      },
-    },
-  )
   .post(
     "/topics",
     async ({ body }) => {

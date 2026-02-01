@@ -1,6 +1,7 @@
 import { and, eq, ilike, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
+import slugify from "slugify";
 import { db } from "@/server/db";
 import {
   academicCourses,
@@ -656,9 +657,19 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
           const code =
             body.code || body.name.toUpperCase().replace(/[^A-Z0-9]+/g, "");
 
+          let slug = slugify(body.name);
+          // check if slug already exists
+          const existingCourse = await db.query.academicCourses.findFirst({
+            where: { slug },
+          });
+          if (existingCourse) {
+            slug = `${slug}-${nanoid(4)}`;
+          }
+
           await db.insert(academicCourses).values({
             ...body,
             id,
+            slug,
             code,
             createdAt: new Date(),
             updatedAt: new Date(),
