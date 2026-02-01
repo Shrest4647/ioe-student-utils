@@ -109,42 +109,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   // Get specific API key
   .get(
     "/:id",
-    async ({ user: currentUser, params }) => {
-      const { id } = params;
-
-      const apiKey = await db.query.apikey.findFirst({
-        where: {
-          id,
-          userId: currentUser.id,
-        },
-        columns: {
-          id: true,
-          name: true,
-          prefix: true,
-          start: true,
-          enabled: true,
-          rateLimitEnabled: true,
-          rateLimitMax: true,
-          remaining: true,
-          expiresAt: true,
-          lastRequest: true,
-          permissions: true,
-          metadata: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-
-      if (!apiKey) {
-        return {
-          success: false,
-          error: {
-            code: "API_KEY_NOT_FOUND",
-            message: "API key not found",
-          },
-        };
-      }
-
+    async ({ apiKey }) => {
       // Parse permissions and metadata from JSON strings
       const parsedApiKey = {
         ...apiKey,
@@ -161,7 +126,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
       };
     },
     {
-      auth: true,
+      apiKeyOwnerOnly: true,
       params: t.Object({
         id: t.String(),
       }),
@@ -174,38 +139,9 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   // Update API key
   .put(
     "/:id",
-    async ({ user: currentUser, body, params }) => {
+    async ({ params, body }) => {
       const { id } = params;
       const { name, enabled, permissions, metadata, expiresIn } = body;
-
-      const existingKey = await db.query.apikey.findFirst({
-        where: {
-          id,
-        },
-      });
-
-      if (!existingKey) {
-        return {
-          success: false,
-          error: {
-            code: "API_KEY_NOT_FOUND",
-            message: "API key not found",
-          },
-        };
-      }
-
-      if (
-        currentUser.role !== "admin" &&
-        existingKey.userId !== currentUser.id
-      ) {
-        return {
-          success: false,
-          error: {
-            code: "ACCESS_DENIED",
-            message: "You can only update your own API keys",
-          },
-        };
-      }
 
       const updatedKey = await auth.api.updateApiKey({
         body: {
@@ -224,7 +160,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
       };
     },
     {
-      auth: true,
+      apiKeyOwnerOnly: true,
       params: t.Object({
         id: t.String(),
       }),
@@ -244,37 +180,8 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   // Delete API key
   .delete(
     "/:id",
-    async ({ user: currentUser, params }) => {
+    async ({ params }) => {
       const { id } = params;
-
-      const existingKey = await db.query.apikey.findFirst({
-        where: {
-          id,
-        },
-      });
-
-      if (!existingKey) {
-        return {
-          success: false,
-          error: {
-            code: "API_KEY_NOT_FOUND",
-            message: "API key not found",
-          },
-        };
-      }
-
-      if (
-        currentUser.role !== "admin" &&
-        existingKey.userId !== currentUser.id
-      ) {
-        return {
-          success: false,
-          error: {
-            code: "ACCESS_DENIED",
-            message: "You can only delete your own API keys",
-          },
-        };
-      }
 
       await auth.api.deleteApiKey({
         body: {
@@ -288,7 +195,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
       };
     },
     {
-      auth: true,
+      apiKeyOwnerOnly: true,
       params: t.Object({
         id: t.String(),
       }),
@@ -301,16 +208,10 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   // Regenerate API key
   .post(
     "/:id/regenerate",
-    async ({ user: currentUser, params }) => {
+    async ({ apiKey, params }) => {
       const { id } = params;
 
-      const existingKey = await db.query.apikey.findFirst({
-        where: {
-          id,
-        },
-      });
-
-      if (!existingKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: {
@@ -320,34 +221,18 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
         };
       }
 
-      if (
-        currentUser.role !== "admin" &&
-        existingKey.userId !== currentUser.id
-      ) {
-        return {
-          success: false,
-          error: {
-            code: "ACCESS_DENIED",
-            message: "You can only regenerate your own API keys",
-          },
-        };
-      }
-
       const newApiKey = await auth.api.createApiKey({
         body: {
-          name:
-            existingKey.name ?? `Regenerated Key (${new Date().toISOString()})`,
-          expiresIn: existingKey.expiresAt
-            ? Math.floor((existingKey.expiresAt.getTime() - Date.now()) / 1000)
+          name: apiKey.name ?? `Regenerated Key (${new Date().toISOString()})`,
+          expiresIn: apiKey.expiresAt
+            ? Math.floor((apiKey.expiresAt.getTime() - Date.now()) / 1000)
             : undefined,
-          userId: existingKey.userId,
+          userId: apiKey.userId,
           permissions:
-            parseJSONFields<Record<string, string[]>>(
-              existingKey,
-              "permissions",
-            ) || undefined,
+            parseJSONFields<Record<string, string[]>>(apiKey, "permissions") ||
+            undefined,
           metadata:
-            parseJSONFields<Record<string, any>>(existingKey, "metadata") ||
+            parseJSONFields<Record<string, any>>(apiKey, "metadata") ||
             undefined,
         },
       });
@@ -364,7 +249,7 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
       };
     },
     {
-      auth: true,
+      apiKeyOwnerOnly: true,
       params: t.Object({
         id: t.String(),
       }),

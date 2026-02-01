@@ -14,6 +14,7 @@ type Role = "user" | "admin";
  * - `role: "admin"` - Requires specific role
  * - `ownerOnly: true` - User can only access their own resources (uses `id` or `userId` param)
  * - `adminOrOwner: true` - Admin users can access any resource, or user can access their own resource
+ * - `apiKeyOwnerOnly: true` - User can only access their own API keys (admin can access any)
  *
  * @example
  * # Require authentication (session or API key)
@@ -33,6 +34,9 @@ type Role = "user" | "admin";
  *
  * # Admin or owner access (admin can access any, user can access their own)
  * .put("/user/:id/profile", handler, { auth: true, adminOrOwner: true })
+ *
+ * # API key owner-only access (user can only access their own API keys)
+ * .get("/apikeys/:id", handler, { apiKeyOwnerOnly: true })
  */
 export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
   auth: {
@@ -253,6 +257,54 @@ export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
       return {
         user: session.user,
         session: session.session,
+      };
+    },
+  },
+  apiKeyOwnerOnly: {
+    async resolve({
+      status,
+      request: { headers },
+      params,
+    }: {
+      status: (code: number) => void;
+      request: { headers: Headers };
+      params: Record<string, string>;
+    }) {
+      const session = await auth.api.getSession({ headers });
+      if (!session) return status(401);
+
+      // Admin users can access any API key
+      if (session.user.role === "admin") {
+        return {
+          user: session.user,
+          session: session.session,
+        };
+      }
+
+      const apiKeyId = params.id;
+      if (!apiKeyId) {
+        return status(400);
+      }
+
+      // Check if API key exists and belongs to user
+      const apiKey = await db.query.apikey.findFirst({
+        where: {
+          id: apiKeyId,
+        },
+      });
+
+      if (!apiKey) {
+        return status(404);
+      }
+
+      if (apiKey.userId !== session.user.id) {
+        return status(403);
+      }
+
+      return {
+        user: session.user,
+        session: session.session,
+        apiKey,
       };
     },
   },

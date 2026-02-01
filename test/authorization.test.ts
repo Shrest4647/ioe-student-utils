@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { Elysia } from "elysia";
 
 // Mock session and user data
@@ -265,5 +265,174 @@ describe("Authorization Integration", () => {
       }),
     );
     expect(userResponse.status).toBe(403);
+  });
+});
+
+describe("API Key Ownership", () => {
+  // Mock API keys belonging to different users
+  const mockUser1ApiKey = {
+    id: "apikey-1",
+    name: "User 1 Key",
+    userId: "user-456", // Belongs to mockRegularUser
+    prefix: "pk1",
+    enabled: true,
+  };
+
+  const mockUser2ApiKey = {
+    id: "apikey-2",
+    name: "User 2 Key",
+    userId: "other-user-789", // Belongs to a different user
+    prefix: "pk2",
+    enabled: true,
+  };
+
+  const mockDbQuery = {
+    findFirst: mock((args: any) => {
+      // Mock database query to return API key by ID
+      if (args.where.id === "apikey-1") {
+        return Promise.resolve(mockUser1ApiKey);
+      }
+      if (args.where.id === "apikey-2") {
+        return Promise.resolve(mockUser2ApiKey);
+      }
+      return Promise.resolve(null);
+    }),
+  };
+
+  // Create test auth plugin with apiKeyOwnerOnly macro
+  const createApiKeyAuthPlugin = (
+    authenticatedUser: typeof mockAdminUser | typeof mockRegularUser | null,
+    mockDb: any,
+  ) => {
+    return new Elysia({ name: "test-apikey-auth" }).macro({
+      apiKeyOwnerOnly: {
+        async resolve({
+          status,
+          params,
+        }: {
+          status: (code: number) => void;
+          params: Record<string, string>;
+        }) {
+          if (!authenticatedUser) return status(401);
+
+          const apiKeyId = params.id;
+          if (!apiKeyId) {
+            return status(400);
+          }
+
+          // Check if API key exists
+          const apiKey = await mockDb.findFirst({ where: { id: apiKeyId } });
+
+          if (!apiKey) {
+            return status(404);
+          }
+
+          // Admin users can access any API key
+          if (authenticatedUser.role === "admin") {
+            return {
+              user: authenticatedUser,
+              session: mockSession,
+              apiKey,
+            };
+          }
+
+          // Regular users can only access their own API keys
+          if (apiKey.userId !== authenticatedUser.id) {
+            return status(403);
+          }
+
+          return {
+            user: authenticatedUser,
+            session: mockSession,
+            apiKey,
+          };
+        },
+      },
+    });
+  };
+
+  it("should allow user to access their own API key", async () => {
+    const app = new Elysia()
+      .use(createApiKeyAuthPlugin(mockRegularUser, mockDbQuery))
+      .get(
+        "/apikeys/:id",
+        ({ apiKey }) => ({
+          id: apiKey.id,
+          name: apiKey.name,
+        }),
+        { apiKeyOwnerOnly: true },
+      );
+
+    const response = await app.handle(
+      new Request("http://localhost/apikeys/apikey-1"),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.id).toBe("apikey-1");
+    expect(body.name).toBe("User 1 Key");
+  });
+
+  it("should reject user accessing another user's API key", async () => {
+    const app = new Elysia()
+      .use(createApiKeyAuthPlugin(mockRegularUser, mockDbQuery))
+      .get("/apikeys/:id", () => ({ message: "should not reach" }), {
+        apiKeyOwnerOnly: true,
+      });
+
+    const response = await app.handle(
+      new Request("http://localhost/apikeys/apikey-2"),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("should allow admin to access any API key", async () => {
+    const app = new Elysia()
+      .use(createApiKeyAuthPlugin(mockAdminUser, mockDbQuery))
+      .get(
+        "/apikeys/:id",
+        ({ apiKey }) => ({
+          id: apiKey.id,
+          name: apiKey.name,
+        }),
+        { apiKeyOwnerOnly: true },
+      );
+
+    const response = await app.handle(
+      new Request("http://localhost/apikeys/apikey-2"),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.id).toBe("apikey-2");
+  });
+
+  it("should return 404 for non-existent API key", async () => {
+    const app = new Elysia()
+      .use(createApiKeyAuthPlugin(mockRegularUser, mockDbQuery))
+      .get("/apikeys/:id", () => ({ message: "should not reach" }), {
+        apiKeyOwnerOnly: true,
+      });
+
+    const response = await app.handle(
+      new Request("http://localhost/apikeys/nonexistent"),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("should reject unauthenticated requests", async () => {
+    const app = new Elysia()
+      .use(createApiKeyAuthPlugin(null, mockDbQuery))
+      .get("/apikeys/:id", () => ({ message: "should not reach" }), {
+        apiKeyOwnerOnly: true,
+      });
+
+    const response = await app.handle(
+      new Request("http://localhost/apikeys/apikey-1"),
+    );
+
+    expect(response.status).toBe(401);
   });
 });
