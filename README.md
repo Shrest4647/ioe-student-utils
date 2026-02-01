@@ -19,7 +19,12 @@ The primary goal of this project is to create an open source, community driven e
 - **Subject Selector**: Helps students select subjects for their 7th and 8th semesters based on their interests and career goals.
 - **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours into standard credit hours used by International US/European universities.
 - **Syllabus Explorer**: Detailed breakdown of chapters, sub-topics, and marks distribution (Internal vs. Final) for BCT (Bachelor of Computer Engineering).
-- **Study Planner**: A tool to plan and track study/application schedules, including exam dates and study goals.
+- **Study Planner**: A comprehensive tool to plan and track academic schedules with structured day-by-day tasks, progress tracking, and smart notifications. Features include:
+  - Create personalized study plans from templates (1-day to custom durations)
+  - Daily task management with checkboxes and progress tracking
+  - Academic event tracking (exams, assignments, projects)
+  - Study session logging with time tracking
+  - Visual dashboard with progress indicators and upcoming deadlines
 - **Resources Library**: A collection of study materials, past papers, and other resources to help students prepare for exams and applications.
 
 ## Tech Stack
