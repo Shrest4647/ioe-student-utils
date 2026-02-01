@@ -1419,3 +1419,6 @@ export const studyLogs = pgTable(
 
 export type StudyLog = typeof studyLogs.$inferSelect;
 export type NewStudyLog = typeof studyLogs.$inferInsert;
+
+// --- Course Explorer Tables ---
+export * from "./schema/units";
