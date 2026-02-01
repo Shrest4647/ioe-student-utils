@@ -142,6 +142,16 @@ export function Navbar() {
                     asChild
                     className={navigationMenuTriggerStyle()}
                   >
+                    <Link href="/course-explorer/bct-301">
+                      <span className="text-sm">Course Explorer</span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
                     <Link href="/study-planner">
                       <span className="text-sm">Study Planner</span>
                     </Link>
@@ -290,6 +300,13 @@ export function Navbar() {
                 icon={<Calculator className="h-4 w-4" />}
               >
                 GPA Converter
+              </MobileLink>
+
+              <MobileLink
+                href="/course-explorer/bct-301"
+                icon={<BookOpen className="h-4 w-4" />}
+              >
+                Course Explorer
               </MobileLink>
 
               <MobileLink
