@@ -190,6 +190,7 @@ export const resources = pgTable("resource", {
     onDelete: "set null",
   }),
   isFeatured: boolean("is_featured").default(false).notNull(),
+  viewCount: integer("view_count").notNull().default(0),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
@@ -1424,3 +1425,4 @@ export type NewStudyLog = typeof studyLogs.$inferInsert;
 export * from "./schema/units";
 export * from "./schema/topics";
 export * from "./schema/prerequisites";
+export * from "./schema/resource-links";
