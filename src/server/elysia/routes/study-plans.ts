@@ -2,8 +2,8 @@ import { and, desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { studyPlans, studyTasks } from "@/server/db/schema";
+import { generateStudyPlan } from "@/server/utils/study-plan-generator";
 import { authorizationPlugin } from "../plugins/authorization";
-import { generateStudyPlan } from "../utils/study-plan-generator";
 
 interface GeneratedTask {
   id: string;
@@ -38,6 +38,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Plans"],
         summary: "Get all study plans for user",
@@ -65,7 +66,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
         const todayTasks: Array<{
           planId: string;
           subjectName: string;
-          examDate: Date;
+          examDate: Date | string;
           dayNumber: number;
           task: GeneratedTask;
         }> = [];
@@ -109,6 +110,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Plans"],
         summary: "Get today's tasks across all active plans",
@@ -118,6 +120,10 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
   .post(
     "/create",
     async ({ body, user, set }) => {
+      if (!user) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
       try {
         const {
           templateId,
@@ -157,16 +163,16 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
           startDate,
         });
 
-        // Insert study plan
+        // Insert study plan - Drizzle date columns expect YYYY-MM-DD strings
         const newPlan = await db
           .insert(studyPlans)
           .values({
             userId: user.id,
             templateId,
             subjectName,
-            examDate: examDateObj,
-            startDate: startDateObj,
-            endDate: endDateObj,
+            examDate: examDateObj.toISOString().split("T")[0],
+            startDate: startDateObj.toISOString().split("T")[0],
+            endDate: endDateObj.toISOString().split("T")[0],
             dailyTasks,
             status: "active",
           })
@@ -203,6 +209,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       body: t.Object({
         templateId: t.String(),
         subjectName: t.String(),
@@ -234,7 +241,9 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
     async ({ params: { id }, user, set }) => {
       try {
         const plan = await db.query.studyPlans.findFirst({
-          where: and(eq(studyPlans.id, id), eq(studyPlans.userId, user.id)),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!plan) {
@@ -260,6 +269,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Plans"],
         summary: "Get study plan by ID",
@@ -272,7 +282,9 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       try {
         // First check if plan exists and belongs to user
         const existing = await db.query.studyPlans.findFirst({
-          where: and(eq(studyPlans.id, id), eq(studyPlans.userId, user.id)),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!existing) {
@@ -282,15 +294,21 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
 
         const updateData: Record<string, unknown> = { ...body };
 
-        // Convert date strings to Date objects if provided
+        // Convert date strings to YYYY-MM-DD format for Drizzle date columns
         if (body.examDate) {
-          updateData.examDate = new Date(body.examDate as string);
+          updateData.examDate = new Date(body.examDate as string)
+            .toISOString()
+            .split("T")[0];
         }
         if (body.startDate) {
-          updateData.startDate = new Date(body.startDate as string);
+          updateData.startDate = new Date(body.startDate as string)
+            .toISOString()
+            .split("T")[0];
         }
         if (body.endDate) {
-          updateData.endDate = new Date(body.endDate as string);
+          updateData.endDate = new Date(body.endDate as string)
+            .toISOString()
+            .split("T")[0];
         }
 
         const updated = await db
@@ -310,6 +328,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       body: t.Object({
         subjectName: t.Optional(t.String()),
         examDate: t.Optional(t.String()),
@@ -344,7 +363,9 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       try {
         // First check if plan exists and belongs to user
         const existing = await db.query.studyPlans.findFirst({
-          where: and(eq(studyPlans.id, id), eq(studyPlans.userId, user.id)),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!existing) {
@@ -369,6 +390,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Plans"],
         summary: "Archive study plan",

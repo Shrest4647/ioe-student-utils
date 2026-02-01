@@ -16,17 +16,11 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const conditions = [eq(academicEvents.userId, user.id)];
 
         if (startDate) {
-          conditions.push(
-            // @ts-expect-error - drizzle ORM type
-            eq(academicEvents.eventDate, startDate),
-          );
+          conditions.push(eq(academicEvents.eventDate, startDate));
         }
 
         if (endDate) {
-          conditions.push(
-            // @ts-expect-error - drizzle ORM type
-            eq(academicEvents.eventDate, endDate),
-          );
+          conditions.push(eq(academicEvents.eventDate, endDate));
         }
 
         if (eventType) {
@@ -50,6 +44,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       }
     },
     {
+      auth: true,
       query: t.Object({
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
@@ -66,10 +61,9 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
     async ({ params: { id }, user, set }) => {
       try {
         const event = await db.query.academicEvents.findFirst({
-          where: and(
-            eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id),
-          ),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!event) {
@@ -88,6 +82,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Academic Events"],
         summary: "Get academic event by ID",
@@ -101,9 +96,14 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const newEvent = await db
           .insert(academicEvents)
           .values({
-            ...body,
             userId: user.id,
-            eventDate: new Date(body.eventDate),
+            subjectName: body.subjectName,
+            eventType: body.eventType,
+            title: body.title,
+            description: body.description,
+            eventDate: body.eventDate,
+            eventTime: body.eventTime,
+            location: body.location,
           })
           .returning();
 
@@ -118,6 +118,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       }
     },
     {
+      auth: true,
       body: t.Object({
         subjectName: t.String(),
         eventType: t.String(),
@@ -139,10 +140,9 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       try {
         // First check if event exists and belongs to user
         const existing = await db.query.academicEvents.findFirst({
-          where: and(
-            eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id),
-          ),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!existing) {
@@ -150,12 +150,18 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
           return { success: false, error: "Academic event not found" };
         }
 
-        const updateData: Record<string, unknown> = { ...body };
+        const updateData: Record<string, unknown> = {};
 
-        // Convert eventDate string to Date if provided
-        if (body.eventDate) {
-          updateData.eventDate = new Date(body.eventDate);
-        }
+        // Only include fields that are provided
+        if (body.subjectName !== undefined)
+          updateData.subjectName = body.subjectName;
+        if (body.eventType !== undefined) updateData.eventType = body.eventType;
+        if (body.title !== undefined) updateData.title = body.title;
+        if (body.description !== undefined)
+          updateData.description = body.description;
+        if (body.eventDate !== undefined) updateData.eventDate = body.eventDate;
+        if (body.eventTime !== undefined) updateData.eventTime = body.eventTime;
+        if (body.location !== undefined) updateData.location = body.location;
 
         const updated = await db
           .update(academicEvents)
@@ -176,6 +182,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       }
     },
     {
+      auth: true,
       body: t.Object({
         subjectName: t.Optional(t.String()),
         eventType: t.Optional(t.String()),
@@ -197,10 +204,9 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       try {
         // First check if event exists and belongs to user
         const existing = await db.query.academicEvents.findFirst({
-          where: and(
-            eq(academicEvents.id, id),
-            eq(academicEvents.userId, user.id),
-          ),
+          where: {
+            AND: [{ id: id }, { userId: user.id }],
+          },
         });
 
         if (!existing) {
@@ -225,6 +231,7 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Academic Events"],
         summary: "Delete academic event",

@@ -26,7 +26,9 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
 
         // Get the plan to verify user owns it
         const plan = await db.query.studyPlans.findFirst({
-          where: eq(studyPlans.id, task.studyPlanId),
+          where: {
+            AND: [{ id: task.studyPlanId }, { userId: user.id }],
+          },
         });
 
         if (!plan || plan.userId !== user.id) {
@@ -71,6 +73,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Tasks"],
         summary: "Mark task as complete",
@@ -97,7 +100,9 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
 
         // Get the plan to verify user owns it
         const plan = await db.query.studyPlans.findFirst({
-          where: eq(studyPlans.id, task.studyPlanId),
+          where: {
+            AND: [{ id: task.studyPlanId }, { userId: user.id }],
+          },
         });
 
         if (!plan || plan.userId !== user.id) {
@@ -142,6 +147,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Tasks"],
         summary: "Mark task as incomplete",
@@ -168,7 +174,9 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
 
         // Get the plan to verify user owns it
         const plan = await db.query.studyPlans.findFirst({
-          where: eq(studyPlans.id, task.studyPlanId),
+          where: {
+            AND: [{ id: task.studyPlanId }, { userId: user.id }],
+          },
         });
 
         if (!plan || plan.userId !== user.id) {
@@ -204,6 +212,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
       }
     },
     {
+      auth: true,
       body: t.Object({
         minutes: t.Number(),
         notes: t.Optional(t.String()),
@@ -219,7 +228,7 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
     async ({ params: { id }, set }) => {
       try {
         const task = await db.query.studyTasks.findFirst({
-          where: eq(studyTasks.id, id),
+          where: { id: id },
         });
 
         if (!task) {
@@ -238,9 +247,10 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
       }
     },
     {
+      auth: true,
       detail: {
         tags: ["Study Tasks"],
-        summary: "Get task details",
+        summary: "Get task by ID",
       },
     },
   );
