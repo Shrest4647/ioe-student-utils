@@ -28,7 +28,9 @@ export const rateLimit = (options: RateLimitOptions) => {
     const store = rateLimitStore.get(ip);
 
     // Debug logging
-    console.log(`[RateLimit] IP: ${ip}, Store: ${store ? JSON.stringify(store) : "null"}`);
+    console.log(
+      `[RateLimit] IP: ${ip}, Store: ${store ? JSON.stringify(store) : "null"}`,
+    );
 
     if (!store || now > store.resetTime) {
       // Create new window
@@ -38,7 +40,9 @@ export const rateLimit = (options: RateLimitOptions) => {
       };
       rateLimitStore.set(ip, newStore);
 
-      console.log(`[RateLimit] New window created: ${JSON.stringify(newStore)}`);
+      console.log(
+        `[RateLimit] New window created: ${JSON.stringify(newStore)}`,
+      );
 
       // Set rate limit headers
       set.headers["X-RateLimit-Limit"] = maxRequests.toString();
@@ -51,7 +55,9 @@ export const rateLimit = (options: RateLimitOptions) => {
     // Increment counter
     store.count++;
 
-    console.log(`[RateLimit] Incremented count to: ${store.count}, max: ${maxRequests}`);
+    console.log(
+      `[RateLimit] Incremented count to: ${store.count}, max: ${maxRequests}`,
+    );
 
     if (store.count > maxRequests) {
       console.log(`[RateLimit] BLOCKED - Exceeded limit!`);

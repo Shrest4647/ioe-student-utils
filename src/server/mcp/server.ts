@@ -3,6 +3,7 @@ import { auth } from "@/server/better-auth";
 import { registerAcademicTools } from "./tools/academic";
 import { registerCollegeTools } from "./tools/colleges";
 import { registerCountryTools } from "./tools/countries";
+import { registerCourseExplorerTools } from "./tools/course-explorer";
 import { registerDataQualityTools } from "./tools/data-quality";
 import { registerDegreeTools } from "./tools/degrees";
 import { registerDepartmentTools } from "./tools/departments";
@@ -37,6 +38,9 @@ const mcpHandler = createMcpHandler(
 
     // Academic tools (programs and courses)
     registerAcademicTools(server);
+
+    // Course Explorer tools (bulk operations for courses, units, topics)
+    registerCourseExplorerTools(server);
 
     // Resource library tools
     registerResourceTools(server);
@@ -91,7 +95,7 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
 };
 
 export const handler = withMcpAuth(mcpHandler, verifyToken, {
-  required: true, // ✅ Require authentication
+  required: true,
 });
 
 export { handler as GET, handler as POST };
