@@ -163,7 +163,7 @@ const createTestApp = () => {
         mockPlans.push(newPlan);
 
         // Create tasks for the plan
-        const tasks = [];
+        const tasks: any[] = [];
         Object.entries(dailyTasks).forEach(
           ([dayNumber, dayTasks]: [string, any]) => {
             dayTasks.forEach((taskData: any) => {
