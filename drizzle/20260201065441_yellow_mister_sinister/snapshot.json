@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "f6ad1bc9-b182-4f04-9ce8-f2f21f1c9729",
-  "prevIds": [
-    "4866d7b4-f656-4e82-a194-316a784565c7"
-  ],
+  "prevIds": ["4866d7b4-f656-4e82-a194-316a784565c7"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -8727,14 +8725,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "academic_event_user_id_user_id_fkey",
@@ -8744,14 +8738,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "account_user_id_user_id_fk",
@@ -8761,14 +8751,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "apikey_user_id_user_id_fkey",
@@ -8778,14 +8764,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "certification_record_profile_id_resume_profile_id_fkey",
@@ -8795,14 +8777,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_department_program_course_id"
-      ],
+      "columns": ["college_department_program_course_id"],
       "schemaTo": "public",
       "tableTo": "collegeprogram_to_course",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartmentprogramcourse_to_rating_Mc4St3ycIHj6_fkey",
@@ -8812,14 +8790,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartmentprogramcourse_to_rating_v6LlQcd8mO84_fkey",
@@ -8829,14 +8803,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_program_id"
-      ],
+      "columns": ["college_program_id"],
       "schemaTo": "public",
       "tableTo": "collegedepartment_to_program",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegeprogram_to_course_CxnIyJAK9KhN_fkey",
@@ -8846,14 +8816,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "course_id"
-      ],
+      "columns": ["course_id"],
       "schemaTo": "public",
       "tableTo": "academic_course",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegeprogram_to_course_course_id_academic_course_id_fkey",
@@ -8863,14 +8829,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_department_program_id"
-      ],
+      "columns": ["college_department_program_id"],
       "schemaTo": "public",
       "tableTo": "collegedepartment_to_program",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartmentprogram_to_rating_vMlFMFlDT1Fs_fkey",
@@ -8880,14 +8842,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartmentprogram_to_rating_rating_id_rating_id_fkey",
@@ -8897,14 +8855,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_id"
-      ],
+      "columns": ["college_id"],
       "schemaTo": "public",
       "tableTo": "college",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "college_department_college_id_college_id_fkey",
@@ -8914,14 +8868,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "department_id"
-      ],
+      "columns": ["department_id"],
       "schemaTo": "public",
       "tableTo": "department",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "college_department_department_id_department_id_fkey",
@@ -8931,14 +8881,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_department_id"
-      ],
+      "columns": ["college_department_id"],
       "schemaTo": "public",
       "tableTo": "college_department",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartment_to_program_54GvlNMAZVvq_fkey",
@@ -8948,14 +8894,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "program_id"
-      ],
+      "columns": ["program_id"],
       "schemaTo": "public",
       "tableTo": "academic_program",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartment_to_program_rccbeBWqKSqC_fkey",
@@ -8965,14 +8907,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_department_id"
-      ],
+      "columns": ["college_department_id"],
       "schemaTo": "public",
       "tableTo": "college_department",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartment_to_rating_HPHTMJfoRJgV_fkey",
@@ -8982,14 +8920,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "collegedepartment_to_rating_rating_id_rating_id_fkey",
@@ -8999,14 +8933,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_id"
-      ],
+      "columns": ["college_id"],
       "schemaTo": "public",
       "tableTo": "college",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "college_to_rating_college_id_college_id_fkey",
@@ -9016,14 +8946,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "college_to_rating_rating_id_rating_id_fkey",
@@ -9033,14 +8959,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "university_id"
-      ],
+      "columns": ["university_id"],
       "schemaTo": "public",
       "tableTo": "university",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "college_university_id_university_id_fkey",
@@ -9050,14 +8972,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "college_created_by_id_user_id_fkey",
@@ -9067,14 +8985,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "college_updated_by_id_user_id_fkey",
@@ -9084,14 +8998,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "country_created_by_id_user_id_fkey",
@@ -9101,14 +9011,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "country_updated_by_id_user_id_fkey",
@@ -9118,14 +9024,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "course_id"
-      ],
+      "columns": ["course_id"],
       "schemaTo": "public",
       "tableTo": "academic_course",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "course_to_rating_course_id_academic_course_id_fkey",
@@ -9135,14 +9037,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "course_to_rating_rating_id_rating_id_fkey",
@@ -9152,14 +9050,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "degree_level_created_by_id_user_id_fkey",
@@ -9169,14 +9063,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "degree_level_updated_by_id_user_id_fkey",
@@ -9186,14 +9076,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "department_id"
-      ],
+      "columns": ["department_id"],
       "schemaTo": "public",
       "tableTo": "department",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "department_to_rating_department_id_department_id_fkey",
@@ -9203,14 +9089,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "department_to_rating_rating_id_rating_id_fkey",
@@ -9220,14 +9102,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "department_created_by_id_user_id_fkey",
@@ -9237,14 +9115,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "department_updated_by_id_user_id_fkey",
@@ -9254,14 +9128,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "education_record_profile_id_resume_profile_id_fkey",
@@ -9271,14 +9141,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "field_of_study_created_by_id_user_id_fkey",
@@ -9288,14 +9154,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "field_of_study_updated_by_id_user_id_fkey",
@@ -9305,14 +9167,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "standard_id"
-      ],
+      "columns": ["standard_id"],
       "schemaTo": "public",
       "tableTo": "gpa_conversion_standard",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "gpa_conversion_range_L8PRyyxtW8H5_fkey",
@@ -9322,14 +9180,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "gpa_conversion_range_created_by_id_user_id_fkey",
@@ -9339,14 +9193,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "gpa_conversion_range_updated_by_id_user_id_fkey",
@@ -9356,14 +9206,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "gpa_conversion_standard_created_by_id_user_id_fkey",
@@ -9373,14 +9219,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "gpa_conversion_standard_updated_by_id_user_id_fkey",
@@ -9390,14 +9232,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "gpa_conversion_user_id_user_id_fkey",
@@ -9407,14 +9245,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "standard_id"
-      ],
+      "columns": ["standard_id"],
       "schemaTo": "public",
       "tableTo": "gpa_conversion_standard",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "gpa_conversion_standard_id_gpa_conversion_standard_id_fkey",
@@ -9424,14 +9258,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "language_skill_profile_id_resume_profile_id_fkey",
@@ -9441,14 +9271,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "position_of_responsibility_record_9K81GE7oLvVi_fkey",
@@ -9458,14 +9284,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "createdById"
-      ],
+      "columns": ["createdById"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "pg-drizzle_post_createdById_user_id_fkey",
@@ -9475,14 +9297,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "program_id"
-      ],
+      "columns": ["program_id"],
       "schemaTo": "public",
       "tableTo": "academic_program",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "program_to_rating_program_id_academic_program_id_fkey",
@@ -9492,14 +9310,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "program_to_rating_rating_id_rating_id_fkey",
@@ -9509,14 +9323,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "project_record_profile_id_resume_profile_id_fkey",
@@ -9526,14 +9336,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "rating_category_created_by_id_user_id_fkey",
@@ -9543,14 +9349,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "rating_category_updated_by_id_user_id_fkey",
@@ -9560,14 +9362,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "rating_user_id_user_id_fkey",
@@ -9577,14 +9375,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_category_id"
-      ],
+      "columns": ["rating_category_id"],
       "schemaTo": "public",
       "tableTo": "rating_category",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "rating_rating_category_id_rating_category_id_fkey",
@@ -9594,14 +9388,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "student_id"
-      ],
+      "columns": ["student_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "recommendation_letter_student_id_user_id_fkey",
@@ -9611,14 +9401,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "template_id"
-      ],
+      "columns": ["template_id"],
       "schemaTo": "public",
       "tableTo": "recommendation_template",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "recommendation_letter_MEodNtK0EIfW_fkey",
@@ -9628,14 +9414,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "recommendation_template_created_by_id_user_id_fkey",
@@ -9645,14 +9427,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "recommendation_template_updated_by_id_user_id_fkey",
@@ -9662,14 +9440,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "reference_record_profile_id_resume_profile_id_fkey",
@@ -9679,14 +9453,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "resource_id"
-      ],
+      "columns": ["resource_id"],
       "schemaTo": "public",
       "tableTo": "resource",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_attachment_resource_id_resource_id_fk",
@@ -9696,14 +9466,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "content_type_id"
-      ],
+      "columns": ["content_type_id"],
       "schemaTo": "public",
       "tableTo": "resource_content_type",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "resource_content_type_id_resource_content_type_id_fkey",
@@ -9713,14 +9479,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "uploader_id"
-      ],
+      "columns": ["uploader_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "resource_uploader_id_user_id_fkey",
@@ -9730,14 +9492,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "resource_id"
-      ],
+      "columns": ["resource_id"],
       "schemaTo": "public",
       "tableTo": "resource",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_to_category_resource_id_resource_id_fk",
@@ -9747,14 +9505,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "category_id"
-      ],
+      "columns": ["category_id"],
       "schemaTo": "public",
       "tableTo": "resource_category",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resource_to_category_category_id_resource_category_id_fk",
@@ -9764,14 +9518,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resume_profile_user_id_user_id_fkey",
@@ -9781,14 +9531,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "resume_profile_id_resume_profile_id_fkey",
@@ -9798,14 +9544,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "round_id"
-      ],
+      "columns": ["round_id"],
       "schemaTo": "public",
       "tableTo": "scholarship_round",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "round_event_round_id_scholarship_round_id_fkey",
@@ -9815,14 +9557,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "round_event_created_by_id_user_id_fkey",
@@ -9832,14 +9570,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "round_event_updated_by_id_user_id_fkey",
@@ -9849,14 +9583,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "saved_recommender_user_id_user_id_fkey",
@@ -9866,14 +9596,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "saved_target_institution_user_id_user_id_fkey",
@@ -9883,14 +9609,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "saved_template_variables_user_id_user_id_fkey",
@@ -9900,14 +9622,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "template_id"
-      ],
+      "columns": ["template_id"],
       "schemaTo": "public",
       "tableTo": "recommendation_template",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "saved_template_variables_9snkaZYc0TRI_fkey",
@@ -9917,14 +9635,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_round_scholarship_id_scholarship_id_fkey",
@@ -9934,14 +9648,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_round_created_by_id_user_id_fkey",
@@ -9951,14 +9661,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_round_updated_by_id_user_id_fkey",
@@ -9968,14 +9674,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_created_by_id_user_id_fkey",
@@ -9985,14 +9687,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "scholarship_updated_by_id_user_id_fkey",
@@ -10002,14 +9700,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_country_scholarship_id_scholarship_id_fkey",
@@ -10019,14 +9713,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "country_code"
-      ],
+      "columns": ["country_code"],
       "schemaTo": "public",
       "tableTo": "country",
-      "columnsTo": [
-        "code"
-      ],
+      "columnsTo": ["code"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_country_country_code_country_code_fkey",
@@ -10036,14 +9726,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_degree_scholarship_id_scholarship_id_fkey",
@@ -10053,14 +9739,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "degree_id"
-      ],
+      "columns": ["degree_id"],
       "schemaTo": "public",
       "tableTo": "degree_level",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_degree_degree_id_degree_level_id_fkey",
@@ -10070,14 +9752,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "scholarship_id"
-      ],
+      "columns": ["scholarship_id"],
       "schemaTo": "public",
       "tableTo": "scholarship",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_field_scholarship_id_scholarship_id_fkey",
@@ -10087,14 +9765,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "field_id"
-      ],
+      "columns": ["field_id"],
       "schemaTo": "public",
       "tableTo": "field_of_study",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "scholarship_to_field_field_id_field_of_study_id_fkey",
@@ -10104,14 +9778,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "session_user_id_user_id_fk",
@@ -10121,14 +9791,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "student_profile_data_user_id_user_id_fkey",
@@ -10138,14 +9804,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "task_id"
-      ],
+      "columns": ["task_id"],
       "schemaTo": "public",
       "tableTo": "study_tasks",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "study_logs_task_id_study_tasks_id_fkey",
@@ -10155,14 +9817,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "study_logs_user_id_user_id_fkey",
@@ -10172,14 +9830,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "study_plans_user_id_user_id_fkey",
@@ -10189,14 +9843,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "template_id"
-      ],
+      "columns": ["template_id"],
       "schemaTo": "public",
       "tableTo": "study_templates",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "study_plans_template_id_study_templates_id_fkey",
@@ -10206,14 +9856,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "study_plan_id"
-      ],
+      "columns": ["study_plan_id"],
       "schemaTo": "public",
       "tableTo": "study_plans",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "study_tasks_study_plan_id_study_plans_id_fkey",
@@ -10223,14 +9869,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "two_factor_user_id_user_id_fkey",
@@ -10240,14 +9882,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "university_created_by_id_user_id_fkey",
@@ -10257,14 +9895,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "updated_by_id"
-      ],
+      "columns": ["updated_by_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "university_updated_by_id_user_id_fkey",
@@ -10274,14 +9908,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "university_id"
-      ],
+      "columns": ["university_id"],
       "schemaTo": "public",
       "tableTo": "university",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "university_to_rating_university_id_university_id_fkey",
@@ -10291,14 +9921,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "rating_id"
-      ],
+      "columns": ["rating_id"],
       "schemaTo": "public",
       "tableTo": "rating",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "university_to_rating_rating_id_rating_id_fkey",
@@ -10308,14 +9934,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_application_user_id_user_id_fkey",
@@ -10325,14 +9947,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "round_id"
-      ],
+      "columns": ["round_id"],
       "schemaTo": "public",
       "tableTo": "scholarship_round",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_application_round_id_scholarship_round_id_fkey",
@@ -10342,14 +9960,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_profile_user_id_user_id_fk",
@@ -10359,14 +9973,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_skill_profile_id_resume_profile_id_fkey",
@@ -10376,14 +9986,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "schemaTo": "public",
       "tableTo": "resume_profile",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "work_experience_profile_id_resume_profile_id_fkey",
@@ -10393,14 +9999,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "course_id"
-      ],
+      "columns": ["course_id"],
       "schemaTo": "public",
       "tableTo": "academic_course",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "course_unit_course_id_academic_course_id_fkey",
@@ -10409,9 +10011,7 @@
       "table": "course_unit"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "academic_course_pkey",
       "schema": "public",
@@ -10419,9 +10019,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "academic_event_pkey",
       "schema": "public",
@@ -10429,9 +10027,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "academic_program_pkey",
       "schema": "public",
@@ -10439,9 +10035,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pkey",
       "schema": "public",
@@ -10449,9 +10043,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "apikey_pkey",
       "schema": "public",
@@ -10459,9 +10051,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "certification_record_pkey",
       "schema": "public",
@@ -10469,9 +10059,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "collegeprogram_to_course_pkey",
       "schema": "public",
@@ -10479,9 +10067,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "college_department_pkey",
       "schema": "public",
@@ -10489,9 +10075,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "collegedepartment_to_program_pkey",
       "schema": "public",
@@ -10499,9 +10083,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "college_pkey",
       "schema": "public",
@@ -10509,9 +10091,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nameExplicit": false,
       "name": "country_pkey",
       "schema": "public",
@@ -10519,9 +10099,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "degree_level_pkey",
       "schema": "public",
@@ -10529,9 +10107,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "department_pkey",
       "schema": "public",
@@ -10539,9 +10115,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "education_record_pkey",
       "schema": "public",
@@ -10549,9 +10123,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "field_of_study_pkey",
       "schema": "public",
@@ -10559,9 +10131,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "gpa_conversion_range_pkey",
       "schema": "public",
@@ -10569,9 +10139,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "gpa_conversion_standard_pkey",
       "schema": "public",
@@ -10579,9 +10147,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "gpa_conversion_pkey",
       "schema": "public",
@@ -10589,9 +10155,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "language_skill_pkey",
       "schema": "public",
@@ -10599,9 +10163,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "position_of_responsibility_record_pkey",
       "schema": "public",
@@ -10609,9 +10171,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "pg-drizzle_post_pkey",
       "schema": "public",
@@ -10619,9 +10179,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "project_record_pkey",
       "schema": "public",
@@ -10629,9 +10187,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "rating_category_pkey",
       "schema": "public",
@@ -10639,9 +10195,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "rating_pkey",
       "schema": "public",
@@ -10649,9 +10203,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "recommendation_letter_pkey",
       "schema": "public",
@@ -10659,9 +10211,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "recommendation_template_pkey",
       "schema": "public",
@@ -10669,9 +10219,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "reference_record_pkey",
       "schema": "public",
@@ -10679,9 +10227,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_attachment_pkey",
       "schema": "public",
@@ -10689,9 +10235,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_category_pkey",
       "schema": "public",
@@ -10699,9 +10243,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_content_type_pkey",
       "schema": "public",
@@ -10709,9 +10251,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resource_pkey",
       "schema": "public",
@@ -10719,9 +10259,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resume_profile_pkey",
       "schema": "public",
@@ -10729,9 +10267,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "resume_pkey",
       "schema": "public",
@@ -10739,9 +10275,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "round_event_pkey",
       "schema": "public",
@@ -10749,9 +10283,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "saved_recommender_pkey",
       "schema": "public",
@@ -10759,9 +10291,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "saved_target_institution_pkey",
       "schema": "public",
@@ -10769,9 +10299,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "saved_template_variables_pkey",
       "schema": "public",
@@ -10779,9 +10307,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "scholarship_round_pkey",
       "schema": "public",
@@ -10789,9 +10315,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "scholarship_pkey",
       "schema": "public",
@@ -10799,9 +10323,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pkey",
       "schema": "public",
@@ -10809,9 +10331,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "student_profile_data_pkey",
       "schema": "public",
@@ -10819,9 +10339,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "study_logs_pkey",
       "schema": "public",
@@ -10829,9 +10347,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "study_plans_pkey",
       "schema": "public",
@@ -10839,9 +10355,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "study_tasks_pkey",
       "schema": "public",
@@ -10849,9 +10363,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "study_templates_pkey",
       "schema": "public",
@@ -10859,9 +10371,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "two_factor_pkey",
       "schema": "public",
@@ -10869,9 +10379,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "university_pkey",
       "schema": "public",
@@ -10879,9 +10387,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pkey",
       "schema": "public",
@@ -10889,9 +10395,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_application_pkey",
       "schema": "public",
@@ -10899,9 +10403,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_profile_pkey",
       "schema": "public",
@@ -10909,9 +10411,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_skill_pkey",
       "schema": "public",
@@ -10919,9 +10419,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pkey",
       "schema": "public",
@@ -10929,9 +10427,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "work_experience_pkey",
       "schema": "public",
@@ -10939,9 +10435,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "course_unit_pkey",
       "schema": "public",
@@ -10950,10 +10444,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "college_id",
-        "department_id"
-      ],
+      "columns": ["college_id", "department_id"],
       "nullsNotDistinct": false,
       "name": "college_department_college_id_department_id_unique",
       "entityType": "uniques",
@@ -10962,9 +10453,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "academic_course_code_key",
       "schema": "public",
@@ -10973,9 +10462,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "code"
-      ],
+      "columns": ["code"],
       "nullsNotDistinct": false,
       "name": "academic_program_code_key",
       "schema": "public",
@@ -10984,9 +10471,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "college_slug_key",
       "schema": "public",
@@ -10995,9 +10480,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "degree_level_name_key",
       "schema": "public",
@@ -11006,9 +10489,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "department_slug_key",
       "schema": "public",
@@ -11017,9 +10498,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "field_of_study_name_key",
       "schema": "public",
@@ -11028,9 +10507,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "gpa_conversion_standard_name_key",
       "schema": "public",
@@ -11039,9 +10516,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "rating_category_slug_key",
       "schema": "public",
@@ -11050,9 +10525,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "resource_category_name_unique",
       "schema": "public",
@@ -11061,9 +10534,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "name"
-      ],
+      "columns": ["name"],
       "nullsNotDistinct": false,
       "name": "resource_content_type_name_unique",
       "schema": "public",
@@ -11072,9 +10543,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "scholarship_slug_key",
       "schema": "public",
@@ -11083,9 +10552,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "session_token_unique",
       "schema": "public",
@@ -11094,9 +10561,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nullsNotDistinct": false,
       "name": "student_profile_data_user_id_key",
       "schema": "public",
@@ -11105,9 +10570,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "university_slug_key",
       "schema": "public",
@@ -11116,9 +10579,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "user_email_unique",
       "schema": "public",
@@ -11127,9 +10588,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nullsNotDistinct": false,
       "name": "user_profile_user_id_unique",
       "schema": "public",
@@ -11138,9 +10597,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "slug"
-      ],
+      "columns": ["slug"],
       "nullsNotDistinct": false,
       "name": "course_unit_slug_key",
       "schema": "public",
