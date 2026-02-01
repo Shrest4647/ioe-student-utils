@@ -1422,3 +1422,4 @@ export type NewStudyLog = typeof studyLogs.$inferInsert;
 
 // --- Course Explorer Tables ---
 export * from "./schema/units";
+export * from "./schema/topics";
