@@ -306,6 +306,10 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   academicCourses: {
+    units: r.many.courseUnits({
+      from: r.academicCourses.id,
+      to: r.courseUnits.courseId,
+    }),
     academicPrograms: r.many.academicPrograms({
       from: r.academicCourses.id.through(
         r.collegeDepartmentProgramToCourses.courseId,
@@ -317,6 +321,73 @@ export const relations = defineRelations(schema, (r) => ({
     ratings: r.many.ratings({
       from: r.academicCourses.id.through(r.courseToRatings.courseId),
       to: r.ratings.id.through(r.courseToRatings.ratingId),
+    }),
+  },
+
+  courseUnits: {
+    course: r.one.academicCourses({
+      from: r.courseUnits.courseId,
+      to: r.academicCourses.id,
+    }),
+    topics: r.many.courseTopics({
+      from: r.courseUnits.id,
+      to: r.courseTopics.unitId,
+    }),
+  },
+
+  courseTopics: {
+    unit: r.one.courseUnits({
+      from: r.courseTopics.unitId,
+      to: r.courseUnits.id,
+    }),
+    parentTopic: r.one.courseTopics({
+      from: r.courseTopics.parentTopicId,
+      to: r.courseTopics.id,
+    }),
+    children: r.many.courseTopics({
+      from: r.courseTopics.id,
+      to: r.courseTopics.parentTopicId,
+    }),
+    prerequisites: r.many.topicPrerequisites({
+      from: r.courseTopics.id,
+      to: r.topicPrerequisites.topicId,
+    }),
+    resources: r.many.topicResourceLinks({
+      from: r.courseTopics.id,
+      to: r.topicResourceLinks.topicId,
+    }),
+  },
+
+  topicPrerequisites: {
+    topic: r.one.courseTopics({
+      from: r.topicPrerequisites.topicId,
+      to: r.courseTopics.id,
+    }),
+    prerequisiteTopic: r.one.courseTopics({
+      from: r.topicPrerequisites.prerequisiteTopicId,
+      to: r.courseTopics.id,
+    }),
+  },
+
+  unitPrerequisites: {
+    unit: r.one.courseUnits({
+      from: r.unitPrerequisites.unitId,
+      to: r.courseUnits.id,
+    }),
+    prerequisiteUnit: r.one.courseUnits({
+      from: r.unitPrerequisites.prerequisiteUnitId,
+      to: r.courseUnits.id,
+    }),
+  },
+
+  topicResourceLinks: {
+    topic: r.one.courseTopics({
+      from: r.topicResourceLinks.topicId,
+      to: r.courseTopics.id,
+    }),
+    resource: r.one.resources({
+      from: r.topicResourceLinks.resourceId,
+      to: r.resources.id,
     }),
   },
 

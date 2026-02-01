@@ -518,6 +518,7 @@ export const academicPrograms = pgTable("academic_program", {
 export const academicCourses = pgTable("academic_course", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
   code: text("code").notNull().unique(),
   description: text("description"),
   credits: text("credits"),
@@ -1421,8 +1422,8 @@ export const studyLogs = pgTable(
 export type StudyLog = typeof studyLogs.$inferSelect;
 export type NewStudyLog = typeof studyLogs.$inferInsert;
 
-// --- Course Explorer Tables ---
-export * from "./schema/units";
-export * from "./schema/topics";
 export * from "./schema/prerequisites";
 export * from "./schema/resource-links";
+export * from "./schema/topics";
+// --- Course Explorer Tables ---
+export * from "./schema/units";

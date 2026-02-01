@@ -10,7 +10,9 @@ export const topicPrerequisites = pgTable("topic_prerequisite", {
   prerequisiteTopicId: text("prerequisite_topic_id")
     .notNull()
     .references(() => courseTopics.id, { onDelete: "cascade" }),
-  dependencyType: text("dependency_type", { enum: ["strong", "weak"] }).notNull(),
+  dependencyType: text("dependency_type", {
+    enum: ["strong", "weak"],
+  }).notNull(),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
 });
 
@@ -22,6 +24,8 @@ export const unitPrerequisites = pgTable("unit_prerequisite", {
   prerequisiteUnitId: text("prerequisite_unit_id")
     .notNull()
     .references(() => courseUnits.id, { onDelete: "cascade" }),
-  dependencyType: text("dependency_type", { enum: ["strong", "weak"] }).notNull(),
+  dependencyType: text("dependency_type", {
+    enum: ["strong", "weak"],
+  }).notNull(),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
 });

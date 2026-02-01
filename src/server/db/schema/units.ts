@@ -1,4 +1,10 @@
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { academicCourses } from "../schema";
 
 export const courseUnits = pgTable("course_unit", {

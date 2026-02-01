@@ -1,6 +1,6 @@
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { courseTopics } from "./topics";
 import { resources } from "../schema";
+import { courseTopics } from "./topics";
 
 export const topicResourceLinks = pgTable("topic_resource_link", {
   id: text("id").primaryKey(),
@@ -10,7 +10,9 @@ export const topicResourceLinks = pgTable("topic_resource_link", {
   resourceId: text("resource_id")
     .notNull()
     .references(() => resources.id, { onDelete: "cascade" }),
-  relevance: text("relevance", { enum: ["primary", "supplementary", "practice"] }).notNull(),
+  relevance: text("relevance", {
+    enum: ["primary", "supplementary", "practice"],
+  }).notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
 });
