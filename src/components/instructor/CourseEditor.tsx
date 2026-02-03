@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2, ChevronRight } from "lucide-react";
+import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { apiClient } from "@/lib/eden";
 
 export function CourseEditor({ courseId }: { courseId: string }) {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
@@ -10,9 +11,10 @@ export function CourseEditor({ courseId }: { courseId: string }) {
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
     queryFn: async () => {
-      const res = await fetch(`/api/course-explorer/courses/admin/${courseId}`);
-      const json = await res.json();
-      return json.data;
+      const response = await apiClient.api["course-explorer"]
+        .courses({ id: courseId })
+        .get();
+      return response.data?.data;
     },
   });
 
@@ -20,10 +22,10 @@ export function CourseEditor({ courseId }: { courseId: string }) {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-3xl font-bold">Edit Course: {course.name}</h1>
+      <h1 className="mb-6 font-bold text-3xl">Edit Course: {course?.name}</h1>
 
       <div className="space-y-4">
-        {course.units?.map((unit: any) => (
+        {course?.units?.map((unit: any) => (
           <UnitTree
             key={unit.id}
             unit={unit}
@@ -40,7 +42,10 @@ export function CourseEditor({ courseId }: { courseId: string }) {
           />
         ))}
 
-        <button className="flex items-center gap-2 text-primary hover:underline">
+        <button
+          type="button"
+          className="flex items-center gap-2 text-primary hover:underline"
+        >
           <Plus className="h-4 w-4" />
           Add Unit
         </button>
@@ -53,34 +58,47 @@ function UnitTree({ unit, isExpanded, onToggle }: any) {
   return (
     <div className="rounded-lg border">
       <div
+        role="button"
+        tabIndex={0}
         className="flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
         onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            onToggle();
+          }
+        }}
       >
         <div className="flex items-center gap-2">
           <ChevronRight
             className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
           />
           <span className="font-semibold">{unit.name}</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-gray-500 text-sm">
             ({unit.topics?.length || 0} topics)
           </span>
         </div>
         <div className="flex gap-2">
-          <button className="rounded p-1 hover:bg-gray-100">
+          <button type="button" className="rounded p-1 hover:bg-gray-100">
             <Plus className="h-4 w-4" />
           </button>
-          <button className="rounded p-1 text-red-600 hover:bg-gray-100">
+          <button
+            type="button"
+            className="rounded p-1 text-red-600 hover:bg-gray-100"
+          >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t p-4 pl-8 space-y-2">
+        <div className="space-y-2 border-t p-4 pl-8">
           {unit.topics?.map((topic: any) => (
             <TopicItem key={topic.id} topic={topic} />
           ))}
-          <button className="text-sm text-primary hover:underline">
+          <button
+            type="button"
+            className="text-primary text-sm hover:underline"
+          >
             + Add Topic
           </button>
         </div>
@@ -94,10 +112,10 @@ function TopicItem({ topic }: { topic: any }) {
     <div className="flex items-center justify-between rounded px-3 py-2 hover:bg-gray-50">
       <span>{topic.name}</span>
       <div className="flex gap-2">
-        <button className="text-sm text-blue-600 hover:underline">
+        <button type="button" className="text-blue-600 text-sm hover:underline">
           Edit
         </button>
-        <button className="text-sm text-red-600 hover:underline">
+        <button type="button" className="text-red-600 text-sm hover:underline">
           Delete
         </button>
       </div>

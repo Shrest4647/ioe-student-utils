@@ -42,77 +42,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-interface Course {
-  id: string;
-  name: string;
-  slug: string;
-  code?: string;
-  description?: string;
-  isActive: boolean;
-  units?: Array<{ id: string; name: string; isActive: boolean }>;
-  createdAt?: string;
-}
-
-interface CoursesResponse {
-  success: boolean;
-  data: Course[];
-  metadata: {
-    totalCount: number;
-    totalPages: number;
-    currentPage: number;
-    hasMore: boolean;
-  };
-}
-
-async function fetchCourses(search?: string): Promise<CoursesResponse> {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  params.set("limit", "50");
-
-  const response = await fetch(`/api/course-explorer/admin/courses?${params}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch courses");
-  }
-  return response.json();
-}
-
-async function deleteCourse(id: string): Promise<void> {
-  const response = await fetch(`/api/course-explorer/admin/courses/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete course");
-  }
-}
-
-async function duplicateCourse(id: string): Promise<void> {
-  // This would be a real endpoint in production
-  const response = await fetch(`/api/course-explorer/admin/courses/${id}/duplicate`, {
-    method: "POST",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to duplicate course");
-  }
-}
+import { apiClient } from "@/lib/eden";
+import type { AcademicCourse } from "@/server/db/schema";
 
 export default function InstructorCoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
+    new Set(),
+  );
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const {
-    data: coursesData,
+    data: courses,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["instructor-courses", searchQuery],
-    queryFn: () => fetchCourses(searchQuery),
+    queryFn: async () => {
+      const response = await apiClient.api["course-explorer"].courses.get({
+        query: {
+          search: searchQuery || undefined,
+          limit: "50",
+        },
+      });
+      if (!response.data) return [];
+
+      return response.data.data;
+    },
   });
 
   const _deleteMutation = useMutation({
-    mutationFn: deleteCourse,
+    mutationFn: async (id: string) => {
+      const response = await apiClient.api["course-explorer"].admin
+        .courses({ id })
+        .delete();
+      return response.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
       toast.success("Course deleted successfully");
@@ -124,7 +90,12 @@ export default function InstructorCoursesPage() {
   });
 
   const duplicateMutation = useMutation({
-    mutationFn: duplicateCourse,
+    mutationFn: async (id: string) => {
+      const response = await apiClient.api["course-explorer"].admin
+        .courses({ id })
+        .duplicate.post();
+      return response.data?.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
       toast.success("Course duplicated successfully");
@@ -133,8 +104,6 @@ export default function InstructorCoursesPage() {
       toast.error("Failed to duplicate course");
     },
   });
-
-  const courses = coursesData?.data || [];
 
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedCourses);
@@ -147,14 +116,16 @@ export default function InstructorCoursesPage() {
   };
 
   const toggleAllSelection = () => {
-    if (selectedCourses.size === courses.length) {
+    if (selectedCourses.size === courses?.length) {
       setSelectedCourses(new Set());
     } else {
-      setSelectedCourses(new Set(courses.map((c) => c.id)));
+      setSelectedCourses(new Set(courses?.map((c) => c.id)));
     }
   };
 
-  const getCourseStatus = (course: Course): "published" | "draft" | "archived" => {
+  const getCourseStatus = (
+    course: AcademicCourse & { units?: { id: string; name: string }[] },
+  ): "published" | "draft" | "archived" => {
     if (!course.isActive) return "archived";
     if (course.units && course.units.length > 0) return "published";
     return "draft";
@@ -220,7 +191,9 @@ export default function InstructorCoursesPage() {
               <TableHead className="w-12">
                 <Checkbox
                   checked={
-                    courses.length > 0 && selectedCourses.size === courses.length
+                    !!courses &&
+                    courses?.length > 0 &&
+                    selectedCourses.size === courses?.length
                   }
                   onCheckedChange={toggleAllSelection}
                 />
@@ -234,13 +207,15 @@ export default function InstructorCoursesPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={6}>
-                    <Skeleton className="h-12" />
-                  </TableCell>
-                </TableRow>
-              ))
+              Array(5)
+                .fill(0)
+                .map((v, i) => (
+                  <TableRow key={`${v + i}`}>
+                    <TableCell colSpan={6}>
+                      <Skeleton className="h-12" />
+                    </TableCell>
+                  </TableRow>
+                ))
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center">
@@ -249,7 +224,7 @@ export default function InstructorCoursesPage() {
                   </p>
                 </TableCell>
               </TableRow>
-            ) : courses.length === 0 ? (
+            ) : courses?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center">
                   <p className="text-muted-foreground">No courses found.</p>
@@ -262,7 +237,7 @@ export default function InstructorCoursesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              courses.map((course) => (
+              courses?.map((course) => (
                 <TableRow key={course.id}>
                   <TableCell>
                     <Checkbox
@@ -292,7 +267,7 @@ export default function InstructorCoursesPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {course.units?.filter((u) => u.isActive).length || 0} units
+                      {course?.units?.length || 0} units
                     </span>
                   </TableCell>
                   <TableCell>
@@ -359,7 +334,9 @@ export default function InstructorCoursesPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => courseToDelete && _deleteMutation.mutate(courseToDelete)}
+              onClick={() =>
+                courseToDelete && _deleteMutation.mutate(courseToDelete)
+              }
               disabled={_deleteMutation.isPending}
             >
               {_deleteMutation.isPending ? "Deleting..." : "Delete"}

@@ -534,14 +534,8 @@ export const courseExplorerTopicRoutes = new Elysia({
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      const whereCondition: Record<string, unknown> = {};
-      if (unitId) {
-        whereCondition.unitId = unitId;
-      }
-
       const results = await db.query.courseTopics.findMany({
-        where:
-          Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+        where: unitId ? { unitId } : {},
         with: {
           unit: {
             columns: {

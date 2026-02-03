@@ -13,7 +13,11 @@ describe("Course Explorer API", () => {
 
   it("returns course by slug", async () => {
     const response = await elysiaApi
-      .handle(new Request("http://localhost/api/course-explorer/courses/slug/bct-301"))
+      .handle(
+        new Request(
+          "http://localhost/api/course-explorer/courses/slug/bct-301",
+        ),
+      )
       .then((res) => res.json());
 
     expect(response).toBeDefined();
@@ -24,7 +28,9 @@ describe("Course Explorer API", () => {
   it("returns mindmap data for a course", async () => {
     const response = await elysiaApi
       .handle(
-        new Request("http://localhost/api/course-explorer/courses/slug/bct-301/mindmap")
+        new Request(
+          "http://localhost/api/course-explorer/courses/slug/bct-301/mindmap",
+        ),
       )
       .then((res) => res.json());
 
@@ -38,8 +44,8 @@ describe("Course Explorer API", () => {
     const response = await elysiaApi
       .handle(
         new Request(
-          "http://localhost/api/course-explorer/courses/slug/bct-301/mindmap?path=exam-prep"
-        )
+          "http://localhost/api/course-explorer/courses/slug/bct-301/mindmap?path=exam-prep",
+        ),
       )
       .then((res) => res.json());
 
@@ -52,7 +58,9 @@ describe("Course Explorer API", () => {
     // First get a course to find a unit
     const courseResponse = await elysiaApi
       .handle(
-        new Request("http://localhost/api/course-explorer/courses/slug/bct-301")
+        new Request(
+          "http://localhost/api/course-explorer/courses/slug/bct-301",
+        ),
       )
       .then((res) => res.json());
 
@@ -61,7 +69,9 @@ describe("Course Explorer API", () => {
       const unitSlug = units[0].slug;
       const response = await elysiaApi
         .handle(
-          new Request(`http://localhost/api/course-explorer/units/slug/${unitSlug}`)
+          new Request(
+            `http://localhost/api/course-explorer/units/slug/${unitSlug}`,
+          ),
         )
         .then((res) => res.json());
 
@@ -75,7 +85,9 @@ describe("Course Explorer API", () => {
     // First get a course to find a unit
     const courseResponse = await elysiaApi
       .handle(
-        new Request("http://localhost/api/course-explorer/courses/slug/bct-301")
+        new Request(
+          "http://localhost/api/course-explorer/courses/slug/bct-301",
+        ),
       )
       .then((res) => res.json());
 
@@ -84,7 +96,9 @@ describe("Course Explorer API", () => {
       const unitSlug = units[0].slug;
       const response = await elysiaApi
         .handle(
-          new Request(`http://localhost/api/course-explorer/units/slug/${unitSlug}/topics`)
+          new Request(
+            `http://localhost/api/course-explorer/units/slug/${unitSlug}/topics`,
+          ),
         )
         .then((res) => res.json());
 
@@ -97,7 +111,9 @@ describe("Course Explorer API", () => {
     // First get a course with topics
     const courseResponse = await elysiaApi
       .handle(
-        new Request("http://localhost/api/course-explorer/courses/slug/bct-301")
+        new Request(
+          "http://localhost/api/course-explorer/courses/slug/bct-301",
+        ),
       )
       .then((res) => res.json());
 
@@ -108,9 +124,12 @@ describe("Course Explorer API", () => {
         const topicSlug = topics[0].slug;
 
         const response = await elysiaApi.handle(
-          new Request(`http://localhost/api/course-explorer/topics/slug/${topicSlug}/view`, {
-            method: "POST",
-          })
+          new Request(
+            `http://localhost/api/course-explorer/topics/slug/${topicSlug}/view`,
+            {
+              method: "POST",
+            },
+          ),
         );
 
         expect(response.status).toBe(200);
@@ -122,7 +141,7 @@ describe("Course Explorer API", () => {
 describe("Course Explorer Admin API", () => {
   it("requires authentication for admin endpoints", async () => {
     const response = await elysiaApi.handle(
-      new Request("http://localhost/api/course-explorer/courses/admin")
+      new Request("http://localhost/api/course-explorer/courses/admin"),
     );
 
     // Should return 401 or 403 without auth
@@ -132,7 +151,7 @@ describe("Course Explorer Admin API", () => {
   it("creates a new unit (with auth)", async () => {
     const newUnit = {
       courseId: "test-course-id",
-      slug: "test-unit-" + Date.now(),
+      slug: `test-unit-${Date.now()}`,
       name: "Test Unit",
       description: "Test unit description",
       sortOrder: 1,
@@ -148,7 +167,7 @@ describe("Course Explorer Admin API", () => {
         headers: {
           "Content-Type": "application/json",
         },
-      })
+      }),
     );
 
     // Without auth, should be unauthorized

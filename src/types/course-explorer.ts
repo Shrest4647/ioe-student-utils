@@ -117,6 +117,7 @@ export interface MindmapNodeData extends Record<string, unknown> {
   description: string | null;
   unitName: string;
   resourceCount: number;
+  level?: number;
 }
 
 /**

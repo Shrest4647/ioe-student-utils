@@ -1,5 +1,5 @@
+import type { Edge, Node } from "@xyflow/react";
 import { useMemo } from "react";
-import type { Node, Edge } from "@xyflow/react";
 
 export function useStudyPath(nodes: Node[], edges: Edge[], path?: string) {
   return useMemo(() => {
@@ -8,7 +8,7 @@ export function useStudyPath(nodes: Node[], edges: Edge[], path?: string) {
     const filteredNodes = filterNodesByPath(nodes, path);
     const nodeIds = new Set(filteredNodes.map((n) => n.id));
     const filteredEdges = edges.filter(
-      (e) => nodeIds.has(e.source) && nodeIds.has(e.target)
+      (e) => nodeIds.has(e.source) && nodeIds.has(e.target),
     );
 
     return { filteredNodes, filteredEdges };
@@ -22,7 +22,8 @@ function filterNodesByPath(nodes: Node[], path: string): Node[] {
         ...n,
         style: {
           ...n.style,
-          opacity: n.data.weightage > 0 ? 1 : 0.3,
+          opacity:
+            n.data.weightage && (n.data.weightage as number) > 0 ? 1 : 0.3,
         },
       }));
 
