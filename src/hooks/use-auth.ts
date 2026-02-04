@@ -8,7 +8,7 @@ export const useAuth = () => {
 
   return {
     user: user || null,
-    isLoading: session.isPending || user === undefined,
+    isLoading: session.isPending,
     isAuthenticated: !!user,
     isEmailVerified: !!user?.emailVerified,
     session,

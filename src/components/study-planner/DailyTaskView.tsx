@@ -182,7 +182,7 @@ function CompletionCelebration({ show }: { show: boolean }) {
   );
 }
 
-// Loading skeleton for tasks
+// Loading skeleton for tasks rewritten for glassmorphism
 function TaskSkeleton({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
@@ -190,17 +190,17 @@ function TaskSkeleton({ delay = 0 }: { delay?: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
     >
-      <Card>
-        <CardContent className="px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-start gap-3">
-            <Skeleton className="mt-0.5 size-5 shrink-0 rounded-sm" />
-            <div className="min-w-0 flex-1 space-y-2">
+      <Card className="border-border/40 bg-card/40 backdrop-blur-sm">
+        <CardContent className="px-4 py-4 sm:px-6">
+          <div className="flex items-start gap-4">
+            <Skeleton className="mt-1 size-5 shrink-0 rounded-md bg-muted/50" />
+            <div className="min-w-0 flex-1 space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-12 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full bg-muted/40" />
+                <Skeleton className="h-5 w-14 rounded-full bg-muted/40" />
               </div>
-              <Skeleton className="h-4 w-full max-w-50" />
-              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-5 w-3/4 rounded-md bg-muted/60" />
+              <Skeleton className="h-4 w-1/2 rounded-md bg-muted/40" />
             </div>
           </div>
         </CardContent>
@@ -221,7 +221,10 @@ export function DailyTaskView() {
   );
 
   const fetchTodayTasks = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -345,26 +348,36 @@ export function DailyTaskView() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <Card>
-              <CardHeader className="px-3 pb-3 sm:px-6 sm:pb-4">
-                <CardTitle className="flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:justify-between sm:text-lg">
-                  <span>Today's Progress</span>
+            <Card className="overflow-hidden border-border/40 bg-card/60 backdrop-blur-md">
+              <div className="absolute top-0 right-0 h-32 w-32 translate-x-16 -translate-y-16 rounded-full bg-primary/10 blur-3xl" />
+              <CardHeader className="px-4 pb-3 sm:px-6 sm:pb-4">
+                <CardTitle className="flex flex-col gap-3 font-bold text-lg sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      Power Progress
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     {completedCount === tasks.length && tasks.length > 0 && (
                       <motion.div
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{ type: "spring", stiffness: 200 }}
+                        className="rounded-full bg-yellow-500/20 p-1"
                       >
                         <Trophy className="size-5 text-yellow-500" />
                       </motion.div>
                     )}
-                    <Badge variant="secondary" className="text-xs sm:text-sm">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-lg bg-primary/10 px-3 py-1 text-primary hover:bg-primary/20"
+                    >
                       <motion.span
                         key={completedCount}
                         initial={{ scale: 1.5 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.2 }}
+                        className="font-bold"
                       >
                         {completedCount}/{tasks.length}
                       </motion.span>
@@ -372,24 +385,23 @@ export function DailyTaskView() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 px-3 sm:space-y-4 sm:px-6">
-                {/* Progress Bar */}
-                <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-secondary sm:h-3">
+              <CardContent className="space-y-4 px-4 sm:px-6">
+                {/* Enhanced Progress Bar */}
+                <div className="group relative h-3 w-full overflow-hidden rounded-full bg-secondary ring-1 ring-border/50">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80"
+                    className="h-full rounded-full bg-linear-to-r from-primary via-primary/80 to-primary/90 shadow-[0_0_15px_-3px_rgba(var(--primary),0.5)]"
                     variants={progressBarVariants}
                     initial="hidden"
                     animate="visible"
                     custom={progressPercentage}
                   />
-                  {/* Shimmer effect */}
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent"
                     animate={{
-                      x: ["-100%", "100%"],
+                      x: ["-100%", "200%"],
                     }}
                     transition={{
-                      duration: 2,
+                      duration: 3,
                       repeat: Infinity,
                       ease: "linear",
                     }}
@@ -397,27 +409,31 @@ export function DailyTaskView() {
                 </div>
 
                 {/* Stats Row */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
                   <motion.div
-                    className="flex items-center gap-2 text-muted-foreground text-xs sm:text-sm"
+                    className="flex items-center gap-3 text-muted-foreground text-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <Clock className="size-3.5 flex-shrink-0 sm:size-4" />
-                    <span>
-                      {totalEstimatedMinutes} minutes total{" "}
+                    <div className="rounded-md bg-muted/50 p-1.5">
+                      <Clock className="size-4 shrink-0" />
+                    </div>
+                    <span className="font-medium">
+                      {totalEstimatedMinutes} mins total{" "}
                       {completedCount > 0 && (
-                        <>
-                          • {Math.round((completedCount / tasks.length) * 100)}%
-                          done
-                        </>
+                        <span className="ml-1 font-bold text-primary italic">
+                          ({Math.round((completedCount / tasks.length) * 100)}%
+                          complete)
+                        </span>
                       )}
                     </span>
                   </motion.div>
 
                   {/* Streak Counter */}
-                  <StreakCounter streak={streak} />
+                  <div className="group relative ring-offset-background transition-transform hover:scale-105 active:scale-95">
+                    <StreakCounter streak={streak} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -478,29 +494,29 @@ export function DailyTaskView() {
                   >
                     <Card
                       className={cn(
-                        "relative overflow-hidden transition-all duration-300",
+                        "group relative overflow-hidden transition-all duration-300",
+                        "border-border/40 bg-card/40 backdrop-blur-sm",
                         task.completed && "opacity-60",
-                        "hover:shadow-md",
+                        "hover:border-primary/40 hover:bg-card/60 hover:shadow-primary/5 hover:shadow-xl",
                       )}
                     >
                       <CompletionCelebration show={isCelebrating} />
 
-                      {/* Completion indicator line */}
-                      <motion.div
-                        className="absolute top-0 bottom-0 left-0 w-1 bg-primary"
-                        initial={{ scaleY: 0 }}
-                        animate={{ scaleY: task.completed ? 1 : 0 }}
-                        transition={{ duration: 0.3 }}
-                        style={{ originY: 0 }}
+                      {/* Side Accents */}
+                      <div
+                        className={cn(
+                          "absolute top-0 bottom-0 left-0 w-1.5 transition-colors",
+                          !task.completed ? badgeColor : "bg-muted",
+                        )}
                       />
 
-                      <CardContent className="px-3 py-3 sm:px-6 sm:py-4">
-                        <div className="flex items-start gap-3">
-                          {/* Checkbox with animation */}
+                      <CardContent className="px-4 py-4 sm:px-6">
+                        <div className="flex items-start gap-4">
+                          {/* Modern Checkbox Control */}
                           <motion.div
                             variants={checkVariants}
                             animate={task.completed ? "checked" : "unchecked"}
-                            className="relative mt-0.5 flex-shrink-0"
+                            className="relative mt-1 shrink-0"
                           >
                             <Checkbox
                               checked={task.completed}
@@ -508,34 +524,30 @@ export function DailyTaskView() {
                                 toggleTaskComplete(task.id, checked === true)
                               }
                               className={cn(
-                                "size-5 transition-all duration-300 sm:size-4",
-                                task.completed &&
-                                  "border-primary bg-primary text-primary-foreground",
+                                "size-6 rounded-lg border-2 transition-all duration-300",
+                                task.completed
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-muted-foreground/30 ring-offset-background hover:border-primary/50",
                               )}
                             />
                           </motion.div>
 
                           {/* Task Content */}
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               {/* Task Type Badge */}
                               <motion.div
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.2 }}
                               >
                                 <Badge
-                                  variant="secondary"
                                   className={cn(
-                                    "gap-1 py-0.5 text-xs transition-all duration-300 sm:py-1 sm:text-xs",
-                                    !task.completed && badgeColor,
+                                    "rounded-md border-none px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider",
+                                    !task.completed
+                                      ? `${badgeColor} text-white`
+                                      : "bg-muted text-muted-foreground",
                                   )}
                                 >
-                                  <span
-                                    className={cn(
-                                      "size-1.5 rounded-full",
-                                      !task.completed && "bg-current",
-                                    )}
-                                  />
                                   {taskLabel}
                                 </Badge>
                               </motion.div>
@@ -543,13 +555,13 @@ export function DailyTaskView() {
                               {/* Time Badge */}
                               <Badge
                                 variant="outline"
-                                className="gap-1 py-0.5 text-xs sm:py-1"
+                                className="h-5 gap-1 border-border/50 bg-background/50 font-medium text-[10px]"
                               >
                                 <Clock className="size-2.5" />
                                 {task.estimatedMinutes}m
                               </Badge>
 
-                              {/* Completed Badge */}
+                              {/* Completed Status */}
                               <AnimatePresence>
                                 {task.completed && (
                                   <motion.div
@@ -559,10 +571,9 @@ export function DailyTaskView() {
                                     transition={{ duration: 0.2 }}
                                   >
                                     <Badge
-                                      variant="secondary"
-                                      className="bg-green-500/10 py-0.5 text-green-700 text-xs sm:py-1 dark:text-green-400"
+                                      variant="outline"
+                                      className="h-5 border-emerald-500/30 bg-emerald-500/10 font-bold text-[10px] text-emerald-600 dark:text-emerald-400"
                                     >
-                                      <CheckCircle2 className="mr-1 size-2.5" />
                                       Done
                                     </Badge>
                                   </motion.div>
@@ -573,14 +584,14 @@ export function DailyTaskView() {
                             {/* Task Title */}
                             <motion.h4
                               className={cn(
-                                "font-medium text-sm transition-all duration-300 sm:text-base",
-                                task.completed &&
-                                  "text-muted-foreground line-through",
+                                "font-bold text-base tracking-tight transition-all duration-300",
+                                task.completed
+                                  ? "text-muted-foreground italic"
+                                  : "text-foreground ring-offset-background",
                               )}
                               animate={{
-                                x: task.completed ? 4 : 0,
+                                x: task.completed ? 8 : 0,
                               }}
-                              transition={{ duration: 0.3 }}
                             >
                               {task.title}
                             </motion.h4>
@@ -589,12 +600,11 @@ export function DailyTaskView() {
                             {task.description && (
                               <motion.p
                                 className={cn(
-                                  "text-muted-foreground text-xs transition-all duration-300 sm:text-sm",
-                                  task.completed && "line-through",
+                                  "text-sm leading-relaxed transition-all duration-300",
+                                  task.completed
+                                    ? "text-muted-foreground/50 line-through"
+                                    : "text-muted-foreground",
                                 )}
-                                animate={{
-                                  opacity: task.completed ? 0.6 : 1,
-                                }}
                               >
                                 {task.description}
                               </motion.p>
@@ -627,7 +637,7 @@ export function DailyTaskView() {
                   animate={{ rotate: 0, scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                 >
-                  <Trophy className="size-8 flex-shrink-0 text-yellow-500 sm:size-8" />
+                  <Trophy className="size-8 shrink-0 text-yellow-500 sm:size-8" />
                 </motion.div>
                 <div className="text-center sm:text-left">
                   <motion.h4
