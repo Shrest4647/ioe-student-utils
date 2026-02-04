@@ -96,7 +96,7 @@ const features = [
     title: "Course Explorer",
     description:
       "Understand course structure, topics, relationships, and resources.",
-    href: "/course-explorer/bct-301",
+    href: "/course-explorer",
   },
   {
     icon: Calendar,

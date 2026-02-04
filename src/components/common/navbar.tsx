@@ -142,7 +142,7 @@ export function Navbar() {
                     asChild
                     className={navigationMenuTriggerStyle()}
                   >
-                    <Link href="/course-explorer/bct-301">
+                    <Link href="/course-explorer">
                       <span className="text-sm">Course Explorer</span>
                     </Link>
                   </NavigationMenuLink>
@@ -303,7 +303,7 @@ export function Navbar() {
               </MobileLink>
 
               <MobileLink
-                href="/course-explorer/bct-301"
+                href="/course-explorer"
                 icon={<BookOpen className="h-4 w-4" />}
               >
                 Course Explorer
