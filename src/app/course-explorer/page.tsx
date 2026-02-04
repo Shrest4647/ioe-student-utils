@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CourseExplorerLanding } from "@/components/course-explorer/CourseExplorerLanding";
+import { CourseExplorerLanding } from "@/components/course-explorer/course-explorer-landing";
 
 export const metadata: Metadata = {
   title: "Course Explorer | IOE Student Utils",

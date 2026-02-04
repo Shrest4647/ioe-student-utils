@@ -5,617 +5,300 @@ import {
   Background,
   type Connection,
   Controls,
-  type EdgeTypes,
+  type Edge,
+  MarkerType,
   MiniMap,
   type Node,
   type NodeTypes,
-  Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
-  useReactFlow,
 } from "@xyflow/react";
-import { Loader2, Maximize } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useMindmapData } from "@/hooks/use-mindmap-data";
-import { useTopicDetails } from "@/hooks/use-topic-details";
-import { cn } from "@/lib/utils";
-import type {
-  MindmapEdge as MindmapEdgeType,
-  MindmapFlowEdge,
-  MindmapFlowNode,
-  MindmapNodeData,
-  MindmapNode as MindmapNodeType,
-  MindmapViewProps,
-  StudyPath,
-} from "@/types/course-explorer";
-import {
-  ContextualSourcesDrawer,
-  ContextualSourcesPanel,
-} from "./contextual-sources-panel";
-import {
-  MindmapEdge,
-  MindmapEdgeBezier,
-  MindmapEdgeStraight,
-} from "./mindmap-edge";
-import {
-  MindmapNode,
-  MindmapNodeCompact,
-  MindmapUnitNode,
-} from "./mindmap-node";
-import { StudyPathFilter } from "./study-path-filter";
-
 import "@xyflow/react/dist/style.css";
+import type { MindmapNodeData } from "@/types/course-explorer";
+import { MindmapNode } from "./mindmap-node";
+import { useStudyPath } from "./use-study-path";
 
-// ============================================================================
-// Node and Edge Type Registrations
-// ============================================================================
+interface MindmapViewProps {
+  nodes: Node<MindmapNodeData>[];
+  edges: Edge[];
+  path?: string;
+  courseName?: string;
+  onNodeClick?: (node: Node<MindmapNodeData>) => void;
+}
 
 const nodeTypes: NodeTypes = {
-  topic: MindmapNode,
-  "topic-compact": MindmapNodeCompact,
-  unit: MindmapUnitNode,
+  mindmap: MindmapNode,
 };
 
-const edgeTypes: EdgeTypes = {
-  prerequisite: MindmapEdge,
-  "prerequisite-straight": MindmapEdgeStraight,
-  "prerequisite-bezier": MindmapEdgeBezier,
-};
+export function MindmapView({
+  nodes: inputNodes,
+  edges,
+  path,
+  courseName,
+  onNodeClick,
+}: MindmapViewProps) {
+  const { filteredNodes: baseNodes, filteredEdges } = useStudyPath(
+    inputNodes,
+    edges,
+    path,
+  );
 
-// ============================================================================
-// Layout Utilities
-// ============================================================================
+  // Inject Subject Node if courseName is provided
+  const { nodes, edges: finalEdges } = useMemo(() => {
+    if (!courseName) return { nodes: baseNodes, edges: filteredEdges };
 
-/**
- * Calculate node positions using a hierarchical layout
- *
- * Groups nodes by unit and arranges them in a grid pattern
- * with prerequisite edges flowing from top to bottom.
- */
-function calculateNodeLayout(
-  nodes: MindmapNodeType[],
-  _edges: MindmapEdgeType[],
-): MindmapFlowNode[] {
-  // Group nodes by unit
-  const unitGroups = new Map<string, MindmapNodeType[]>();
-  for (const node of nodes) {
-    const unitNodes = unitGroups.get(node.unitId) || [];
-    unitNodes.push(node);
-    unitGroups.set(node.unitId, unitNodes);
-  }
+    const subjectId = "subject-root";
+    const subjectNode: Node<MindmapNodeData> = {
+      id: subjectId,
+      type: "mindmap",
+      data: {
+        id: subjectId,
+        label: courseName,
+        slug: "root",
+        priority: "core",
+        hours: 0,
+        weightage: null,
+        description: "Main Course Subject",
+        unitName: "Root",
+        resourceCount: 0,
+        level: 0,
+      } as MindmapNodeData,
+      position: { x: 0, y: 0 },
+    };
 
-  // Calculate positions
-  const positionedNodes: MindmapFlowNode[] = [];
-
-  let currentX = 0;
-  const unitSpacing = 400; // Horizontal space between units
-  const nodeSpacingX = 220; // Horizontal space between nodes
-  const nodeSpacingY = 150; // Vertical space between nodes
-  const nodesPerRow = 3;
-
-  for (const [, unitNodes] of unitGroups) {
-    // Sort nodes by level (core first, then important, then optional)
-    const sortedNodes = [...unitNodes].sort((a, b) => {
-      const levelOrder = { core: 0, important: 1, optional: 2 };
-      return levelOrder[a.priority] - levelOrder[b.priority];
-    });
-
-    // Position nodes in a grid within each unit
-    for (let i = 0; i < sortedNodes.length; i++) {
-      const node = sortedNodes[i];
-      const row = Math.floor(i / nodesPerRow);
-      const col = i % nodesPerRow;
-
-      const x = currentX + col * nodeSpacingX;
-      const y = row * nodeSpacingY;
-
-      positionedNodes.push({
-        id: node.id,
-        type: "topic",
-        position: { x, y },
-        data: {
-          id: node.id,
-          label: node.label,
-          slug: node.slug,
-          priority: node.priority,
-          hours: node.hours,
-          weightage: node.weightage,
-          description: node.description,
-          unitName: node.unitName,
-          resourceCount: node.resources.length,
-        } as MindmapNodeData,
-      });
-    }
-
-    // Move to next unit position
-    const unitWidth = Math.min(sortedNodes.length, nodesPerRow) * nodeSpacingX;
-    currentX += Math.max(unitWidth, unitSpacing);
-  }
-
-  return positionedNodes;
-}
-
-/**
- * Convert API edges to React Flow edges
- */
-function convertEdges(edges: MindmapEdgeType[]): MindmapFlowEdge[] {
-  return edges.map((edge) => ({
-    id: `${edge.from}-${edge.to}`,
-    source: edge.from,
-    target: edge.to,
-    type: "prerequisite",
-    data: { type: edge.type },
-    animated: edge.type === "strong",
-    style: { strokeWidth: edge.type === "strong" ? 3 : 2 },
-  }));
-}
-
-/**
- * Filter nodes based on study path
- */
-function filterNodesByPath(
-  nodes: MindmapFlowNode[],
-  path: StudyPath,
-): MindmapFlowNode[] {
-  if (!path || path === "all") return nodes;
-
-  return nodes.map((node) => {
-    const data = node.data;
-    let opacity = 1;
-
-    switch (path) {
-      case "exam-prep":
-        // Highlight nodes with weightage > 0
-        opacity =
-          data.weightage && parseFloat(data.weightage as string) > 0 ? 1 : 0.3;
-        break;
-      case "minimum":
-        // Show only core topics
-        opacity = data.priority === "core" ? 1 : 0.2;
-        break;
-    }
+    // Find nodes that have no parents and link them to subject
+    const rootNodes = baseNodes.filter(
+      (n) => !filteredEdges.some((e) => e.target === n.id),
+    );
+    const newEdges: Edge[] = rootNodes.map((rn) => ({
+      id: `root-${rn.id}`,
+      source: subjectId,
+      target: rn.id,
+    }));
 
     return {
-      ...node,
-      style: {
-        ...node.style,
-        opacity,
-      },
+      nodes: [subjectNode, ...baseNodes],
+      edges: [...newEdges, ...filteredEdges],
     };
-  });
-}
+  }, [baseNodes, filteredEdges, courseName]);
 
-/**
- * Filter edges based on visible nodes
- */
-function filterEdgesByNodes(
-  edges: MindmapFlowEdge[],
-  nodeIds: Set<string>,
-): MindmapFlowEdge[] {
-  return edges.filter(
-    (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target),
+  const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(
+    new Set(),
   );
-}
 
-// ============================================================================
-// Fit View Component
-// ============================================================================
-
-function FitViewButton() {
-  const { fitView } = useReactFlow();
-
-  return (
-    <Button
-      variant="secondary"
-      size="icon"
-      onClick={() => fitView({ padding: 0.2, duration: 300 })}
-      className="h-8 w-8"
-      title="Fit to view"
-    >
-      <Maximize className="h-4 w-4" />
-    </Button>
-  );
-}
-
-// ============================================================================
-// Main Component
-// ============================================================================
-
-/**
- * MindmapView Component
- *
- * A React Flow-based mindmap visualization for course topics and prerequisites.
- *
- * Features:
- * - Hierarchical node layout grouped by units
- * - Different node types (core, important, optional)
- * - Prerequisite edges with strong/weak dependencies
- * - Study path filtering (exam-prep, minimum, all)
- * - Zoom, pan, and fit-to-view controls
- * - Responsive design with dark mode support
- * - Click handlers for node selection
- *
- * @example
- * ```tsx
- * <MindmapView
- *   courseSlug="bct-301"
- *   path="exam-prep"
- *   onNodeClick={(node) => console.log("Clicked:", node.data.label)}
- * />
- * ```
- */
-export function MindmapView({
-  courseSlug,
-  path,
-  onNodeClick,
-  onPathChange,
-  className,
-}: MindmapViewProps) {
-  // Fetch mindmap data
-  const { data, isLoading, error } = useMindmapData(courseSlug, path);
-
-  // Track selected node for the contextual sources panel
-  const [selectedNodeSlug, setSelectedNodeSlug] = useState<string | undefined>(
-    undefined,
-  );
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-
-  // Fetch topic details for the selected node
-  const { data: topicDetails, isLoading: isTopicLoading } =
-    useTopicDetails(selectedNodeSlug);
-
-  // React Flow state
-  const [nodes, setNodes, onNodesChange] = useNodesState<MindmapFlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<MindmapFlowEdge>([]);
-
-  // Calculate initial layout when data loads
-  const initialNodes = useMemo(() => {
-    if (!data?.nodes) return [];
-    return calculateNodeLayout(data.nodes, data.edges);
-  }, [data]);
-
-  const initialEdges = useMemo(() => {
-    if (!data?.edges) return [];
-    return convertEdges(data.edges);
-  }, [data]);
-
-  // Apply study path filtering
-  const filteredNodes = useMemo(() => {
-    return filterNodesByPath(initialNodes, path);
-  }, [initialNodes, path]);
-
-  const filteredEdges = useMemo(() => {
-    const visibleNodeIds = new Set(
-      filteredNodes
-        .filter((n) => !n.style?.opacity || (n.style.opacity as number) > 0.5)
-        .map((n) => n.id),
-    );
-    return filterEdgesByNodes(initialEdges, visibleNodeIds);
-  }, [filteredNodes, initialEdges]);
-
-  // Sync with React Flow state
+  // Initialize expanded nodes: Only level 0 or nodes without parents
   useEffect(() => {
-    setNodes(filteredNodes);
-    setEdges(filteredEdges);
-  }, [filteredNodes, filteredEdges, setNodes, setEdges]);
+    const initialExpanded = new Set<string>();
+    const roots = nodes.filter(
+      (n) => !finalEdges.some((e) => e.target === n.id),
+    );
+    for (const root of roots) {
+      initialExpanded.add(root.id);
+    }
+    setExpandedNodeIds(initialExpanded);
+  }, [nodes, finalEdges]);
 
-  // Handle edge connections (for interactive editing - future feature)
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
-    },
-    [setEdges],
-  );
-
-  // Handle node clicks
-  const handleNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      const flowNode = node as MindmapFlowNode;
-      const nodeSlug = flowNode.data.slug as string;
-
-      // Update selected node and open panel
-      setSelectedNodeSlug(nodeSlug);
-      setIsPanelOpen(true);
-
-      // Call the external onNodeClick callback if provided
-      onNodeClick?.(flowNode);
-    },
-    [onNodeClick],
-  );
-
-  // Handle panel close
-  const handlePanelClose = useCallback(() => {
-    setIsPanelOpen(false);
-    setSelectedNodeSlug(undefined);
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedNodeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }, []);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div
-        className={cn(
-          "flex h-full min-h-100 items-center justify-center rounded-lg border border-border bg-card",
-          className,
-        )}
-      >
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="text-sm">Loading mindmap...</span>
-        </div>
-      </div>
+  // Determine visibility and layout based on expanded state
+  const { laidOutNodes, visibleEdges } = useMemo(() => {
+    const childrenMap = new Map<string, string[]>();
+    for (const edge of finalEdges) {
+      const children = childrenMap.get(edge.source) || [];
+      children.push(edge.target);
+      childrenMap.set(edge.source, children);
+    }
+
+    const visibleNodeIds = new Set<string>();
+
+    // Find absolute roots
+    const rootNodes = nodes.filter(
+      (n) => !finalEdges.some((e) => e.target === n.id),
     );
-  }
+    for (const r of rootNodes) {
+      visibleNodeIds.add(r.id);
+    }
 
-  // Error state
-  if (error) {
-    return (
-      <div
-        className={cn(
-          "flex h-full min-h-100 items-center justify-center rounded-lg border border-destructive bg-destructive/10",
-          className,
-        )}
-      >
-        <div className="text-center">
-          <p className="font-medium text-destructive">Failed to load mindmap</p>
-          <p className="mt-1 text-destructive/80 text-sm">
-            {error instanceof Error ? error.message : "Unknown error"}
-          </p>
-        </div>
-      </div>
-    );
-  }
+    // Recursively add children ONLY IF parent is visible AND parent is expanded
+    const addChildrenRecursively = (parentId: string) => {
+      if (expandedNodeIds.has(parentId) && visibleNodeIds.has(parentId)) {
+        const children = childrenMap.get(parentId) || [];
+        for (const childId of children) {
+          visibleNodeIds.add(childId);
+          addChildrenRecursively(childId);
+        }
+      }
+    };
 
-  // Empty state
-  if (!data || data.nodes.length === 0) {
-    return (
-      <div
-        className={cn(
-          "flex h-full min-h-100 items-center justify-center rounded-lg border border-border bg-card",
-          className,
-        )}
-      >
-        <div className="text-center text-muted-foreground">
-          <p className="font-medium">No topics found</p>
-          <p className="mt-1 text-sm">
-            This course doesn't have any topics yet.
-          </p>
-        </div>
-      </div>
-    );
-  }
+    for (const r of rootNodes) {
+      addChildrenRecursively(r.id);
+    }
 
-  return (
-    <div className={cn("flex h-full w-full", className)}>
-      {/* Main Mindmap Area */}
-      <div
-        className={cn(
-          "relative h-full min-h-125 flex-1 rounded-lg border border-border bg-background transition-all",
-          isPanelOpen ? "rounded-r-none border-r-0" : "",
-        )}
-      >
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleNodeClick}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2, duration: 300 }}
-          minZoom={0.1}
-          maxZoom={2}
-          defaultEdgeOptions={{
-            type: "prerequisite",
-            animated: false,
-          }}
-          proOptions={{ hideAttribution: true }}
-          className="bg-background"
-        >
-          {/* Background pattern */}
-          <Background
-            gap={20}
-            size={1}
-            color="hsl(var(--border))"
-            className="bg-background"
-          />
+    // 2. Filter nodes and edges
+    const vNodes = nodes
+      .filter((n) => visibleNodeIds.has(n.id))
+      .map((n) => ({
+        ...n,
+        type: "mindmap",
+        data: {
+          ...n.data,
+          isExpanded: expandedNodeIds.has(n.id),
+          hasChildren: (childrenMap.get(n.id)?.length ?? 0) > 0,
+          onToggleExpand: toggleExpand,
+        } as MindmapNodeData & {
+          onToggleExpand: (id: string) => void;
+          isExpanded: boolean;
+          hasChildren: boolean;
+        },
+      }));
 
-          {/* Controls */}
-          <Controls className="border-border bg-card shadow-sm">
-            <FitViewButton />
-          </Controls>
+    const vEdges = finalEdges
+      .filter(
+        (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target),
+      )
+      .map((e) => ({
+        ...e,
+        animated: true,
+        style: { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "5,5" },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#94a3b8",
+          width: 15,
+          height: 15,
+        },
+      }));
 
-          {/* Mini map */}
-          <MiniMap
-            className="rounded-lg border border-border bg-card shadow-sm"
-            nodeColor={(node) => {
-              switch (node.data?.priority) {
-                case "core":
-                  return "hsl(var(--destructive))";
-                case "important":
-                  return "hsl(var(--warning))";
-                case "optional":
-                  return "hsl(var(--muted))";
-                default:
-                  return "hsl(var(--primary))";
-              }
-            }}
-            maskColor="hsl(var(--background) / 0.8)"
-          />
+    // 3. Apply tree layout
+    if (vNodes.length === 0) return { laidOutNodes: [], visibleEdges: [] };
 
-          {/* Study Path Filter */}
-          <Panel position="top-left" className="m-4">
-            <StudyPathFilter
-              value={path}
-              onChange={(newPath) => {
-                // Call the onPathChange callback if provided
-                onPathChange?.(newPath);
-              }}
-              nodes={data.nodes}
-              variant="compact"
-            />
-          </Panel>
+    const nodeHeight = 100;
+    const horizontalGap = 400; // Increased
+    const verticalGap = 60; // Increased
 
-          {/* Node count indicator */}
-          <Panel position="bottom-left" className="m-4">
-            <div className="rounded-lg border border-border bg-card px-3 py-2 text-muted-foreground text-xs shadow-sm">
-              {data.nodes.length} topics • {data.edges.length} prerequisites
-            </div>
-          </Panel>
-        </ReactFlow>
+    const vChildrenMap = new Map<string, string[]>();
+    for (const edge of vEdges) {
+      const children = vChildrenMap.get(edge.source) || [];
+      children.push(edge.target);
+      vChildrenMap.set(edge.source, children);
+    }
 
-        {/* Desktop: Side Panel */}
-        <div
-          className={cn(
-            "hidden w-96 shrink-0 transition-all duration-300 ease-in-out lg:block",
-            isPanelOpen
-              ? "translate-x-0 opacity-100"
-              : "w-0 translate-x-full opacity-0",
-          )}
-        >
-          {isPanelOpen && (
-            <ContextualSourcesPanel
-              topic={topicDetails ?? null}
-              isLoading={isTopicLoading}
-              onClose={handlePanelClose}
-            />
-          )}
-        </div>
+    const vRoots = vNodes.filter((n) => !vEdges.some((e) => e.target === n.id));
+    const nodePositions = new Map<string, { x: number; y: number }>();
+    let currentY = 0;
 
-        {/* Mobile: Drawer */}
-        <ContextualSourcesDrawer
-          topic={topicDetails ?? null}
-          isLoading={isTopicLoading}
-          isOpen={isPanelOpen}
-          onClose={handlePanelClose}
-        />
-      </div>
-    </div>
-  );
-}
+    const layoutSubtree = (nodeId: string, depth: number): number => {
+      const children = vChildrenMap.get(nodeId) || [];
+      const x = depth * horizontalGap;
 
-// ============================================================================
-// Static Data Variant (for testing/storybook)
-// ============================================================================
+      if (children.length === 0) {
+        const y = currentY;
+        nodePositions.set(nodeId, { x, y });
+        currentY += nodeHeight + verticalGap;
+        return y;
+      }
 
-interface MindmapViewStaticProps {
-  nodes: MindmapNodeType[];
-  edges: MindmapEdgeType[];
-  path?: StudyPath;
-  onNodeClick?: (node: MindmapFlowNode) => void;
-  className?: string;
-}
+      const childYPositions: number[] = [];
+      for (const childId of children) {
+        childYPositions.push(layoutSubtree(childId, depth + 1));
+      }
 
-/**
- * Static variant of MindmapView for testing or Storybook
- * Does not fetch data - uses provided nodes and edges
- */
-export function MindmapViewStatic({
-  nodes: initialDataNodes,
-  edges: initialDataEdges,
-  path,
-  onNodeClick,
-  className,
-}: MindmapViewStaticProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<MindmapFlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<MindmapFlowEdge>([]);
+      const minY = childYPositions[0];
+      const maxY = childYPositions[childYPositions.length - 1];
+      const y = (minY + maxY) / 2;
+      nodePositions.set(nodeId, { x, y });
+      return y;
+    };
 
-  const initialNodes = useMemo(() => {
-    return calculateNodeLayout(initialDataNodes, initialDataEdges);
-  }, [initialDataNodes, initialDataEdges]);
+    for (const root of vRoots) {
+      layoutSubtree(root.id, 0);
+    }
 
-  const initialEdges = useMemo(() => {
-    return convertEdges(initialDataEdges);
-  }, [initialDataEdges]);
+    const resultNodes = vNodes.map((n) => ({
+      ...n,
+      position: nodePositions.get(n.id) || n.position,
+    }));
 
-  const filteredNodes = useMemo(() => {
-    return filterNodesByPath(initialNodes, path);
-  }, [initialNodes, path]);
+    return { laidOutNodes: resultNodes, visibleEdges: vEdges };
+  }, [nodes, finalEdges, expandedNodeIds, toggleExpand]);
 
-  const filteredEdges = useMemo(() => {
-    const visibleNodeIds = new Set(
-      filteredNodes
-        .filter((n) => !n.style?.opacity || (n.style.opacity as number) > 0.5)
-        .map((n) => n.id),
-    );
-    return filterEdgesByNodes(initialEdges, visibleNodeIds);
-  }, [filteredNodes, initialEdges]);
+  const [internalNodes, setNodes, onNodesChange] = useNodesState(laidOutNodes);
+  const [internalEdges, setEdges, onEdgesChange] = useEdgesState(visibleEdges);
 
   useEffect(() => {
-    setNodes(filteredNodes);
-    setEdges(filteredEdges);
-  }, [filteredNodes, filteredEdges, setNodes, setEdges]);
+    setNodes(laidOutNodes);
+    setEdges(visibleEdges);
+  }, [laidOutNodes, visibleEdges, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
-    },
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges],
   );
 
-  const handleNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      onNodeClick?.(node as MindmapFlowNode);
-    },
-    [onNodeClick],
-  );
-
   return (
-    <div
-      className={cn(
-        "h-full min-h-125 w-full rounded-lg border border-border bg-background",
-        className,
-      )}
-    >
+    <div className="relative h-full w-full overflow-hidden bg-slate-50">
+      {/* Overlay UI */}
+      <div className="pointer-events-none absolute top-8 left-8 z-10 space-y-1">
+        <h1 className="font-semibold text-2xl text-slate-900 tracking-tight">
+          Course Topic Explorer
+        </h1>
+        <p className="text-slate-500 text-sm">
+          Interactive study path visualization
+        </p>
+      </div>
+
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={internalNodes}
+        edges={internalEdges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={handleNodeClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
+        onNodeClick={(_, node) => onNodeClick?.(node as Node<MindmapNodeData>)}
         fitView
-        fitViewOptions={{ padding: 0.2, duration: 300 }}
-        minZoom={0.1}
+        minZoom={0.05}
         maxZoom={2}
         defaultEdgeOptions={{
-          type: "prerequisite",
-          animated: false,
+          type: "smoothstep",
+          animated: true,
         }}
-        proOptions={{ hideAttribution: true }}
-        className="bg-background"
       >
-        <Background
-          gap={20}
-          size={1}
-          color="hsl(var(--border))"
-          className="bg-background"
-        />
-        <Controls className="border-border bg-card shadow-sm">
-          <FitViewButton />
-        </Controls>
+        <Background color="#cbd5e1" gap={40} size={1} variant={"dots" as any} />
+        <Controls className="border-slate-200! bg-white! fill-slate-600! shadow-lg" />
         <MiniMap
-          className="rounded-lg border border-border bg-card shadow-sm"
-          nodeColor={(node) => {
-            switch (node.data?.priority) {
-              case "core":
-                return "hsl(var(--destructive))";
-              case "important":
-                return "hsl(var(--warning))";
-              case "optional":
-                return "hsl(var(--muted))";
-              default:
-                return "hsl(var(--primary))";
-            }
+          className="border-slate-200! bg-white! shadow-lg"
+          nodeColor={(n) => {
+            const priority = (n.data as MindmapNodeData)?.priority;
+            if (priority === "core") return "#10b981";
+            if (priority === "important") return "#3b82f6";
+            return "#94a3b8";
           }}
-          maskColor="hsl(var(--background) / 0.8)"
+          maskColor="rgba(248, 250, 252, 0.7)"
         />
       </ReactFlow>
+
+      {/* Floating Action Hint */}
+      <div className="absolute bottom-8 left-8 z-10 flex items-center gap-4">
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-600 text-xs shadow-sm backdrop-blur-md">
+          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span>Core Topics</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-600 text-xs shadow-sm backdrop-blur-md">
+          <div className="h-2 w-2 rounded-full bg-blue-500" />
+          <span>Important</span>
+        </div>
+      </div>
     </div>
   );
 }

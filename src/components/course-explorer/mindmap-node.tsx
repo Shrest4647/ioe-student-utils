@@ -1,223 +1,134 @@
 "use client";
 
-import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { AlertCircle, BookOpen, Clock, Star } from "lucide-react";
-import { memo } from "react";
+import { Handle, Position } from "@xyflow/react";
+import {
+  BarChart,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MindmapNodeData, PriorityLevel } from "@/types/course-explorer";
+import type { MindmapNodeData } from "@/types/course-explorer";
 
-/**
- * Priority configuration with colors and icons
- */
-const priorityConfig: Record<
-  PriorityLevel,
-  {
-    color: string;
-    borderColor: string;
-    bgColor: string;
-    icon: typeof Star;
-    label: string;
-  }
-> = {
-  core: {
-    color: "text-red-600 dark:text-red-400",
-    borderColor: "border-red-500 dark:border-red-400",
-    bgColor: "bg-red-50 dark:bg-red-950/30",
-    icon: Star,
-    label: "Core",
-  },
-  important: {
-    color: "text-orange-600 dark:text-orange-400",
-    borderColor: "border-orange-500 dark:border-orange-400",
-    bgColor: "bg-orange-50 dark:bg-orange-950/30",
-    icon: AlertCircle,
-    label: "Important",
-  },
-  optional: {
-    color: "text-slate-600 dark:text-slate-400",
-    borderColor: "border-slate-400 dark:border-slate-500",
-    bgColor: "bg-slate-50 dark:bg-slate-900/50",
-    icon: BookOpen,
-    label: "Optional",
-  },
-};
+interface MindmapNodeProps {
+  data: MindmapNodeData & {
+    onToggleExpand?: (id: string) => void;
+    isExpanded?: boolean;
+    hasChildren?: boolean;
+    isRoot?: boolean;
+  };
+  selected?: boolean;
+}
 
-/**
- * Custom node component for React Flow mindmap
- *
- * Displays course topics with:
- * - Priority-based styling (core, important, optional)
- * - Hours and weightage information
- * - Resource count indicator
- * - Hover and selection states
- */
-export const MindmapNode = memo(function MindmapNode(props: NodeProps) {
-  const data = props.data as MindmapNodeData;
-  const selected = props.selected;
-  const config = priorityConfig[data.priority];
-  const Icon = config.icon;
+export function MindmapNode({ data, selected }: MindmapNodeProps) {
+  const priorityColors = {
+    core: "border-emerald-500 bg-emerald-50/50 text-emerald-900",
+    important: "border-blue-500 bg-blue-50/50 text-blue-900",
+    optional: "border-slate-300 bg-slate-100/50 text-slate-700",
+  };
 
-  const hasWeightage = data.weightage && parseFloat(data.weightage) > 0;
-  const weightageValue = hasWeightage
-    ? parseFloat(data.weightage as string)
-    : 0;
+  const priorityLineColors = {
+    core: "bg-emerald-500",
+    important: "bg-blue-500",
+    optional: "bg-slate-400",
+  };
+
+  const priority = data.priority ?? "optional";
 
   return (
     <div
       className={cn(
-        "group relative min-w-45 max-w-60 rounded-lg border-2 bg-card p-3 shadow-sm transition-all duration-200",
-        "hover:scale-[1.02] hover:shadow-md",
-        config.borderColor,
-        config.bgColor,
-        selected && "scale-[1.02] shadow-lg ring-2 ring-primary ring-offset-2",
+        "group relative flex min-w-[200px] max-w-[320px] cursor-pointer items-center gap-3 rounded-xl border-2 bg-white/60 px-4 py-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md",
+        priorityColors[priority],
+        selected
+          ? "scale-105 ring-2 ring-primary ring-offset-2"
+          : "hover:border-primary/50",
       )}
     >
-      {/* Input handle (top) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="h-3! w-3! border-2! bg-background!"
+      {/* Visual Priority Indicator - Fixed inside border */}
+      <div
+        className={cn(
+          "absolute top-2 bottom-2 left-0 w-1 rounded-r-full",
+          priorityLineColors[priority],
+        )}
       />
 
-      {/* Header with icon and priority */}
-      <div className="mb-2 flex items-start gap-2">
-        <div
+      {/* Inputs/Outputs for React Flow */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="border-none! bg-slate-400! p-0!"
+        style={{ left: 0 }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="border-none! bg-slate-400! p-0!"
+        style={{ right: 0 }}
+      />
+
+      <div className="flex flex-1 flex-col gap-1 pr-6">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-bold text-sm leading-tight tracking-wide">
+            {data.label}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 text-[10px] text-slate-500">
+          {data.hours > 0 && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{data.hours}h</span>
+            </div>
+          )}
+          {data.weightage && (
+            <div className="flex items-center gap-1">
+              <BarChart className="h-3 w-3" />
+              <span>{data.weightage}%</span>
+            </div>
+          )}
+          {data.resourceCount > 0 && (
+            <div className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3" />
+              <span>{data.resourceCount} resources</span>
+            </div>
+          )}
+        </div>
+
+        {/* Hover detail - Description */}
+        {data.description && (
+          <div className="mt-2 max-h-0 overflow-hidden text-[11px] text-slate-600 leading-relaxed transition-all duration-300 group-hover:max-h-24">
+            <p className="border-slate-100 border-t pt-2 italic">
+              {data.description.length > 100
+                ? `${data.description.substring(0, 100)}...`
+                : data.description}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* External Toggle Button */}
+      {data.hasChildren && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onToggleExpand?.(data.id);
+          }}
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-            config.bgColor,
-            config.color,
+            "absolute top-1/2 right-5 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900",
+            data.isExpanded ? "-rotate-180" : "",
+            priorityColors[priority],
           )}
         >
-          <Icon className="h-3.5 w-3.5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 font-semibold text-foreground text-sm leading-tight">
-            {data.label}
-          </h3>
-          <span className={cn("text-xs", config.color)}>{config.label}</span>
-        </div>
-      </div>
-
-      {/* Description (if available) */}
-      {data.description && (
-        <p className="mb-2 line-clamp-2 text-muted-foreground text-xs">
-          {data.description}
-        </p>
+          {data.isExpanded ? (
+            <ChevronLeft className="h-5 w-5" />
+          ) : (
+            <ChevronRight className="h-5 w-5" />
+          )}
+        </button>
       )}
-
-      {/* Unit name */}
-      <p className="mb-2 truncate text-muted-foreground/70 text-xs">
-        {data.unitName}
-      </p>
-
-      {/* Metadata row */}
-      <div className="flex items-center gap-3 text-muted-foreground text-xs">
-        {/* Hours */}
-        {data.hours > 0 && (
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>{data.hours}h</span>
-          </div>
-        )}
-
-        {/* Weightage */}
-        {hasWeightage && (
-          <div className="flex items-center gap-1">
-            <span className="font-medium">{weightageValue}%</span>
-          </div>
-        )}
-
-        {/* Resource count */}
-        {data.resourceCount > 0 && (
-          <div className="ml-auto flex items-center gap-1">
-            <BookOpen className="h-3 w-3" />
-            <span>{data.resourceCount}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Output handle (bottom) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-3! w-3! border-2! bg-background!"
-      />
     </div>
   );
-});
-
-/**
- * Compact node variant for dense mindmaps
- */
-export const MindmapNodeCompact = memo(function MindmapNodeCompact(
-  props: NodeProps,
-) {
-  const data = props.data as MindmapNodeData;
-  const selected = props.selected;
-  const config = priorityConfig[data.priority];
-  const Icon = config.icon;
-
-  return (
-    <div
-      className={cn(
-        "group relative flex items-center gap-2 rounded-full border-2 bg-card px-3 py-1.5 shadow-sm transition-all duration-200",
-        "hover:shadow-md",
-        config.borderColor,
-        config.bgColor,
-        selected && "shadow-lg ring-2 ring-primary ring-offset-2",
-      )}
-    >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="h-2.5! w-2.5! border-2! bg-background!"
-      />
-
-      <Icon className={cn("h-3.5 w-3.5 shrink-0", config.color)} />
-
-      <span className="whitespace-nowrap font-medium text-foreground text-xs">
-        {data.label}
-      </span>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-2.5! w-2.5! border-2! bg-background!"
-      />
-    </div>
-  );
-});
-
-/**
- * Unit group node for clustering topics by unit
- */
-export const MindmapUnitNode = memo(function MindmapUnitNode(props: NodeProps) {
-  const data = props.data as MindmapNodeData;
-  const selected = props.selected;
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-xl border-2 border-border border-dashed bg-muted/30 p-4",
-        selected && "ring-2 ring-primary ring-offset-2",
-      )}
-    >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="h-3! w-3! border-2! bg-background!"
-      />
-
-      <div className="text-center">
-        <h3 className="font-bold text-foreground text-sm">{data.label}</h3>
-        <p className="mt-1 text-muted-foreground text-xs">{data.unitName}</p>
-      </div>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="h-3! w-3! border-2! bg-background!"
-      />
-    </div>
-  );
-});
+}

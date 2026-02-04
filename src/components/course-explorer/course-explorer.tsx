@@ -7,8 +7,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { apiClient } from "@/lib/eden";
 import type { MindmapNodeData } from "@/types/course-explorer";
-import { MindmapView } from "./MindmapView";
-import { SourcesPanel } from "./SourcesPanel";
+import { MindmapView } from "./mindmap-view";
+import { SourcesPanel } from "./sources-panel";
 
 interface CourseExplorerProps {
   courseSlug: string;
@@ -65,6 +65,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <button
+              type="button"
               onClick={() => refetch()}
               className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm hover:bg-accent"
             >
@@ -106,67 +107,45 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
     );
   }
 
-  // Group nodes by unit for better layout
-  const nodesByUnit = new Map<string, typeof mindmapData.nodes>();
-  (mindmapData?.nodes || []).forEach((node) => {
-    const unitName = node.unitName || "Other";
-    if (!nodesByUnit.has(unitName)) {
-      nodesByUnit.set(unitName, []);
-    }
-    nodesByUnit.get(unitName)?.push(node);
-  });
-
-  // Create hierarchical layout with units as columns
-  const nodes: Node<MindmapNodeData>[] = [];
-  const unitNames = Array.from(nodesByUnit.keys()).sort();
-  const columnWidth = 280;
-  const rowHeight = 100;
-
-  unitNames.forEach((unitName, unitIndex) => {
-    const unitNodes = nodesByUnit.get(unitName)!;
-    unitNodes.forEach((node, nodeIndex) => {
-      nodes.push({
+  // Pass raw nodes and edges to MindmapView, which handles its own layout and expansion
+  const nodes: Node<MindmapNodeData>[] = (mindmapData?.nodes || []).map(
+    (node) => ({
+      id: node.id,
+      data: {
         id: node.id,
-        data: {
-          id: node.id,
-          label: node.label,
-          slug: node.slug,
-          priority: node.priority as "core" | "important" | "optional",
-          hours: node.hours,
-          weightage: node.weightage,
-          description: node.description,
-          unitName: node.unitName,
-          resourceCount: node.resources?.length ?? 0,
-          level: node.level,
-        } as MindmapNodeData,
-        position: {
-          x: unitIndex * columnWidth + 50,
-          y: nodeIndex * rowHeight + 100,
-        },
-      });
-    });
-  });
+        label: node.label,
+        slug: node.slug,
+        priority: node.priority as "core" | "important" | "optional",
+        hours: node.hours,
+        weightage: node.weightage,
+        description: node.description,
+        unitName: node.unitName,
+        resourceCount: node.resources?.length ?? 0,
+        level: node.level,
+      } as MindmapNodeData,
+      position: { x: 0, y: 0 }, // Position will be calculated by MindmapView
+    }),
+  );
 
   const edges: Edge[] = (mindmapData?.edges || []).map((e: any) => ({
     id: `${e.from}-${e.to}`,
     source: e.from,
     target: e.to,
-    type: e.type === "strong" ? "smoothstep" : "default",
-    animated: e.type === "strong",
-    style: { stroke: e.type === "strong" ? "#ef4444" : "#94a3b8" },
   }));
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-white">
       {/* Study Path Selector */}
-      <div className="w-64 border-r p-4">
-        <h2 className="mb-4 font-semibold">Study Paths</h2>
+      <div className="w-64 border-slate-200 border-r bg-slate-50 p-4">
+        <h2 className="mb-4 font-semibold text-slate-900">Study Paths</h2>
         <div className="space-y-2">
           <button
             type="button"
             onClick={() => setSelectedPath(undefined)}
-            className={`w-full rounded px-3 py-2 text-left ${
-              !selectedPath ? "bg-primary text-white" : "hover:bg-gray-100"
+            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
+              !selectedPath
+                ? "bg-primary text-primary-foreground"
+                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
             }`}
           >
             All Topics
@@ -174,10 +153,10 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           <button
             type="button"
             onClick={() => setSelectedPath("exam-prep")}
-            className={`w-full rounded px-3 py-2 text-left ${
+            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
               selectedPath === "exam-prep"
-                ? "bg-primary text-white"
-                : "hover:bg-gray-100"
+                ? "bg-primary text-primary-foreground"
+                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
             }`}
           >
             Exam Prep
@@ -185,10 +164,10 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           <button
             type="button"
             onClick={() => setSelectedPath("minimum")}
-            className={`w-full rounded px-3 py-2 text-left ${
+            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
               selectedPath === "minimum"
-                ? "bg-primary text-white"
-                : "hover:bg-gray-100"
+                ? "bg-primary text-primary-foreground"
+                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
             }`}
           >
             Minimum Passing
@@ -196,10 +175,10 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           <button
             type="button"
             onClick={() => setSelectedPath("mastery")}
-            className={`w-full rounded px-3 py-2 text-left ${
+            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
               selectedPath === "mastery"
-                ? "bg-primary text-white"
-                : "hover:bg-gray-100"
+                ? "bg-primary text-primary-foreground"
+                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
             }`}
           >
             Concept Mastery
@@ -209,7 +188,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
         <div className="mt-8">
           <a
             href={`/study-planner?course=${courseSlug}`}
-            className="block w-full rounded bg-primary px-4 py-2 text-center text-white hover:bg-primary/90"
+            className="block w-full rounded bg-primary px-4 py-2 text-center font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
           >
             Create Study Plan
           </a>
@@ -222,6 +201,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           nodes={nodes}
           edges={edges}
           path={selectedPath}
+          courseName={mindmapData.course.name}
           onNodeClick={(node) => setSelectedNode(node)}
         />
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { CourseExplorer } from "@/components/course-explorer/CourseExplorer";
+import { CourseExplorer } from "@/components/course-explorer/course-explorer";
 
 export default function CourseExplorerPage() {
   const params = useParams<{ slug: string }>();
