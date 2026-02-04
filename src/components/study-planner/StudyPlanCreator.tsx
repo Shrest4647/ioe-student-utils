@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
+import { apiClient } from "@/lib/eden";
 import { cn } from "@/lib/utils";
 
 interface Topic {
@@ -158,23 +159,19 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/study-plans/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          templateId,
-          subjectName: subjectName.trim(),
-          topics: topics.map((t) => ({ name: t.name })),
-          examDate: examDate.toISOString(),
-          startDate: new Date().toISOString(),
-          endDate: examDate.toISOString(),
-        }),
+      const { data, error: apiError } = await apiClient.api[
+        "study-plans"
+      ].create.post({
+        templateId,
+        subjectName: subjectName.trim(),
+        topics: topics.map((t) => ({ name: t.name })),
+        examDate: examDate.toISOString(),
+        startDate: new Date().toISOString(),
+        endDate: examDate.toISOString(),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Plan created:", data.plan);
+      if (!apiError && data?.success) {
+        console.log("Plan created:", data.data);
 
         // Show success animation
         setShowSuccess(true);
@@ -192,9 +189,10 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
           onSuccess?.();
         }, 2000);
       } else {
-        const errorData = await response.json();
         setError(
-          errorData.error || "Failed to create study plan. Please try again.",
+          (apiError?.value as any)?.error ||
+            (data as any)?.error ||
+            "Failed to create study plan. Please try again.",
         );
       }
     } catch (err) {

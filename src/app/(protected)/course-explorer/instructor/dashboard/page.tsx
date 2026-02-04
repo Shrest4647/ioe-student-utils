@@ -14,6 +14,7 @@ import { QuickActions } from "@/components/instructor/quick-actions";
 import { StatsCard } from "@/components/instructor/stats-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/eden";
 
 interface DashboardStats {
   totalCourses: number;
@@ -32,23 +33,30 @@ interface Activity {
 }
 
 async function fetchDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch("/api/course-explorer/admin/courses?limit=1");
-  const coursesData = await response.json();
+  // Use public endpoints as they provide the metadata with totalCount
+  const { data: coursesData } = await apiClient.api[
+    "course-explorer"
+  ].courses.get({
+    query: { limit: "1" },
+  });
 
-  // Fetch units count
-  const unitsResponse = await fetch("/api/course-explorer/admin/units?limit=1");
-  const unitsData = await unitsResponse.json();
+  const { data: unitsData } = await (
+    apiClient.api["course-explorer"].units as any
+  ).get({
+    query: { limit: "1" },
+  });
 
   // Fetch topics count
-  const topicsResponse = await fetch(
-    "/api/course-explorer/admin/topics?limit=1",
-  );
-  const topicsData = await topicsResponse.json();
+  const { data: topicsData } = await (
+    apiClient.api["course-explorer"].topics as any
+  ).get({
+    query: { limit: "1" },
+  });
 
   return {
-    totalCourses: coursesData.metadata?.totalCount || 0,
-    totalUnits: unitsData.metadata?.totalCount || 0,
-    totalTopics: topicsData.metadata?.totalCount || 0,
+    totalCourses: (coursesData as any)?.metadata?.totalCount || 0,
+    totalUnits: (unitsData as any)?.metadata?.totalCount || 0,
+    totalTopics: (topicsData as any)?.metadata?.totalCount || 0,
     totalViews: 0, // This would need a separate analytics endpoint
   };
 }
@@ -189,9 +197,10 @@ function TrendingContent() {
   const { data: trendingCourses, isLoading } = useQuery({
     queryKey: ["trending-courses"],
     queryFn: async () => {
-      const response = await fetch("/api/course-explorer/courses?limit=5");
-      const data = await response.json();
-      return data.data || [];
+      const { data } = await apiClient.api["course-explorer"].courses.get({
+        query: { limit: "5" },
+      });
+      return (data as any)?.data || [];
     },
   });
 

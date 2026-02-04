@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/eden";
 import type { ApiResponse, ResourceRelevance } from "@/types/course-explorer";
 
 // ============================================================================
@@ -127,23 +128,21 @@ const topicDetailsKeys = {
  * @returns Promise with topic details
  */
 async function fetchTopicDetails(slug: string): Promise<TopicDetails> {
-  const response = await fetch(`/api/topics/slug/${slug}`);
+  const { data, error } = await apiClient.api["course-explorer"].topics
+    .slug({
+      slug,
+    })
+    .get();
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+  if (error || !data?.success) {
     throw new Error(
-      errorData.error ||
-        `Failed to fetch topic details: ${response.statusText}`,
+      (error?.value as any)?.error ||
+        data?.error ||
+        "Failed to fetch topic details",
     );
   }
 
-  const result: TopicDetailsResponse = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error || "Failed to fetch topic details");
-  }
-
-  return result.data;
+  return data.data as TopicDetails;
 }
 
 // ============================================================================

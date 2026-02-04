@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { apiClient } from "@/lib/eden";
 
 interface GPACalculatorResultsProps {
   result: {
@@ -80,30 +81,28 @@ export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
 
   const saveCalculation = async () => {
     try {
-      const response = await fetch("/api/gpa-converter/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          standardId: result.standard.id,
-          courses: result.courses.map((c) => ({
-            name: c.name,
-            percentage: c.percentage,
-            credits: c.credits,
-          })),
-          cumulativeGPA: result.cumulativeGPA.toString(),
-          totalCredits: result.totalCredits.toString(),
-          totalQualityPoints: result.totalQualityPoints.toString(),
-        }),
+      const { data, error: apiError } = await apiClient.api[
+        "gpa-converter"
+      ].save.post({
+        standardId: result.standard.id,
+        courses: result.courses.map((c) => ({
+          name: c.name,
+          percentage: c.percentage,
+          credits: c.credits,
+        })),
+        cumulativeGPA: result.cumulativeGPA.toString(),
+        totalCredits: result.totalCredits.toString(),
+        totalQualityPoints: result.totalQualityPoints.toString(),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (!apiError && data?.success) {
         toast.success("Calculation saved successfully!");
-      } else if (response.status === 401) {
-        toast.error("Please login to save calculations");
       } else {
-        toast.error(data.error || "Failed to save calculation");
+        toast.error(
+          (apiError?.value as any)?.error ||
+            (data as any)?.error ||
+            "Failed to save calculation",
+        );
       }
     } catch (_error) {
       toast.error("Failed to save calculation. Please try again.");

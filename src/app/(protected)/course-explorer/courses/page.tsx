@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/eden";
 import type { Course, PaginationMetadata } from "@/types/course-explorer";
 
 // ============================================================================
@@ -42,19 +43,19 @@ async function fetchCourses(
   search?: string,
   page = 1,
 ): Promise<CoursesResponse> {
-  const url = new URL("/api/course-explorer/courses", window.location.origin);
-  if (search) url.searchParams.set("search", search);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("limit", "12");
+  const { data, error } = await apiClient.api["course-explorer"].courses.get({
+    query: {
+      search,
+      page: String(page),
+      limit: "12",
+    },
+  });
 
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || "Failed to fetch courses");
+  if (error || !data?.success) {
+    throw new Error((error?.value as any)?.error || "Failed to fetch courses");
   }
 
-  return response.json();
+  return data as any;
 }
 
 // ============================================================================
