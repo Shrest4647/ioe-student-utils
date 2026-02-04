@@ -486,6 +486,37 @@ export const recommendationRoutes = new Elysia({
       },
     },
   )
+  .get(
+    "/letters/:id/download",
+    async ({ user, params, set }) => {
+      const letter = await db.query.recommendationLetter.findFirst({
+        where: { id: params.id },
+      });
+
+      if (!letter) {
+        set.status = 404;
+        return { success: false, error: "Letter not found" };
+      }
+
+      if (letter.studentId !== user.id) {
+        set.status = 403;
+        return { success: false, error: "Forbidden" };
+      }
+
+      set.headers["content-type"] = "application/pdf";
+      set.headers["content-disposition"] =
+        `attachment; filename="${letter.title}.pdf"`;
+
+      return letter.finalContent;
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Recommendations", "Letters"],
+        summary: "Download a recommendation letter",
+      },
+    },
+  )
 
   // ============================================================
   // STUDENT PROFILE DATA ROUTES

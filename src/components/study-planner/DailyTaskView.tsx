@@ -1,13 +1,15 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Clock, Flame, Trophy } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { apiClient } from "@/lib/eden";
 import { cn } from "@/lib/utils";
 
 interface StudyTask {
@@ -17,11 +19,6 @@ interface StudyTask {
   type: "learn" | "practice" | "review" | "prepare";
   estimatedMinutes: number;
   completed: boolean;
-  date: string;
-}
-
-interface TodayTasksResponse {
-  tasks: StudyTask[];
   date: string;
 }
 
@@ -211,94 +208,111 @@ function TaskSkeleton({ delay = 0 }: { delay?: number }) {
 
 export function DailyTaskView() {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<StudyTask[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [completedCount, setCompletedCount] = useState(0);
-  const [streak] = useState(3); // Mock streak - would come from API
+  const queryClient = useQueryClient();
   const [celebratingTaskId, setCelebratingTaskId] = useState<string | null>(
     null,
   );
 
-  const fetchTodayTasks = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const {
+    data: tasks = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["today-tasks", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
 
-    try {
-      setLoading(true);
-      setError(null);
+      const { data, error: apiError } = await apiClient.api[
+        "study-plans"
+      ].today.get({
+        query: { userId: user.id },
+      });
 
-      const response = await fetch(`/api/study-plans/today?userId=${user.id}`);
-
-      if (response.ok) {
-        const data: TodayTasksResponse = await response.json();
-        setTasks(data.tasks || []);
-
-        // Calculate completed count
-        const completed = (data.tasks || []).filter(
-          (task) => task.completed,
-        ).length;
-        setCompletedCount(completed);
-      } else {
-        const errorData = await response.json();
-        setError(
-          errorData.error || "Failed to load today's tasks. Please try again.",
+      if (apiError || !data?.success) {
+        throw new Error(
+          (apiError?.value as any)?.error ||
+            data?.error ||
+            "Failed to load today's tasks",
         );
       }
-    } catch (err) {
-      console.error("Error fetching today's tasks:", err);
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
 
-  useEffect(() => {
-    if (user) {
-      fetchTodayTasks();
-    }
-  }, [user, fetchTodayTasks]);
+      // Transform the response data to match the StudyTask interface
+      const rawData = data.data || [];
+      return rawData.map((item: any) => ({
+        id: item.task.id,
+        title: item.task.title,
+        description: item.task.description,
+        type: (item.task.taskType as any) || "learn",
+        estimatedMinutes: item.task.estimatedMinutes,
+        completed: false, // Defaulting to false as the today route currently returns structural tasks
+        date: new Date().toISOString(),
+      })) as StudyTask[];
+    },
+    enabled: !!user?.id,
+  });
 
-  const toggleTaskComplete = useCallback(
-    async (taskId: string, completed: boolean) => {
-      // Optimistic update
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId ? { ...task, completed } : task,
-        ),
-      );
-      setCompletedCount((prev) => (completed ? prev + 1 : prev - 1));
+  const toggleMutation = useMutation({
+    mutationFn: async ({
+      taskId,
+      completed,
+    }: {
+      taskId: string;
+      completed: boolean;
+    }) => {
+      const endpoint = completed ? "complete" : "uncomplete";
+      const { error } = await (apiClient.api["study-tasks"] as any)({
+        id: taskId,
+      })[endpoint].patch();
 
+      if (error) {
+        throw new Error("Failed to update task");
+      }
+    },
+    onMutate: async ({ taskId, completed }) => {
       // Show celebration animation
       if (completed) {
         setCelebratingTaskId(taskId);
         setTimeout(() => setCelebratingTaskId(null), 600);
       }
 
-      try {
-        const endpoint = completed ? "/complete" : "/uncomplete";
-        const response = await fetch(`/api/study-tasks/${taskId}${endpoint}`, {
-          method: "PATCH",
-        });
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<StudyTask[]>([
+        "today-tasks",
+        user?.id,
+      ]);
 
-        if (!response.ok) {
-          throw new Error("Failed to update task");
-        }
-      } catch (error) {
-        console.error("Error updating task:", error);
-        // Revert on error
-        setTasks((prev) =>
-          prev.map((task) =>
-            task.id === taskId ? { ...task, completed: !completed } : task,
+      // Optimistically update to the new value
+      if (previousTasks) {
+        queryClient.setQueryData<StudyTask[]>(
+          ["today-tasks", user?.id],
+          previousTasks.map((task) =>
+            task.id === taskId ? { ...task, completed } : task,
           ),
         );
-        setCompletedCount((prev) => (completed ? prev - 1 : prev + 1));
       }
+
+      return { previousTasks };
     },
-    [],
-  );
+    onError: (err, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(
+          ["today-tasks", user?.id],
+          context.previousTasks,
+        );
+      }
+      console.error("Error updating task:", err);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["today-tasks", user?.id] });
+    },
+  });
+
+  const toggleTaskComplete = (taskId: string, completed: boolean) => {
+    toggleMutation.mutate({ taskId, completed });
+  };
+
+  const completedCount = tasks.filter((task) => task.completed).length;
+  const streak = 3; // Mock streak - would come from API
 
   const progressPercentage =
     tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
@@ -307,7 +321,7 @@ export function DailyTaskView() {
     0,
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <motion.div
         className="space-y-2 sm:space-y-3"
@@ -330,7 +344,9 @@ export function DailyTaskView() {
       >
         <Card>
           <CardContent className="px-4 py-6 text-center sm:py-8">
-            <p className="text-destructive text-sm sm:text-base">{error}</p>
+            <p className="text-destructive text-sm sm:text-base">
+              {error instanceof Error ? error.message : "Failed to load tasks"}
+            </p>
           </CardContent>
         </Card>
       </motion.div>

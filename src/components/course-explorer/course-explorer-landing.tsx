@@ -12,32 +12,10 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { apiClient } from "@/lib/eden";
 import { CourseCard } from "./course-card";
 import { CourseCardSkeleton } from "./course-card-skeleton";
 import { FilterChips } from "./filter-chips";
-
-interface Course {
-  id: string;
-  name: string;
-  slug: string;
-  code: string | null;
-  description: string | null;
-  credits: string | null;
-  units: Array<{
-    id: string;
-    name: string;
-  }>;
-}
-
-interface CoursesResponse {
-  success: boolean;
-  data: Course[];
-  metadata: {
-    totalCount: number;
-    totalPages: number;
-    currentPage: number;
-  };
-}
 
 function StarField() {
   return (
@@ -89,17 +67,21 @@ export function CourseExplorerLanding() {
     refetch,
   } = useQuery({
     queryKey: ["courses", debouncedSearch],
-    queryFn: async (): Promise<CoursesResponse> => {
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.append("search", debouncedSearch);
+    queryFn: async () => {
+      const { data, error } = await apiClient.api[
+        "course-explorer"
+      ].courses.get({
+        query: {
+          search: debouncedSearch || undefined,
+        },
+      });
 
-      const response = await fetch(
-        `/api/course-explorer/courses?${params.toString()}`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch courses");
+      if (error || !data?.success) {
+        throw new Error(
+          (error?.value as any)?.error || "Failed to fetch courses",
+        );
       }
-      return response.json();
+      return data;
     },
   });
 

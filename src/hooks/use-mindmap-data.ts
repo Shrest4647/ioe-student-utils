@@ -1,11 +1,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  MindmapApiResponse,
-  MindmapData,
-  StudyPath,
-} from "@/types/course-explorer";
+import { apiClient } from "@/lib/eden";
+import type { MindmapData, StudyPath } from "@/types/course-explorer";
 
 /**
  * Query key factory for mindmap data
@@ -28,31 +25,23 @@ async function fetchMindmapData(
   courseSlug: string,
   path?: StudyPath,
 ): Promise<MindmapData> {
-  const url = new URL(
-    `/api/course-explorer/courses/slug/${courseSlug}/mindmap`,
-    window.location.origin,
-  );
+  const { data, error } = await apiClient.api["course-explorer"].courses
+    .slug({ slug: courseSlug })
+    .mindmap.get({
+      query: {
+        path: path && path !== "all" ? path : undefined,
+      },
+    });
 
-  if (path && path !== "all") {
-    url.searchParams.set("path", path);
-  }
-
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+  if (error || !data?.success) {
     throw new Error(
-      errorData.error || `Failed to fetch mindmap data: ${response.statusText}`,
+      (error?.value as any)?.error ||
+        data?.error ||
+        "Failed to fetch mindmap data",
     );
   }
 
-  const result: MindmapApiResponse = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error || "Failed to fetch mindmap data");
-  }
-
-  return result.data;
+  return data.data as MindmapData;
 }
 
 /**

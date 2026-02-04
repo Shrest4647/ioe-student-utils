@@ -66,10 +66,11 @@ export default function LetterDetailPage({ params }: PageProps) {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(
-        `/api/recommendations/letters/${id}/download`,
-      );
-      if (!response.ok) {
+      const { response } = await apiClient.api.recommendations
+        .letters({ id })
+        .download.get();
+
+      if (!response || !response.ok) {
         throw new Error("Failed to download PDF");
       }
 
