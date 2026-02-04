@@ -1,18 +1,28 @@
 export function CourseCardSkeleton() {
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <div className="space-y-3">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card/50 p-6 backdrop-blur-xl">
+      <div className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
-            <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-1/4 animate-pulse rounded bg-muted" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="h-6 w-16 animate-pulse rounded-full bg-muted" />
-            <div className="h-6 w-12 animate-pulse rounded-full bg-muted" />
+            <div className="h-7 w-3/4 animate-pulse rounded-lg bg-muted" />
+            <div className="h-4 w-1/4 animate-pulse rounded-md bg-muted/60" />
           </div>
         </div>
-        <div className="mt-4 h-8 animate-pulse rounded bg-muted" />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-8 animate-pulse rounded-lg bg-muted/80" />
+          <div className="h-8 animate-pulse rounded-lg bg-muted/80" />
+        </div>
+
+        <div className="space-y-2 pt-2">
+          <div className="h-4 animate-pulse rounded bg-muted/50" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-muted/50" />
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 border-border/50 border-t pt-4">
+          <div className="h-10 animate-pulse rounded-lg bg-muted/30" />
+          <div className="h-12 animate-pulse rounded-lg bg-muted" />
+        </div>
       </div>
     </div>
   );

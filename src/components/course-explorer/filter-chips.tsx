@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface FilterChipsProps {
   courses: Array<{
@@ -33,26 +34,27 @@ export function FilterChips({ courses }: FilterChipsProps) {
   };
 
   return (
-    <div className="scrollbar-hide flex items-center justify-center gap-2 overflow-x-auto pb-2">
-      {chips.map((chip) => (
-        <button
-          type="button"
-          key={chip.id}
-          onClick={() => handleFilterClick(chip.id)}
-          className={`whitespace-nowrap rounded-full px-4 py-2 font-medium text-sm transition-all ${
-            activeFilter === chip.id
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-          }
-          `}
-          aria-pressed={activeFilter === chip.id}
-        >
-          {chip.label}
-          {activeFilter === chip.id && (
-            <X className="ml-1.5 inline h-3.5 w-3.5" />
-          )}
-        </button>
-      ))}
+    <div className="scrollbar-hide flex items-center justify-center gap-3 overflow-x-auto px-4 pb-2">
+      {chips.map((chip) => {
+        const isActive = activeFilter === chip.id;
+        return (
+          <button
+            type="button"
+            key={chip.id}
+            onClick={() => handleFilterClick(chip.id)}
+            className={cn(
+              "relative flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-bold text-xs uppercase tracking-wider transition-all duration-300",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "border border-border bg-card shadow-sm backdrop-blur-md hover:border-primary/50 hover:text-primary",
+            )}
+            aria-pressed={isActive}
+          >
+            {chip.label}
+            {isActive && <X className="h-3 w-3" />}
+          </button>
+        );
+      })}
     </div>
   );
 }
