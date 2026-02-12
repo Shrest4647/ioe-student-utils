@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
-import { studyPlans, studyTasks } from "@/server/db/schema";
+import { studyPlans, studyTasks, studyTemplates } from "@/server/db/schema";
 import { generateStudyPlan } from "@/server/utils/study-plan-generator";
 import { authorizationPlugin } from "../plugins/authorization";
 
@@ -17,6 +17,28 @@ type DailyTasks = Record<string, GeneratedTask[]>;
 
 export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
   .use(authorizationPlugin)
+  .get(
+    "/templates",
+    async ({ set }) => {
+      try {
+        const templates = await db.select().from(studyTemplates);
+        return { success: true, data: templates };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching study templates:", error);
+        return {
+          success: false,
+          error: "Failed to fetch study templates",
+        };
+      }
+    },
+    {
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Get all available study templates",
+      },
+    },
+  )
   .get(
     "/",
     async ({ user, set }) => {
@@ -155,6 +177,26 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
           };
         }
 
+        // Generate slug from subject name
+        const baseSlug = subjectName
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/[\s_-]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+
+        // Check if slug exists and generate unique one if needed
+        let slug = baseSlug;
+        let counter = 1;
+        while (true) {
+          const existing = await db.query.studyPlans.findFirst({
+            where: { slug: slug },
+          });
+          if (!existing) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+
         // Generate study plan using utility
         const dailyTasks = await generateStudyPlan({
           templateId,
@@ -170,6 +212,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
             userId: user.id,
             templateId,
             subjectName,
+            slug,
             examDate: examDateObj.toISOString().split("T")[0],
             startDate: startDateObj.toISOString().split("T")[0],
             endDate: endDateObj.toISOString().split("T")[0],
@@ -242,7 +285,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       try {
         const plan = await db.query.studyPlans.findFirst({
           where: {
-            AND: [{ id: id }, { userId: user.id }],
+            AND: [{ slug: id }, { userId: user.id }],
           },
         });
 
@@ -255,7 +298,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
         const tasks = await db
           .select()
           .from(studyTasks)
-          .where(eq(studyTasks.studyPlanId, id))
+          .where(eq(studyTasks.studyPlanId, plan.id))
           .orderBy(studyTasks.dayNumber);
 
         return { success: true, data: { ...plan, tasks } };
@@ -272,7 +315,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       auth: true,
       detail: {
         tags: ["Study Plans"],
-        summary: "Get study plan by ID",
+        summary: "Get study plan by slug",
       },
     },
   )

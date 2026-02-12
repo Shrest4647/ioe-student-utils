@@ -99,6 +99,7 @@ export const studyPlans = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     templateId: uuid("template_id").references(() => studyTemplates.id),
     subjectName: varchar("subject_name", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
     examDate: date("exam_date").notNull(),
     startDate: date("start_date").notNull(),
     endDate: date("end_date").notNull(),
@@ -128,6 +129,7 @@ export const studyPlans = pgTable(
     index("study_plans_user_id_idx").on(t.userId),
     index("study_plans_status_idx").on(t.status),
     index("study_plans_exam_date_idx").on(t.examDate),
+    index("study_plans_slug_idx").on(t.slug),
   ],
 );
 
