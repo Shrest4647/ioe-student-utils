@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarIcon,
@@ -39,13 +40,11 @@ interface StudyPlanCreatorProps {
   onSuccess?: () => void;
 }
 
-const templates = [
-  { id: "1-day", label: "1-Day Sprint" },
-  { id: "3-day", label: "3-Day Boost" },
-  { id: "1-week", label: "1-Week Plan" },
-  { id: "2-week", label: "2-Week Comprehensive" },
-  { id: "1-month", label: "1-Month Plan" },
-];
+interface Template {
+  id: string;
+  name: string;
+  durationDays: number;
+}
 
 // Animation variants
 const containerVariants = {
@@ -123,6 +122,22 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const {
+    data: templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+  } = useQuery({
+    queryKey: ["study-templates"],
+    queryFn: async () => {
+      const { data, error } =
+        await apiClient.api["study-plans"].templates.get();
+      if (error) {
+        throw new Error("Failed to load templates");
+      }
+      return data?.data as Template[];
+    },
+  });
 
   const isFormValid =
     subjectName.trim() !== "" &&
@@ -349,10 +364,21 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
                     templateId && "border-primary",
                   )}
                 >
-                  <SelectValue placeholder="Select duration" />
+                  <SelectValue
+                    placeholder={
+                      templatesLoading
+                        ? "Loading templates..."
+                        : "Select duration"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template, index) => (
+                  {templatesError && (
+                    <div className="p-2 text-destructive text-sm">
+                      Error loading templates
+                    </div>
+                  )}
+                  {templates?.map((template, index) => (
                     <motion.div
                       key={template.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -363,10 +389,15 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
                         value={template.id}
                         className="py-3 text-sm sm:py-2 sm:text-base"
                       >
-                        {template.label}
+                        {template.name} ({template.durationDays} days)
                       </SelectItem>
                     </motion.div>
                   ))}
+                  {templates && templates.length === 0 && (
+                    <div className="p-2 text-muted-foreground text-sm">
+                      No templates found
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </motion.div>

@@ -285,7 +285,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       try {
         const plan = await db.query.studyPlans.findFirst({
           where: {
-            AND: [{ slug: id }, { userId: user.id }],
+            AND: [{ id }, { userId: user.id }],
           },
         });
 
@@ -437,6 +437,46 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       detail: {
         tags: ["Study Plans"],
         summary: "Archive study plan",
+      },
+    },
+  )
+  .get(
+    "/slug/:slug",
+    async ({ params: { slug }, user, set }) => {
+      try {
+        const plan = await db.query.studyPlans.findFirst({
+          where: {
+            AND: [{ slug }, { userId: user.id }],
+          },
+        });
+
+        if (!plan) {
+          set.status = 404;
+          return { success: false, error: "Study plan not found" };
+        }
+
+        // Get all tasks for this plan
+        const tasks = await db
+          .select()
+          .from(studyTasks)
+          .where(eq(studyTasks.studyPlanId, plan.id))
+          .orderBy(studyTasks.dayNumber);
+
+        return { success: true, data: { ...plan, tasks } };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching study plan:", error);
+        return {
+          success: false,
+          error: "Failed to fetch study plan",
+        };
+      }
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Get study plan by slug",
       },
     },
   );

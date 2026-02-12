@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BookOpen, ListTodo, Plus, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { StudyPlanCreator } from "./StudyPlanCreator";
 interface StudyPlan {
   id: string;
   subjectName: string;
+  slug: string;
   examDate: string;
   progressPercentage: string;
   status: string;
@@ -182,7 +184,9 @@ function PlanCardSkeleton({ delay = 0 }: { delay?: number }) {
 
 export function StudyPlannerDashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [showCreator, setShowCreator] = useState(false);
+  const [showAllPlans, setShowAllPlans] = useState(false);
 
   const {
     data: plans,
@@ -416,8 +420,9 @@ export function StudyPlannerDashboard() {
                 variant="ghost"
                 size="sm"
                 className="group text-primary hover:bg-primary/5"
+                onClick={() => setShowAllPlans(!showAllPlans)}
               >
-                View All{" "}
+                {showAllPlans ? "Show Active" : "View All"}
                 <span className="ml-1 transition-transform group-hover:translate-x-1">
                   →
                 </span>
@@ -467,7 +472,7 @@ export function StudyPlannerDashboard() {
               animate="visible"
             >
               {plans
-                ?.filter((p) => p.status === "active")
+                ?.filter((p) => showAllPlans || p.status === "active")
                 .map((plan, index) => {
                   const progress = parseFloat(plan.progressPercentage || "0");
                   return (
@@ -478,6 +483,10 @@ export function StudyPlannerDashboard() {
                       whileHover="hover"
                       animate="visible"
                       custom={index}
+                      onClick={() =>
+                        router.push(`/dashboard/study-plans/${plan.slug}`)
+                      }
+                      className="cursor-pointer"
                     >
                       <motion.div variants={cardHoverVariants}>
                         <Card className="group relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-md transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10">
