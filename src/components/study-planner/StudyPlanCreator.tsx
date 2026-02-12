@@ -165,9 +165,7 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
     setTopics(topics.filter((t) => t.name !== topicName));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!user || !isFormValid) return;
 
     setIsCreating(true);
@@ -222,7 +220,7 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
   if (showSuccess) {
     return (
       <motion.div
-        className="flex min-h-[300px] items-center justify-center px-4 sm:min-h-[400px]"
+        className="flex min-h-75 items-center justify-center px-4 sm:min-h-100"
         variants={successVariants}
         initial="hidden"
         animate="visible"
@@ -441,7 +439,7 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
                     variant="outline"
                     onClick={handleAddTopic}
                     disabled={!currentTopic.trim() || isCreating}
-                    className="h-11 w-full min-w-[44px] transition-all duration-200 sm:h-10 sm:w-auto"
+                    className="h-11 w-full min-w-11 transition-all duration-200 sm:h-10 sm:w-auto"
                   >
                     <PlusIcon className="size-4 sm:mr-2" />
                     <span className="sm:inline">Add</span>
@@ -467,7 +465,7 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
                         layout
                         transition={{ delay: index * 0.05 }}
                         whileHover={{ scale: 1.05 }}
-                        className="flex min-h-[32px] items-center gap-1 rounded-md bg-secondary px-2.5 py-1.5 text-xs sm:text-sm"
+                        className="flex min-h-8 items-center gap-1 rounded-md bg-secondary px-2.5 py-1.5 text-xs sm:text-sm"
                       >
                         <span>{topic.name}</span>
                         <motion.div
@@ -480,7 +478,7 @@ export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
                             size="icon"
                             onClick={() => handleRemoveTopic(topic.name)}
                             disabled={isCreating}
-                            className="h-6 min-h-[24px] w-6 min-w-[24px]"
+                            className="h-6 min-h-6 w-6 min-w-6"
                           >
                             <XIcon className="size-3" />
                           </Button>

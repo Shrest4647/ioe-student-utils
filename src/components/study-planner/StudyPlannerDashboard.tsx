@@ -305,7 +305,7 @@ export function StudyPlannerDashboard() {
       </div>
 
       <motion.div
-        className="relative mx-auto max-w-[1400px] space-y-12 px-4 py-12 sm:px-6 lg:px-8"
+        className="relative mx-auto max-w-350 space-y-12 px-4 py-12 sm:px-6 lg:px-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
