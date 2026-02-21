@@ -21,6 +21,7 @@ export const posts = createTable(
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: d.timestamp({ withTimezone: true }).$defaultFn(() => new Date()),
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+    deletedAt: d.timestamp({ withTimezone: true }),
   }),
   (t) => [
     index("created_by_idx").on(t.createdById),
