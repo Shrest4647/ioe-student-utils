@@ -244,7 +244,7 @@ export function DailyTaskView() {
         description: item.task.description,
         type: (item.task.taskType as any) || "learn",
         estimatedMinutes: item.task.estimatedMinutes,
-        completed: false, // Defaulting to false as the today route currently returns structural tasks
+        completed: item.task.completed ?? false,
         date: new Date().toISOString(),
       })) as StudyTask[];
     },

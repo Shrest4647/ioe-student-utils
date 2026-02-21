@@ -6,7 +6,6 @@ import {
   ChevronRight,
   GraduationCap,
   LayoutDashboard,
-  Settings,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,23 +16,13 @@ import { cn } from "@/lib/utils";
 const navigation = [
   {
     name: "Dashboard",
-    href: "/instructor/dashboard",
+    href: "/course-explorer/instructor/dashboard",
     icon: LayoutDashboard,
   },
   {
     name: "Courses",
-    href: "/instructor/courses",
+    href: "/course-explorer/instructor/courses",
     icon: BookOpen,
-  },
-  {
-    name: "Units",
-    href: "/instructor/units",
-    icon: GraduationCap,
-  },
-  {
-    name: "Settings",
-    href: "/instructor/settings",
-    icon: Settings,
   },
 ];
 
@@ -51,7 +40,7 @@ export function InstructorSidebar() {
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!collapsed && (
           <Link
-            href="/instructor/dashboard"
+            href="/course-explorer/instructor/dashboard"
             className="flex items-center gap-2"
           >
             <GraduationCap className="h-6 w-6 text-primary" />

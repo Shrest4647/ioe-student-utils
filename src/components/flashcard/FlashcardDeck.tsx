@@ -21,9 +21,10 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Reset flip state when card changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: need to reset flip state when index changes
   useEffect(() => {
     setIsFlipped(false);
-  }, []);
+  }, [currentIndex]);
 
   // Notify parent of index changes
   useEffect(() => {

@@ -5,8 +5,9 @@ import type { Edge, Node } from "@xyflow/react";
 import { AlertCircle, BookOpen, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/eden";
-import type { MindmapNodeData } from "@/types/course-explorer";
+import type { MindmapNodeData, StudyPath } from "@/types/course-explorer";
 import { MindmapView } from "./mindmap-view";
 import { SourcesPanel } from "./sources-panel";
 
@@ -15,7 +16,7 @@ interface CourseExplorerProps {
 }
 
 export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
-  const [selectedPath, setSelectedPath] = useState<string | undefined>();
+  const [selectedPath, setSelectedPath] = useState<StudyPath>();
   const [selectedNode, setSelectedNode] = useState<Node<MindmapNodeData>>();
 
   const {
@@ -30,7 +31,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
         .slug({ slug: courseSlug })
         .mindmap.get({
           query: {
-            path: selectedPath as "minimum" | "exam-prep" | "all",
+            path: selectedPath,
           },
         });
       return response.data?.data;
@@ -64,20 +65,13 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
             {error instanceof Error ? error.message : "Something went wrong"}
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm hover:bg-accent"
-            >
+            <Button variant="outline" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
               Try Again
-            </button>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm hover:bg-primary/90"
-            >
-              Go Home
-            </Link>
+            </Button>
+            <Button asChild variant="default">
+              <Link href="/">Go Home</Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -96,12 +90,9 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
           <p className="mt-2 text-muted-foreground text-sm">
             This course doesn't have any topics yet, or it may not exist.
           </p>
-          <Link
-            href="/"
-            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm hover:bg-primary/90"
-          >
-            Browse All Courses
-          </Link>
+          <Button asChild className="mt-6" variant="default">
+            <Link href="/">Browse All Courses</Link>
+          </Button>
         </div>
       </div>
     );
@@ -134,64 +125,40 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   }));
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-background">
       {/* Study Path Selector */}
-      <div className="w-64 border-slate-200 border-r bg-slate-50 p-4">
-        <h2 className="mb-4 font-semibold text-slate-900">Study Paths</h2>
+      <div className="w-64 border-border border-r bg-muted p-4">
+        <h2 className="mb-4 font-semibold text-foreground">Study Paths</h2>
         <div className="space-y-2">
-          <button
-            type="button"
+          <Button
+            variant={!selectedPath ? "default" : "ghost"}
+            className="w-full justify-start"
             onClick={() => setSelectedPath(undefined)}
-            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
-              !selectedPath
-                ? "bg-primary text-primary-foreground"
-                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            }`}
           >
             All Topics
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={selectedPath === "exam-prep" ? "default" : "ghost"}
+            className="w-full justify-start"
             onClick={() => setSelectedPath("exam-prep")}
-            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
-              selectedPath === "exam-prep"
-                ? "bg-primary text-primary-foreground"
-                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            }`}
           >
             Exam Prep
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={selectedPath === "minimum" ? "default" : "ghost"}
+            className="w-full justify-start"
             onClick={() => setSelectedPath("minimum")}
-            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
-              selectedPath === "minimum"
-                ? "bg-primary text-primary-foreground"
-                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            }`}
           >
             Minimum Passing
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedPath("mastery")}
-            className={`w-full rounded px-3 py-2 text-left font-medium text-sm transition-colors ${
-              selectedPath === "mastery"
-                ? "bg-primary text-primary-foreground"
-                : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            }`}
-          >
-            Concept Mastery
-          </button>
+          </Button>
         </div>
 
         <div className="mt-8">
-          <a
-            href={`/study-planner?course=${courseSlug}`}
-            className="block w-full rounded bg-primary px-4 py-2 text-center font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
-          >
-            Create Study Plan
-          </a>
+          <Button asChild className="w-full" variant="default">
+            <a href={`/study-planner?course=${courseSlug}`}>
+              Create Study Plan
+            </a>
+          </Button>
         </div>
       </div>
 

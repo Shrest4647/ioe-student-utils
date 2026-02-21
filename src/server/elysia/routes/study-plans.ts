@@ -90,7 +90,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
           subjectName: string;
           examDate: Date | string;
           dayNumber: number;
-          task: GeneratedTask;
+          task: GeneratedTask & { completed: boolean; taskId: string };
         }> = [];
 
         // For each plan, calculate current day and get tasks
@@ -109,13 +109,35 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
           const tasksForDay = dailyTasks[dayNumber.toString()];
 
           if (tasksForDay) {
+            // Get all completed task IDs for this plan from the database
+            const dbTasks = await db
+              .select({ id: studyTasks.id, completed: studyTasks.completed })
+              .from(studyTasks)
+              .where(eq(studyTasks.studyPlanId, plan.id));
+
+            const completedMap = new Map(
+              dbTasks.map((t) => [t.id, t.completed]),
+            );
+
             for (const task of tasksForDay) {
+              // Check if task exists in DB and get its completion status
+              const dbTask = dbTasks.find(
+                (t) =>
+                  t.id === task.id ||
+                  (plan.id && dbTasks.some((db) => db.id === task.id)),
+              );
+
               todayTasks.push({
                 planId: plan.id,
                 subjectName: plan.subjectName,
                 examDate: plan.examDate,
                 dayNumber,
-                task,
+                task: {
+                  ...task,
+                  completed:
+                    completedMap.get(task.id) ?? dbTask?.completed ?? false,
+                  taskId: task.id,
+                },
               });
             }
           }

@@ -14,24 +14,24 @@ const renderMath = (text: string): string => {
   const katex = (window as any).katex;
   let rendered = text;
 
-  // Render inline math: $...$
-  rendered = rendered.replace(/\$([^$]+)\$/g, (match, math) => {
-    try {
-      return katex.renderToString(math, {
-        throwOnError: false,
-        displayMode: false,
-      });
-    } catch {
-      return match;
-    }
-  });
-
   // Render display math: $$...$$
   rendered = rendered.replace(/\$\$([^$]+)\$\$/g, (match, math) => {
     try {
       return katex.renderToString(math, {
         throwOnError: false,
         displayMode: true,
+      });
+    } catch {
+      return match;
+    }
+  });
+
+  // Render inline math: $...$
+  rendered = rendered.replace(/\$([^$]+)\$/g, (match, math) => {
+    try {
+      return katex.renderToString(math, {
+        throwOnError: false,
+        displayMode: false,
       });
     } catch {
       return match;

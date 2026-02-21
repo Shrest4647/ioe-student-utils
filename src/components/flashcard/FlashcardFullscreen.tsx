@@ -25,9 +25,10 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
   }, [initialIndex]);
 
   // Reset flip state when card changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: need to reset flip state when index changes
   useEffect(() => {
     setIsFlipped(false);
-  }, []);
+  }, [currentIndex]);
 
   // Handle open/close animations
   useEffect(() => {

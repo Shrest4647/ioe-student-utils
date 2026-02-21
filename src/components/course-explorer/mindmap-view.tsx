@@ -3,6 +3,7 @@
 import {
   addEdge,
   Background,
+  BackgroundVariant,
   type Connection,
   Controls,
   type Edge,
@@ -274,7 +275,12 @@ export function MindmapView({
           animated: true,
         }}
       >
-        <Background color="#cbd5e1" gap={40} size={1} variant={"dots" as any} />
+        <Background
+          color="#cbd5e1"
+          gap={40}
+          size={1}
+          variant={BackgroundVariant.Dots}
+        />
         <Controls className="border-slate-200! bg-white! fill-slate-600! shadow-lg" />
         <MiniMap
           className="border-slate-200! bg-white! shadow-lg"

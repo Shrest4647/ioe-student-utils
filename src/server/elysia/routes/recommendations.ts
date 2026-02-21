@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { recommendationLetter, studentProfileData } from "@/server/db/schema";
+import { generateLetterPDF } from "@/server/lib/pdf-generator";
 import {
   generateDefaultContext,
   preFillWithProfileData,
@@ -503,11 +504,20 @@ export const recommendationRoutes = new Elysia({
         return { success: false, error: "Forbidden" };
       }
 
+      const pdfBuffer = await generateLetterPDF({
+        finalContent: letter.finalContent,
+        recommenderName: letter.recommenderName,
+        recommenderTitle: letter.recommenderTitle,
+        recommenderInstitution: letter.recommenderInstitution,
+        recommenderEmail: letter.recommenderEmail,
+        recommenderDepartment: letter.recommenderDepartment,
+      });
+
       set.headers["content-type"] = "application/pdf";
       set.headers["content-disposition"] =
         `attachment; filename="${letter.title}.pdf"`;
 
-      return letter.finalContent;
+      return pdfBuffer;
     },
     {
       auth: true,
