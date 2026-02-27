@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Clock, Flame, Trophy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -212,6 +212,7 @@ export function DailyTaskView() {
   const [celebratingTaskId, setCelebratingTaskId] = useState<string | null>(
     null,
   );
+  const celebrationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     data: tasks = [],
@@ -272,7 +273,13 @@ export function DailyTaskView() {
       // Show celebration animation
       if (completed) {
         setCelebratingTaskId(taskId);
-        setTimeout(() => setCelebratingTaskId(null), 600);
+        if (celebrationTimeoutRef.current) {
+          clearTimeout(celebrationTimeoutRef.current);
+        }
+        celebrationTimeoutRef.current = setTimeout(
+          () => setCelebratingTaskId(null),
+          600,
+        );
       }
 
       // Snapshot the previous value
@@ -310,6 +317,15 @@ export function DailyTaskView() {
   const toggleTaskComplete = (taskId: string, completed: boolean) => {
     toggleMutation.mutate({ taskId, completed });
   };
+
+  // Clear celebration timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (celebrationTimeoutRef.current) {
+        clearTimeout(celebrationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const completedCount = tasks.filter((task) => task.completed).length;
   const streak = 3; // Mock streak - would come from API
@@ -405,7 +421,7 @@ export function DailyTaskView() {
                 {/* Enhanced Progress Bar */}
                 <div className="group relative h-3 w-full overflow-hidden rounded-full bg-secondary ring-1 ring-border/50">
                   <motion.div
-                    className="h-full rounded-full bg-linear-to-r from-primary via-primary/80 to-primary/90 shadow-[0_0_15px_-3px_rgba(var(--primary),0.5)]"
+                    className="h-full rounded-full bg-linear-to-r from-primary via-primary/80 to-primary/90 shadow-[0_0_15px_-3px_oklch(var(--color-primary)/0.5)]"
                     variants={progressBarVariants}
                     initial="hidden"
                     animate="visible"

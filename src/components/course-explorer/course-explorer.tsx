@@ -22,6 +22,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   const {
     data: mindmapData,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -118,7 +119,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
     }),
   );
 
-  const edges: Edge[] = (mindmapData?.edges || []).map((e: any) => ({
+  const edges: Edge[] = (mindmapData?.edges || []).map((e) => ({
     id: `${e.from}-${e.to}`,
     source: e.from,
     target: e.to,
@@ -155,9 +156,9 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
 
         <div className="mt-8">
           <Button asChild className="w-full" variant="default">
-            <a href={`/study-planner?course=${courseSlug}`}>
+            <Link href={`/study-planner?course=${courseSlug}`}>
               Create Study Plan
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -174,8 +175,8 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
       </div>
 
       {/* Sources Panel */}
-      <div className="w-96 border-l">
-        <SourcesPanel selectedNode={selectedNode} isLoading={isLoading} />
+      <div className="w-96 border-border border-l">
+        <SourcesPanel selectedNode={selectedNode} isLoading={isFetching} />
       </div>
     </div>
   );

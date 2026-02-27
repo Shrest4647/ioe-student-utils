@@ -82,6 +82,10 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  if (!cards || cards.length === 0) {
+    return null;
+  }
+
   const progress = ((currentIndex + 1) / cards.length) * 100;
 
   return (
@@ -90,17 +94,17 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
       {(title || showExpandButton) && (
         <div className="mb-4 flex items-center justify-between px-2">
           {title && (
-            <h3 className="font-semibold text-gray-900 text-lg">{title}</h3>
+            <h3 className="font-semibold text-foreground text-lg">{title}</h3>
           )}
           {showExpandButton && onExpand && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onExpand}
-              className="h-9 w-9 rounded-lg hover:bg-gray-100"
+              className="h-9 w-9 rounded-lg hover:bg-muted"
               aria-label="Expand fullscreen"
             >
-              <Maximize2 className="h-5 w-5 text-gray-500" />
+              <Maximize2 className="h-5 w-5 text-muted-foreground" />
             </Button>
           )}
         </div>
@@ -135,23 +139,23 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
 
       {/* Control Bar */}
       <div className="flex items-center justify-center gap-4">
-        <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-muted bg-background px-4 py-3 shadow-sm">
           {/* Previous Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={handlePrev}
             disabled={currentIndex === 0 || isAnimating}
-            className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
+            className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
             aria-label="Previous card"
           >
-            <ChevronLeft className="h-5 w-5 text-gray-700" />
+            <ChevronLeft className="h-5 w-5 text-muted-foreground" />
           </Button>
 
           {/* Progress Bar */}
-          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-gray-200 md:w-48">
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted md:w-48">
             <div
-              className="h-full rounded-full bg-orange-500 transition-all duration-300 ease-out"
+              className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
               style={{
                 width: `${progress}%`,
                 transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
@@ -165,14 +169,14 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             size="icon"
             onClick={handleNext}
             disabled={currentIndex === cards.length - 1 || isAnimating}
-            className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
+            className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
             aria-label="Next card"
           >
-            <ChevronRight className="h-5 w-5 text-gray-700" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </Button>
 
           {/* Counter */}
-          <div className="ml-2 min-w-12 text-right font-medium text-gray-600 text-sm">
+          <div className="ml-2 min-w-12 text-right font-medium text-muted-foreground text-sm">
             {currentIndex + 1}/{cards.length}
           </div>
         </div>

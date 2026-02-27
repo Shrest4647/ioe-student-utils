@@ -248,13 +248,13 @@ export function MindmapView({
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-slate-50">
+    <div className="relative h-full w-full overflow-hidden bg-background">
       {/* Overlay UI */}
       <div className="pointer-events-none absolute top-8 left-8 z-10 space-y-1">
-        <h1 className="font-semibold text-2xl text-slate-900 tracking-tight">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">
           Course Topic Explorer
         </h1>
-        <p className="text-slate-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           Interactive study path visualization
         </p>
       </div>
@@ -281,9 +281,9 @@ export function MindmapView({
           size={1}
           variant={BackgroundVariant.Dots}
         />
-        <Controls className="border-slate-200! bg-white! fill-slate-600! shadow-lg" />
+        <Controls className="border-border! bg-background! text-muted-foreground! shadow-lg" />
         <MiniMap
-          className="border-slate-200! bg-white! shadow-lg"
+          className="border-border! bg-background! shadow-lg"
           nodeColor={(n) => {
             const priority = (n.data as MindmapNodeData)?.priority;
             if (priority === "core") return "#10b981";
@@ -296,11 +296,11 @@ export function MindmapView({
 
       {/* Floating Action Hint */}
       <div className="absolute bottom-8 left-8 z-10 flex items-center gap-4">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-600 text-xs shadow-sm backdrop-blur-md">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 font-medium text-muted-foreground text-xs shadow-sm backdrop-blur-md">
           <div className="h-2 w-2 rounded-full bg-emerald-500" />
           <span>Core Topics</span>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-600 text-xs shadow-sm backdrop-blur-md">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 font-medium text-muted-foreground text-xs shadow-sm backdrop-blur-md">
           <div className="h-2 w-2 rounded-full bg-blue-500" />
           <span>Important</span>
         </div>

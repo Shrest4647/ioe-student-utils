@@ -108,11 +108,11 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
     };
   }, [isOpen]);
 
-  const progress = ((currentIndex + 1) / cards.length) * 100;
-
-  if (!isVisible) {
+  if (!isVisible || !cards || cards.length === 0) {
     return null;
   }
+
+  const progress = ((currentIndex + 1) / cards.length) * 100;
 
   return (
     <div
@@ -124,7 +124,7 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
     >
       {/* Background Overlay */}
       <div
-        className="absolute inset-0 bg-gray-100/98 backdrop-blur-sm"
+        className="absolute inset-0 bg-muted/98 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -138,10 +138,10 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-10 w-10 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-200"
+            className="h-10 w-10 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-muted"
             aria-label="Close fullscreen"
           >
-            <X className="h-5 w-5 text-gray-700" />
+            <X className="h-5 w-5 text-muted-foreground" />
           </Button>
 
           {/* Actions */}
@@ -149,7 +149,7 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 gap-2 rounded-lg px-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-200"
+              className="h-9 gap-2 rounded-lg px-3 font-medium text-muted-foreground transition-all duration-200 hover:bg-muted"
               aria-label="Share flashcards"
             >
               <Share2 className="h-4 w-4" />
@@ -158,7 +158,7 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 gap-2 rounded-lg px-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-200"
+              className="h-9 gap-2 rounded-lg px-3 font-medium text-muted-foreground transition-all duration-200 hover:bg-muted"
               aria-label="Edit flashcards"
             >
               <Edit className="h-4 w-4" />
@@ -206,23 +206,23 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
 
           {/* Control Bar */}
           <div className="mt-8 flex items-center justify-center gap-4">
-            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3 rounded-xl border border-muted bg-background px-4 py-3 shadow-sm">
               {/* Previous Button */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handlePrev}
                 disabled={currentIndex === 0 || isAnimating}
-                className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
+                className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
                 aria-label="Previous card"
               >
-                <ChevronLeft className="h-5 w-5 text-gray-700" />
+                <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </Button>
 
               {/* Progress Bar */}
-              <div className="h-1.5 w-40 overflow-hidden rounded-full bg-gray-200 md:w-64">
+              <div className="h-1.5 w-40 overflow-hidden rounded-full bg-muted md:w-64">
                 <div
-                  className="h-full rounded-full bg-orange-500 transition-all duration-300 ease-out"
+                  className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
                   style={{
                     width: `${progress}%`,
                     transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
@@ -236,14 +236,14 @@ export const FlashcardFullscreen: React.FC<FlashcardFullscreenProps> = ({
                 size="icon"
                 onClick={handleNext}
                 disabled={currentIndex === cards.length - 1 || isAnimating}
-                className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
+                className="h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
                 aria-label="Next card"
               >
-                <ChevronRight className="h-5 w-5 text-gray-700" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </Button>
 
               {/* Counter */}
-              <div className="ml-2 min-w-12 text-right font-medium text-gray-600 text-sm">
+              <div className="ml-2 min-w-12 text-right font-medium text-muted-foreground text-sm">
                 {currentIndex + 1}/{cards.length}
               </div>
             </div>

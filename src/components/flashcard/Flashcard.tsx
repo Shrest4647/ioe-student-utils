@@ -4,6 +4,7 @@ import type React from "react";
 import { useEffect, useRef } from "react";
 import type { FlashcardProps } from "@/types/flashcard";
 import "katex/dist/katex.min.css";
+import DOMPurify from "isomorphic-dompurify";
 
 // Helper function to render LaTeX math expressions
 const renderMath = (text: string): string => {
@@ -55,10 +56,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   // Render math when component mounts or content changes
   useEffect(() => {
     if (frontRef.current) {
-      frontRef.current.innerHTML = renderMath(front);
+      frontRef.current.innerHTML = DOMPurify.sanitize(renderMath(front));
     }
     if (backRef.current) {
-      backRef.current.innerHTML = renderMath(back);
+      backRef.current.innerHTML = DOMPurify.sanitize(renderMath(back));
     }
   }, [front, back]);
 
@@ -92,32 +93,28 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         }}
       >
         {/* Front Face */}
-        <div
-          className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12"
-          style={{ backfaceVisibility: "hidden" }}
-        >
+        <div className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12">
           <div
             ref={frontRef}
-            className="text-center font-semibold text-gray-900 text-xl leading-relaxed md:text-2xl"
+            className="text-center font-semibold text-foreground text-xl leading-relaxed md:text-2xl"
           >
             {front}
           </div>
-          <div className="absolute bottom-8 font-medium text-indigo-600 text-sm">
-            Click to check the answer
+          <div className="absolute bottom-8 font-medium text-primary text-sm">
+            Click to check answer
           </div>
         </div>
 
         {/* Back Face */}
         <div
-          className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-white p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12"
+          className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12"
           style={{
-            backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
           <div
             ref={backRef}
-            className="text-center font-medium text-indigo-600 text-lg leading-relaxed md:text-xl"
+            className="text-center font-medium text-lg text-primary leading-relaxed md:text-xl"
           >
             {back}
           </div>

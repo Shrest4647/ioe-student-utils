@@ -55,6 +55,8 @@ export function InstructorSidebar() {
           size="icon"
           className={cn("h-8 w-8", collapsed && "mx-auto")}
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
