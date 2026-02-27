@@ -116,8 +116,8 @@ const LetterPDF = ({
       </View>
 
       <View style={pdfStyles.body}>
-        {content.split("\n\n").map((paragraph, index) => (
-          <Text key={index} style={pdfStyles.paragraph}>
+        {content.split("\n\n").map((paragraph) => (
+          <Text key={paragraph.trim()} style={pdfStyles.paragraph}>
             {paragraph.trim()}
           </Text>
         ))}
