@@ -20,8 +20,8 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       const l = Math.min(100, Math.max(1, parseInt(limit ?? "10", 10) || 12));
       const offset = (p - 1) * l;
 
-      const conditions = [];
-      const dbConditions = [];
+      const conditions: any[] = [{ isActive: true }];
+      const dbConditions = [eq(universities.isActive, true)];
 
       if (search) {
         conditions.push({ name: { ilike: `%${search}%` } });
@@ -228,6 +228,33 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
           detail: {
             tags: ["Universities Admin"],
             summary: "Update university",
+          },
+        },
+      )
+      .delete(
+        "/:id",
+        async ({ params: { id }, set }) => {
+          const university = await db.query.universities.findFirst({
+            where: { id },
+          });
+
+          if (!university) {
+            set.status = 404;
+            return { success: false, error: "University not found" };
+          }
+
+          await db.delete(universities).where(eq(universities.id, id));
+
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          params: t.Object({
+            id: t.String(),
+          }),
+          detail: {
+            tags: ["Universities Admin"],
+            summary: "Delete university",
           },
         },
       ),

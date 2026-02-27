@@ -10,15 +10,15 @@ The Model Context Protocol (MCP) server enables AI agents to interact with the I
 - **Type-safe validation**: All tools use Zod schemas for input validation
 - **Permission-based access**: Tools respect API key permissions
 - **Real-time logging**: Track all tool invocations for audit trails
-- **SSE Transport**: Server-Sent Events for real-time communication
+- **Http Streaming Transport**: Http Streaming for real-time communication
 - **Vercel Integration**: Built on Vercel's mcp-handler for Next.js
 
 ## Available Tools
 
 ### Scholarship Tools
 
-| Tool Name | Description | Required Permissions |
-|------------|-------------|---------------------|
+| Tool Name            | Description                                         | Required Permissions |
+| -------------------- | --------------------------------------------------- | -------------------- |
 | `fetch_scholarships` | Retrieve scholarships with filtering and pagination | `scholarships: read` |
 
 #### fetch_scholarships
@@ -133,7 +133,7 @@ Add to Claude Desktop configuration (`~/.claude/config.json` or Claude Desktop s
 Test the MCP endpoint directly:
 
 ```bash
-curl -X POST http://localhost:3000/api/mcp/sse \
+curl -X POST http://localhost:3000/api/mcp/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -169,7 +169,7 @@ curl -X POST http://localhost:3000/api/mcp/sse \
 bun dev
 
 # Test MCP endpoint
-curl http://localhost:3000/api/mcp/sse
+curl http://localhost:3000/api/mcp/mcp
 ```
 
 ### Testing with MCP Inspector
@@ -179,7 +179,7 @@ curl http://localhost:3000/api/mcp/sse
 bun add @modelcontextprotocol/inspector
 
 # Run inspector with API key
-bun x mcp-inspector --url http://localhost:3000/api/mcp/sse --header "Authorization: Bearer YOUR_API_KEY"
+bun x mcp-inspector --url http://localhost:3000/api/mcp/mcp --header "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ### Debugging
@@ -191,6 +191,7 @@ NODE_ENV=development bun dev
 ```
 
 Logs will show:
+
 - Tool invocations
 - Request parameters
 - Response status
@@ -202,16 +203,17 @@ Logs will show:
 
 Tools require specific permissions:
 
-| Tool | Required Permission | Description |
-|------|-------------------|-------------|
-| `fetch_scholarships` | `scholarships: read` | Read scholarship data |
-| `create_scholarship` | `scholarships: write` | Create new scholarships |
-| `update_scholarship` | `scholarships: write` | Modify scholarships |
-| `delete_scholarship` | `scholarships: delete` | Delete scholarships |
+| Tool                 | Required Permission    | Description             |
+| -------------------- | ---------------------- | ----------------------- |
+| `fetch_scholarships` | `scholarships: read`   | Read scholarship data   |
+| `create_scholarship` | `scholarships: write`  | Create new scholarships |
+| `update_scholarship` | `scholarships: write`  | Modify scholarships     |
+| `delete_scholarship` | `scholarships: delete` | Delete scholarships     |
 
 ### Rate Limiting
 
 All API keys have rate limiting enforced by Better Auth:
+
 - Default: 1000 requests per day
 - Configurable per API key
 - Automatic throttling when exceeded
@@ -219,6 +221,7 @@ All API keys have rate limiting enforced by Better Auth:
 ### Audit Logging
 
 All tool invocations are logged with:
+
 - Timestamp
 - API key ID
 - Tool name
@@ -230,6 +233,7 @@ All tool invocations are logged with:
 ### Adding New Tools
 
 1. Create tool module in `src/lib/mcp/tools/`:
+
    ```typescript
    // src/lib/mcp/tools/new-domain.ts
    import { z } from "zod";
@@ -249,26 +253,28 @@ All tool invocations are logged with:
        async (params: any) => {
          // Implementation here
          const result = await db.select().from(yourTable);
-         
+
          return {
            content: [{ type: "text", text: JSON.stringify(result) }],
          };
-       }
+       },
      );
    }
    ```
 
 2. Register tools in `src/lib/mcp/server.ts`:
+
    ```typescript
    import { registerNewDomainTools } from "./tools/new-domain";
 
    async (server) => {
      registerScholarshipTools(server);
      registerNewDomainTools(server); // Add here
-   }
+   };
    ```
 
 3. Update permissions in `src/lib/mcp/auth.ts`:
+
    ```typescript
    export const TOOL_PERMISSIONS = {
      // ... existing
@@ -316,19 +322,23 @@ src/
 ### Common Issues
 
 **Issue**: "Unauthorized: Invalid or missing API key"
+
 - **Solution**: Ensure API key is included in `Authorization: Bearer <key>` or `x-api-key: <key>` header
 - Verify API key is not expired
 - Check API key has required permissions
 
 **Issue**: "Insufficient permissions. Requires 'scholarships: read' permission"
+
 - **Solution**: Regenerate API key with required permissions or contact administrator
 - Check permissions in `src/server/better-auth/config.ts` under apiKey plugin
 
 **Issue**: Tool execution timeout
+
 - **Solution**: Check if tool query is slow, consider optimizing database query
 - Increase `maxDuration` in `src/lib/mcp/server.ts`
 
-**Issue**: Connection refused on SSE endpoint
+**Issue**: Connection refused on http endpoint
+
 - **Solution**: Ensure development server is running: `bun dev`
 - Check CORS settings if connecting from different origin
 

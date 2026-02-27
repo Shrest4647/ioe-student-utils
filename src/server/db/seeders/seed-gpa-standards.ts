@@ -249,6 +249,7 @@ async function seedGPAStandards() {
   console.log("Starting GPA conversion standards seeding...");
 
   for (const standard of standards) {
+    console.log(`🔍 Checking if "${standard.name}" already exists...`);
     // Check if standard already exists
     const existing = await db.query.gpaConversionStandards.findFirst({
       where: { name: standard.name },

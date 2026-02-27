@@ -1,11 +1,22 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Edit2, Plus, Search } from "lucide-react";
+import { Edit2, Plus, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,11 +35,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDeleteUniversity } from "@/hooks/use-universities";
 import { apiClient } from "@/lib/eden";
 
 export default function UniversitiesDashboardPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 500);
+  const { mutate: deleteUniversity, isPending: isDeleting } =
+    useDeleteUniversity();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "universities", debouncedSearch],
@@ -144,6 +158,39 @@ export default function UniversitiesDashboardPage() {
                             <Edit2 className="h-4 w-4" />
                           </Link>
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete University
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete{" "}
+                                <strong>{university.name}</strong>? This action
+                                cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteUniversity(university.id)}
+                                disabled={isDeleting}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))

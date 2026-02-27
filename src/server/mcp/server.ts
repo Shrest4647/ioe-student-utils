@@ -3,6 +3,7 @@ import { auth } from "@/server/better-auth";
 import { registerAcademicTools } from "./tools/academic";
 import { registerCollegeTools } from "./tools/colleges";
 import { registerCountryTools } from "./tools/countries";
+import { registerCourseExplorerTools } from "./tools/course-explorer";
 import { registerDataQualityTools } from "./tools/data-quality";
 import { registerDegreeTools } from "./tools/degrees";
 import { registerDepartmentTools } from "./tools/departments";
@@ -38,6 +39,9 @@ const mcpHandler = createMcpHandler(
     // Academic tools (programs and courses)
     registerAcademicTools(server);
 
+    // Course Explorer tools (bulk operations for courses, units, topics)
+    registerCourseExplorerTools(server);
+
     // Resource library tools
     registerResourceTools(server);
 
@@ -57,6 +61,7 @@ const mcpHandler = createMcpHandler(
     basePath: "/api/mcp",
     maxDuration: 60,
     verboseLogs: process.env.NODE_ENV === "development",
+    disableSse: true,
   },
 );
 

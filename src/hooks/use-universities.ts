@@ -1,8 +1,11 @@
 import {
   keepPreviousData,
   useInfiniteQuery,
+  useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { Rating } from "@/components/universities/rating-card";
 import { apiClient } from "@/lib/eden";
 
@@ -205,5 +208,33 @@ export function useRatingCategories(entityType?: string) {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useDeleteUniversity() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.api.universities.admin({ id }).delete();
+
+      if (response.error || !response.data?.success) {
+        throw new Error(
+          (typeof response.error?.value === "object"
+            ? (response.error.value as any)?.message ||
+              (response.error.value as any)?.error
+            : response.error?.value) || "Failed to delete university",
+        );
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
+      toast.success("University deleted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete university");
+    },
   });
 }

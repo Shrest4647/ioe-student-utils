@@ -91,11 +91,11 @@ export function LetterList() {
 
   const handleDownloadLetter = async (id: string, title: string) => {
     try {
-      const response = await fetch(
-        `/api/recommendations/letters/${id}/download`,
-      );
+      const { response } = await apiClient.api.recommendations
+        .letters({ id })
+        .download.get();
 
-      if (!response.ok) {
+      if (!response || !response.ok) {
         throw new Error("Failed to download PDF");
       }
 

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { recommendationLetter, studentProfileData } from "@/server/db/schema";
+import { generateLetterPDF } from "@/server/lib/pdf-generator";
 import {
   generateDefaultContext,
   preFillWithProfileData,
@@ -483,6 +484,46 @@ export const recommendationRoutes = new Elysia({
       detail: {
         tags: ["Recommendations", "Letters"],
         summary: "Delete a recommendation letter",
+      },
+    },
+  )
+  .get(
+    "/letters/:id/download",
+    async ({ user, params, set }) => {
+      const letter = await db.query.recommendationLetter.findFirst({
+        where: { id: params.id },
+      });
+
+      if (!letter) {
+        set.status = 404;
+        return { success: false, error: "Letter not found" };
+      }
+
+      if (letter.studentId !== user.id) {
+        set.status = 403;
+        return { success: false, error: "Forbidden" };
+      }
+
+      const pdfBuffer = await generateLetterPDF({
+        finalContent: letter.finalContent,
+        recommenderName: letter.recommenderName,
+        recommenderTitle: letter.recommenderTitle,
+        recommenderInstitution: letter.recommenderInstitution,
+        recommenderEmail: letter.recommenderEmail,
+        recommenderDepartment: letter.recommenderDepartment,
+      });
+
+      set.headers["content-type"] = "application/pdf";
+      set.headers["content-disposition"] =
+        `attachment; filename="${letter.title}.pdf"`;
+
+      return pdfBuffer;
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Recommendations", "Letters"],
+        summary: "Download a recommendation letter",
       },
     },
   )

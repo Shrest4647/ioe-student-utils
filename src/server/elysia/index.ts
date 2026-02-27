@@ -3,10 +3,17 @@ import { authorizationPlugin } from "./plugins/authorization";
 import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
+import { academicEventsRoutes } from "./routes/academic-events";
 import { apiKeyRoutes } from "./routes/api-keys";
 import { betterUploadRoutes } from "./routes/better-upload";
 import { certificationRoutes } from "./routes/certifications";
 import { collegeRoutes } from "./routes/colleges";
+import {
+  courseExplorerAdminRoutes,
+  courseExplorerPublicRoutes,
+  courseExplorerTopicRoutes,
+  courseExplorerUnitRoutes,
+} from "./routes/course-explorer";
 import { departmentRoutes } from "./routes/departments";
 import { educationRoutes } from "./routes/education";
 import { gpaConverterRoutes } from "./routes/gpa-converter";
@@ -23,6 +30,8 @@ import { resourceRoutes } from "./routes/resources";
 import { resumeRoutes } from "./routes/resumes";
 import { scholarshipRoutes } from "./routes/scholarships";
 import { skillRoutes } from "./routes/skills";
+import { studyPlansRoutes } from "./routes/study-plans";
+import { studyTasksRoutes } from "./routes/study-tasks";
 import { universityRoutes } from "./routes/universities";
 import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
@@ -56,6 +65,13 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(savedRecommendationsRoutes)
   .use(gpaConverterRoutes)
   .use(betterUploadRoutes)
+  .use(academicEventsRoutes)
+  .use(studyPlansRoutes)
+  .use(studyTasksRoutes)
+  .use(courseExplorerPublicRoutes)
+  .use(courseExplorerUnitRoutes)
+  .use(courseExplorerTopicRoutes)
+  .use(courseExplorerAdminRoutes)
   .get("/", () => "👋 Hello from IOESU", {
     detail: {
       tags: ["App"],

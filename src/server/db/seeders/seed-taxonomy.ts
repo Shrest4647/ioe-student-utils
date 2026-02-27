@@ -125,4 +125,6 @@ async function main() {
   console.log("\nImport complete!");
 }
 
-main().catch(console.error);
+main()
+  .catch(console.error)
+  .finally(() => process.exit(0));

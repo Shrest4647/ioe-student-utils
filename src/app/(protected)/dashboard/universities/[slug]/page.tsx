@@ -17,6 +17,17 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,6 +56,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useDeleteUniversity } from "@/hooks/use-universities";
 import { apiClient } from "@/lib/eden";
 
 const universitySchema = z.object({
@@ -78,6 +90,8 @@ export default function UniversityEditPage() {
   const queryClient = useQueryClient();
   const isNew = slug === "new";
   const [isCollegeModalOpen, setIsCollegeModalOpen] = useState(false);
+  const { mutate: deleteUniversity, isPending: isDeleting } =
+    useDeleteUniversity();
 
   const universityQuery = useQuery({
     queryKey: ["admin", "university", slug],
@@ -165,6 +179,15 @@ export default function UniversityEditPage() {
   }
 
   const universityId = universityQuery.data?.id || "";
+
+  const handleDelete = () => {
+    if (!universityQuery.data?.id) return;
+    deleteUniversity(universityQuery.data.id, {
+      onSuccess: () => {
+        router.push("/dashboard/universities");
+      },
+    });
+  };
 
   return (
     <div className="container mx-auto space-y-6 pt-8">
@@ -467,6 +490,42 @@ export default function UniversityEditPage() {
                 ? "Create University"
                 : "Update University"}
           </Button>
+
+          {!isNew && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {isDeleting ? "Deleting..." : "Delete University"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete University</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete{" "}
+                    <strong>{universityQuery.data?.name}</strong>? This action
+                    cannot be undone and will also delete all associated
+                    colleges, departments, and programs.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </form>
       <AddCollegeModal

@@ -1,0 +1,21 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { CourseExplorer } from "@/components/course-explorer/course-explorer";
+
+export default function CourseExplorerPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+
+  if (!slug) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <CourseExplorer courseSlug={slug} />;
+}

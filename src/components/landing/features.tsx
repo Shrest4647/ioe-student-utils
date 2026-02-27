@@ -93,15 +93,17 @@ const features = [
   },
   {
     icon: BookOpen,
-    title: "Syllabus Explorer",
-    description: "Detailed breakdown of BCT subjects and marks distribution.",
+    title: "Course Explorer",
+    description:
+      "Understand course structure, topics, relationships, and resources.",
+    href: "/course-explorer",
   },
   {
     icon: Calendar,
     title: "Study Planner",
     description:
       "Plan and track study/application schedules, including exam dates and goals.",
-    href: "/scholarships/calendar",
+    href: "/study-planner",
   },
   {
     icon: Library,
