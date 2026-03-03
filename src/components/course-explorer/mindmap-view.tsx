@@ -88,6 +88,9 @@ export function MindmapView({
     new Set(),
   );
   const initializedGraphRef = useRef<string>("");
+  const nodePositionMemoryRef = useRef<Map<string, { x: number; y: number }>>(
+    new Map(),
+  );
 
   // Initialize expanded nodes: Only level 0 or nodes without parents
   useEffect(() => {
@@ -253,9 +256,35 @@ export function MindmapView({
   const [internalEdges, setEdges, onEdgesChange] = useEdgesState(visibleEdges);
 
   useEffect(() => {
-    setNodes(laidOutNodes);
+    setNodes((prevNodes) => {
+      const previousPositions = new Map(
+        prevNodes.map((node) => [node.id, node.position]),
+      );
+
+      const nextNodes = laidOutNodes.map((node) => {
+        const rememberedPosition =
+          nodePositionMemoryRef.current.get(node.id) ??
+          previousPositions.get(node.id);
+
+        const nextNode = {
+          ...node,
+          position: rememberedPosition ?? node.position,
+        };
+
+        nodePositionMemoryRef.current.set(nextNode.id, nextNode.position);
+        return nextNode;
+      });
+
+      return nextNodes;
+    });
     setEdges(visibleEdges);
   }, [laidOutNodes, visibleEdges, setNodes, setEdges]);
+
+  useEffect(() => {
+    for (const node of internalNodes) {
+      nodePositionMemoryRef.current.set(node.id, node.position);
+    }
+  }, [internalNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
