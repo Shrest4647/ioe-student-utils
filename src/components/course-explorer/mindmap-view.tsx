@@ -378,7 +378,20 @@ export function MindmapView({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={(_, node) => onNodeClick?.(node as Node<MindmapNodeData>)}
+        onNodeClick={(_, node) => {
+          const clickedNode = node as Node<
+            MindmapNodeData & {
+              hasChildren?: boolean;
+              onToggleExpand?: (id: string) => void;
+            }
+          >;
+
+          if (clickedNode.data.hasChildren && clickedNode.data.onToggleExpand) {
+            clickedNode.data.onToggleExpand(clickedNode.id);
+          }
+
+          onNodeClick?.(node as Node<MindmapNodeData>);
+        }}
         onNodeDragStop={onNodeDragStop}
         fitView
         minZoom={0.05}

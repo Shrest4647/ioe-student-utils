@@ -4,7 +4,7 @@ import { Handle, Position } from "@xyflow/react";
 import {
   BarChart,
   BookOpen,
-  ChevronLeft,
+  ChevronDown,
   ChevronRight,
   Clock,
 } from "lucide-react";
@@ -120,11 +120,10 @@ export function MindmapNode({ data, selected }: MindmapNodeProps) {
             "absolute top-1/2 right-5 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-all hover:scale-110",
             "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900",
             "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100",
-            data.isExpanded ? "-rotate-180" : "",
           )}
         >
           {data.isExpanded ? (
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronDown className="h-5 w-5" />
           ) : (
             <ChevronRight className="h-5 w-5" />
           )}
