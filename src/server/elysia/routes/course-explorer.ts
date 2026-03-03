@@ -10,6 +10,12 @@ import {
   topicResourceLinks,
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
+import {
+  computeCourseGraphDiff,
+  exportCourseGraph,
+  upsertCourseGraph,
+} from "../services/course-graph-service";
+import { validateCourseGraphInput } from "../services/course-graph-validator";
 
 // ============================================================================
 // Public Course Routes
@@ -770,7 +776,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: { id, slug } };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         name: t.String(),
         slug: t.Optional(t.String()),
@@ -795,7 +801,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         name: t.Optional(t.String()),
         slug: t.Optional(t.String()),
@@ -820,6 +826,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Soft delete course",
@@ -857,9 +864,126 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: newCourse[0] };
     },
     {
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Duplicate course",
+      },
+    },
+  )
+  .get(
+    "/courses/:id/graph",
+    async ({ params: { id }, set }) => {
+      try {
+        const graph = await exportCourseGraph(id);
+        return { success: true, data: graph };
+      } catch (error) {
+        set.status = 404;
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Course not found",
+        };
+      }
+    },
+    {
+      roles: ["admin", "instructor"],
+      detail: {
+        tags: ["Course Explorer Admin"],
+        summary: "Export course graph payload",
+      },
+    },
+  )
+  .post(
+    "/course-graphs/validate",
+    async ({ body }) => {
+      const validation = await validateCourseGraphInput(body.input ?? body);
+      return { success: true, data: validation.result };
+    },
+    {
+      roles: ["admin", "instructor"],
+      body: t.Object({
+        input: t.Optional(t.Any()),
+      }),
+      detail: {
+        tags: ["Course Explorer Admin"],
+        summary: "Validate nested course graph payload",
+      },
+    },
+  )
+  .post(
+    "/course-graphs/diff",
+    async ({ body }) => {
+      const diff = await computeCourseGraphDiff(body.input ?? body, {
+        targetCourseId: body.targetCourseId,
+        targetCourseSlug: body.targetCourseSlug,
+        mode: body.mode ?? "merge",
+      });
+      return { success: true, data: diff };
+    },
+    {
+      roles: ["admin", "instructor"],
+      body: t.Object({
+        input: t.Optional(t.Any()),
+        targetCourseId: t.Optional(t.String()),
+        targetCourseSlug: t.Optional(t.String()),
+        mode: t.Optional(
+          t.Union([
+            t.Literal("create"),
+            t.Literal("merge"),
+            t.Literal("replace"),
+          ]),
+        ),
+      }),
+      detail: {
+        tags: ["Course Explorer Admin"],
+        summary: "Preview deterministic graph diff",
+      },
+    },
+  )
+  .post(
+    "/course-graphs/upsert",
+    async ({ body, set }) => {
+      try {
+        const data = await upsertCourseGraph(body.input ?? body, {
+          mode: body.mode ?? "merge",
+          targetCourseId: body.targetCourseId,
+          targetCourseSlug: body.targetCourseSlug,
+        });
+        return { success: true, data };
+      } catch (error) {
+        set.status = 400;
+        let errorMessage = "Failed to upsert course graph";
+        let validation: unknown;
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          try {
+            validation = JSON.parse(error.message);
+          } catch {}
+        }
+
+        return {
+          success: false,
+          error: errorMessage,
+          data: validation,
+        };
+      }
+    },
+    {
+      roles: ["admin", "instructor"],
+      body: t.Object({
+        input: t.Optional(t.Any()),
+        mode: t.Union([
+          t.Literal("create"),
+          t.Literal("merge"),
+          t.Literal("replace"),
+        ]),
+        targetCourseId: t.Optional(t.String()),
+        targetCourseSlug: t.Optional(t.String()),
+        idempotencyKey: t.Optional(t.String()),
+      }),
+      detail: {
+        tags: ["Course Explorer Admin"],
+        summary: "Atomically apply nested course graph payload",
       },
     },
   )
@@ -890,7 +1014,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: { id, slug } };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         courseId: t.String(),
         name: t.String(),
@@ -916,7 +1040,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         name: t.Optional(t.String()),
         slug: t.Optional(t.String()),
@@ -943,7 +1067,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Soft delete unit",
@@ -982,7 +1106,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: { id, slug } };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         unitId: t.String(),
         name: t.String(),
@@ -1023,7 +1147,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         name: t.Optional(t.String()),
         slug: t.Optional(t.String()),
@@ -1057,7 +1181,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Soft delete topic",
@@ -1083,7 +1207,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: { id: prereqId } };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         prerequisiteTopicId: t.String(),
         dependencyType: t.Union([t.Literal("strong"), t.Literal("weak")]),
@@ -1103,7 +1227,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Remove prerequisite from topic",
@@ -1130,7 +1254,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true, data: { id: linkId } };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       body: t.Object({
         resourceId: t.String(),
         relevance: t.Union([
@@ -1155,7 +1279,7 @@ export const courseExplorerAdminRoutes = new Elysia({
       return { success: true };
     },
     {
-      role: "admin",
+      roles: ["admin", "instructor"],
       detail: {
         tags: ["Course Explorer Admin"],
         summary: "Remove resource link from topic",

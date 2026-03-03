@@ -229,4 +229,85 @@ describe("Course Explorer Admin API", () => {
     // Without auth, should be unauthorized
     expect([401, 403]).toContain(response.status);
   });
+
+  it("requires auth for course graph validate endpoint", async () => {
+    if (!(await canReachDatabase())) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const response = await elysiaApi.handle(
+      new Request(
+        "http://localhost/api/course-explorer/admin/course-graphs/validate",
+        {
+          method: "POST",
+          body: JSON.stringify({ input: {} }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    expect([401, 403]).toContain(response.status);
+  });
+
+  it("requires auth for course graph diff endpoint", async () => {
+    if (!(await canReachDatabase())) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const response = await elysiaApi.handle(
+      new Request(
+        "http://localhost/api/course-explorer/admin/course-graphs/diff",
+        {
+          method: "POST",
+          body: JSON.stringify({ input: {} }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    expect([401, 403]).toContain(response.status);
+  });
+
+  it("requires auth for course graph upsert endpoint", async () => {
+    if (!(await canReachDatabase())) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const response = await elysiaApi.handle(
+      new Request(
+        "http://localhost/api/course-explorer/admin/course-graphs/upsert",
+        {
+          method: "POST",
+          body: JSON.stringify({ input: {}, mode: "merge" }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      ),
+    );
+
+    expect([401, 403]).toContain(response.status);
+  });
+
+  it("requires auth for course graph export endpoint", async () => {
+    if (!(await canReachDatabase())) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const response = await elysiaApi.handle(
+      new Request(
+        "http://localhost/api/course-explorer/admin/courses/test/graph",
+      ),
+    );
+
+    expect([401, 403]).toContain(response.status);
+  });
 });

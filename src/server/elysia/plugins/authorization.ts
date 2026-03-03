@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 
-type Role = "user" | "admin";
+type Role = "user" | "admin" | "instructor" | "mcp_admin";
 
 /**
  * Authorization plugin for Elysia
@@ -189,6 +189,62 @@ export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
           }
         } catch (_error) {
           // Invalid API key
+          return status(401);
+        }
+      }
+
+      return status(401);
+    },
+  }),
+  roles: (requiredRoles: Role[]) => ({
+    async resolve({
+      status,
+      request: { headers },
+    }: {
+      status: (code: number) => void;
+      request: { headers: Headers };
+    }) {
+      // First try session authentication
+      const session = await auth.api.getSession({ headers });
+      if (session) {
+        if (!requiredRoles.includes(session.user.role as Role)) {
+          return status(403);
+        }
+        return {
+          user: session.user,
+          session: session.session,
+          authType: "session",
+        };
+      }
+
+      // Then try API key authentication
+      const apiKey =
+        headers.get("x-api-key") ||
+        headers.get("authorization")?.replace("Bearer ", "");
+      if (apiKey) {
+        try {
+          const keyValidation = await auth.api.verifyApiKey({
+            body: {
+              key: apiKey,
+            },
+          });
+
+          if (keyValidation?.valid && keyValidation.key) {
+            const user = await db.query.user.findFirst({
+              where: {
+                id: keyValidation.key.userId,
+              },
+            });
+
+            if (user && requiredRoles.includes(user.role as Role)) {
+              return {
+                user,
+                apiKey: keyValidation.key,
+                authType: "apiKey",
+              };
+            }
+          }
+        } catch (_error) {
           return status(401);
         }
       }
