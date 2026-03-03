@@ -14,7 +14,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import type { MindmapNodeData } from "@/types/course-explorer";
 import { MindmapNode } from "./mindmap-node";
@@ -87,9 +87,25 @@ export function MindmapView({
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(
     new Set(),
   );
+  const initializedGraphRef = useRef<string>("");
 
   // Initialize expanded nodes: Only level 0 or nodes without parents
   useEffect(() => {
+    const nodeIds = nodes
+      .map((node) => node.id)
+      .sort()
+      .join("|");
+    const edgeIds = finalEdges
+      .map((edge) => `${edge.source}->${edge.target}`)
+      .sort()
+      .join("|");
+    const graphSignature = `${courseName ?? "course"}::${nodeIds}::${edgeIds}`;
+
+    if (initializedGraphRef.current === graphSignature) {
+      return;
+    }
+    initializedGraphRef.current = graphSignature;
+
     const initialExpanded = new Set<string>();
     const roots = nodes.filter(
       (n) => !finalEdges.some((e) => e.target === n.id),
@@ -98,7 +114,7 @@ export function MindmapView({
       initialExpanded.add(root.id);
     }
     setExpandedNodeIds(initialExpanded);
-  }, [nodes, finalEdges]);
+  }, [nodes, finalEdges, courseName]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedNodeIds((prev) => {
