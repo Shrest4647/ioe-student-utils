@@ -1,18 +1,8 @@
-import { eq } from "drizzle-orm";
 import { db } from "../index";
-import {
-  academicCourses,
-  academicPrograms,
-  collegeDepartmentProgramToCourses,
-  collegeDepartments,
-  collegeDepartmentsToPrograms,
-  colleges,
-  departments,
-  universities,
-} from "../schema";
+import { academicCourses, collegeDepartmentProgramToCourses } from "../schema";
 
 // Configuration for IOE BCT Program
-const IOE_CONFIG = {
+const _IOE_CONFIG = {
   university: {
     name: "Tribhuvan University",
     slug: "tribhuvan-university",

@@ -50,6 +50,60 @@ async function seedCourseExplorer() {
       }
     }
 
+    // Seed a few additional starter courses so landing/results are not empty
+    const starterCourses = [
+      {
+        name: "Operating Systems",
+        slug: "operating-systems",
+        code: "BCT-302",
+        description:
+          "Core operating system concepts including processes, memory management, file systems, and concurrency.",
+        credits: "3",
+      },
+      {
+        name: "Database Management Systems",
+        slug: "database-management-systems",
+        code: "BCT-303",
+        description:
+          "Relational data modeling, SQL, normalization, transactions, and indexing for robust database design.",
+        credits: "3",
+      },
+      {
+        name: "Computer Networks",
+        slug: "computer-networks",
+        code: "BCT-304",
+        description:
+          "Network architecture, routing, transport protocols, and practical network performance concepts.",
+        credits: "3",
+      },
+      {
+        name: "Software Engineering",
+        slug: "software-engineering",
+        code: "BCT-305",
+        description:
+          "Software lifecycle, requirements engineering, testing, and team-based delivery practices.",
+        credits: "3",
+      },
+    ];
+
+    const courseCodes = new Set(
+      (await db.query.academicCourses.findMany()).map((c) => c.code),
+    );
+    const missingStarterCourses = starterCourses
+      .filter((course) => !courseCodes.has(course.code))
+      .map((course) => ({
+        id: crypto.randomUUID(),
+        ...course,
+        isActive: true,
+      }));
+
+    if (missingStarterCourses.length > 0) {
+      await db.insert(academicCourses).values(missingStarterCourses);
+      console.log(`✅ Created ${missingStarterCourses.length} starter courses`);
+    } else {
+      console.log("⏭️ Starter courses already available.");
+    }
+
     // 2. Check if units already exist
     const existingUnits = await db.query.courseUnits.findMany();
     const unitsExistForCourse = existingUnits.some(
@@ -794,12 +848,12 @@ async function seedCourseExplorer() {
         tag: "interview",
       });
     }
-    if (resourceLinks.length === 0) {
+    if (resourceLinks.length > 0) {
       await db.insert(topicResourceLinks).values(resourceLinks);
       console.log(`✅ Created ${resourceLinks.length} resource links`);
     }
 
-    if (resourceTagsData.length === 0) {
+    if (resourceTagsData.length > 0) {
       await db.insert(resourceTags).values(resourceTagsData);
       console.log(`✅ Created ${resourceTagsData.length} resource tags`);
     }

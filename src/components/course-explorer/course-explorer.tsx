@@ -42,7 +42,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
           <p className="mt-2 text-muted-foreground text-sm">
@@ -56,7 +56,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   // Handle error state
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center px-4">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center px-4">
         <div className="max-w-md text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -82,7 +82,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   // Handle empty data
   if (!mindmapData || !mindmapData.nodes || mindmapData.nodes.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center px-4">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center px-4">
         <div className="max-w-md text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <BookOpen className="h-8 w-8 text-muted-foreground" />
@@ -126,7 +126,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   }));
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-[calc(100dvh-4rem)] bg-background">
       {/* Study Path Selector */}
       <div className="w-64 border-border border-r bg-muted p-4">
         <h2 className="mb-4 font-semibold text-foreground">Study Paths</h2>
