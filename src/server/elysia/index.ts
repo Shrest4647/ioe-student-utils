@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { rateLimit } from "../middleware/rate-limit";
 import { authorizationPlugin } from "./plugins/authorization";
 import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
@@ -39,6 +40,13 @@ import { userRoutes } from "./routes/user";
 import { workExperienceRoutes } from "./routes/work-experiences";
 
 export const elysiaApi = new Elysia({ prefix: "/api" })
+  .use(
+    rateLimit({
+      windowMs: 60_000,
+      maxRequests: 120,
+      mutationMaxRequests: 30,
+    }),
+  )
   .use(corsPlugin)
   .use(betterAuthPlugin)
   .use(authorizationPlugin)

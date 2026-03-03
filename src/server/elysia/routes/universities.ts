@@ -171,10 +171,19 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         "/",
         async ({ body, user }) => {
           const id = nanoid();
-          const slug = body.name
+          const baseSlug = body.name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)/g, "");
+          let slug = baseSlug;
+
+          const existingUniversity = await db.query.universities.findFirst({
+            where: { slug },
+            columns: { id: true },
+          });
+          if (existingUniversity) {
+            slug = `${baseSlug}-${nanoid(4)}`;
+          }
 
           await db.insert(universities).values({
             ...body,
@@ -207,10 +216,16 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       .patch(
         "/:id",
         async ({ params: { id }, body, user }) => {
-          await db
+          const updated = await db
             .update(universities)
             .set({ ...body, updatedById: user.id, updatedAt: new Date() })
-            .where(eq(universities.id, id));
+            .where(eq(universities.id, id))
+            .returning({ id: universities.id });
+          if (updated.length === 0) {
+            console.warn(
+              `[universities.admin.patch] No university row updated for id=${id}`,
+            );
+          }
           return { success: true };
         },
         {

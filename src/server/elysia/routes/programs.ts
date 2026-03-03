@@ -1,4 +1,4 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
 import slugify from "slugify";
@@ -63,7 +63,7 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
           }
 
           collegeDepartmentsQuery.where(
-            and(eq(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds[0])),
+            inArray(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds),
           );
         } else if (collegeId) {
           const collegeDeptIds = await db
@@ -87,7 +87,7 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
           }
 
           collegeDepartmentsQuery.where(
-            eq(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds[0]),
+            inArray(collegeDepartmentsToPrograms.collegeDepartmentId, cdIds),
           );
         }
 
@@ -124,20 +124,22 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         orderBy: { createdAt: "desc" },
       });
 
+      const countConditions = [];
+      if (search) {
+        countConditions.push(ilike(academicPrograms.name, `%${search}%`));
+      }
+      if (degreeLevel) {
+        countConditions.push(eq(academicPrograms.degreeLevels, degreeLevel));
+      }
+      if (programIdsToFilter) {
+        countConditions.push(inArray(academicPrograms.id, programIdsToFilter));
+      }
+
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(academicPrograms)
         .where(
-          Object.keys(whereCondition).length > 0
-            ? and(
-                search
-                  ? ilike(academicPrograms.name, `%${search}%`)
-                  : sql`TRUE`,
-                degreeLevel
-                  ? eq(academicPrograms.degreeLevels, degreeLevel)
-                  : sql`TRUE`,
-              )
-            : undefined,
+          countConditions.length > 0 ? and(...countConditions) : undefined,
         );
 
       const realTotal = Number(totalResult[0]?.count || 0);
@@ -338,10 +340,16 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
       .patch(
         "/:id",
         async ({ params: { id }, body }) => {
-          await db
+          const updated = await db
             .update(academicPrograms)
             .set({ ...body, updatedAt: new Date() })
-            .where(eq(academicPrograms.id, id));
+            .where(eq(academicPrograms.id, id))
+            .returning({ id: academicPrograms.id });
+          if (updated.length === 0) {
+            console.warn(
+              `[programs.admin.patch] No program row updated for id=${id}`,
+            );
+          }
           return { success: true };
         },
         {
@@ -371,6 +379,25 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
         },
       )
       .post(
+        "/:id/collegeDepartments/:collegeDepartmentId",
+        async ({ params: { collegeDepartmentId, id: programId } }) => {
+          const id = nanoid();
+          await db.insert(collegeDepartmentsToPrograms).values({
+            id,
+            collegeDepartmentId,
+            programId,
+          });
+          return { success: true, data: { id } };
+        },
+        {
+          role: "admin",
+          detail: {
+            tags: ["Programs Admin"],
+            summary: "Add program to college department",
+          },
+        },
+      )
+      .post(
         "/:id/collegeDeptments/:collegeDepartmentId",
         async ({ params: { collegeDepartmentId, id: programId } }) => {
           const id = nanoid();
@@ -391,7 +418,21 @@ export const programRoutes = new Elysia({ prefix: "/programs" })
       )
       .delete(
         "/:id",
-        async ({ params: { id } }) => {
+        async ({ params: { id }, set }) => {
+          const existing =
+            await db.query.collegeDepartmentsToPrograms.findFirst({
+              where: { id },
+              columns: { id: true },
+            });
+
+          if (!existing) {
+            set.status = 404;
+            return {
+              success: false,
+              error: "Program-college-department mapping not found",
+            };
+          }
+
           await db
             .delete(collegeDepartmentsToPrograms)
             .where(eq(collegeDepartmentsToPrograms.id, id));
