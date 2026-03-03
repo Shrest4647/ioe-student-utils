@@ -262,13 +262,17 @@ export function MindmapView({
       );
 
       const nextNodes = laidOutNodes.map((node) => {
+        const isSubjectRoot = node.id === "subject-root";
         const rememberedPosition =
           nodePositionMemoryRef.current.get(node.id) ??
           previousPositions.get(node.id);
 
         const nextNode = {
           ...node,
-          position: rememberedPosition ?? node.position,
+          position:
+            isSubjectRoot || !rememberedPosition
+              ? node.position
+              : rememberedPosition,
         };
 
         nodePositionMemoryRef.current.set(nextNode.id, nextNode.position);
