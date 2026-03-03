@@ -7,7 +7,6 @@ import {
   type Connection,
   Controls,
   type Edge,
-  MarkerType,
   MiniMap,
   type Node,
   type NodeTypes,
@@ -171,13 +170,13 @@ export function MindmapView({
       )
       .map((e) => ({
         ...e,
-        animated: true,
-        style: { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "5,5" },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: "#94a3b8",
-          width: 15,
-          height: 15,
+        type: "bezier" as const,
+        animated: false,
+        style: {
+          stroke: "#9ca3af",
+          strokeWidth: 2,
+          strokeLinecap: "round" as const,
+          strokeOpacity: 0.8,
         },
       }));
 
@@ -271,8 +270,8 @@ export function MindmapView({
         minZoom={0.05}
         maxZoom={2}
         defaultEdgeOptions={{
-          type: "smoothstep",
-          animated: true,
+          type: "bezier",
+          animated: false,
         }}
       >
         <Background
