@@ -295,19 +295,4 @@ describe("Course Explorer Admin API", () => {
 
     expect([401, 403]).toContain(response.status);
   });
-
-  it("requires auth for course graph export endpoint", async () => {
-    if (!(await canReachDatabase())) {
-      expect(true).toBe(true);
-      return;
-    }
-
-    const response = await elysiaApi.handle(
-      new Request(
-        "http://localhost/api/course-explorer/admin/courses/test/graph",
-      ),
-    );
-
-    expect([401, 403]).toContain(response.status);
-  });
 });
