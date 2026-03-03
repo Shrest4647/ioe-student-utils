@@ -48,6 +48,12 @@ export function MindmapView({
       const placed: Array<{ id: string; x: number; y: number }> = [];
       const minXDistance = NODE_COLLISION_WIDTH - 40;
       const minYDistance = NODE_COLLISION_HEIGHT + NODE_COLLISION_PADDING;
+      const isColliding = (x: number, y: number) =>
+        placed.some(
+          (item) =>
+            Math.abs(item.x - x) < minXDistance &&
+            Math.abs(item.y - y) < minYDistance,
+        );
 
       return nodesToResolve
         .map((node) => ({ ...node }) as TNode)
@@ -58,16 +64,23 @@ export function MindmapView({
           return a.position.x - b.position.x;
         })
         .map((node) => {
-          let nextY = node.position.y;
+          const preferredY = node.position.y;
+          let nextY = preferredY;
 
-          while (
-            placed.some(
-              (item) =>
-                Math.abs(item.x - node.position.x) < minXDistance &&
-                Math.abs(item.y - nextY) < minYDistance,
-            )
-          ) {
-            nextY += minYDistance;
+          if (isColliding(node.position.x, nextY)) {
+            for (let step = 1; step <= 60; step++) {
+              const upY = preferredY - step * minYDistance;
+              if (!isColliding(node.position.x, upY)) {
+                nextY = upY;
+                break;
+              }
+
+              const downY = preferredY + step * minYDistance;
+              if (!isColliding(node.position.x, downY)) {
+                nextY = downY;
+                break;
+              }
+            }
           }
 
           const resolved = {
@@ -326,7 +339,6 @@ export function MindmapView({
               : rememberedPosition,
         };
 
-        nodePositionMemoryRef.current.set(nextNode.id, nextNode.position);
         return nextNode;
       });
 
@@ -335,11 +347,12 @@ export function MindmapView({
     setEdges(visibleEdges);
   }, [laidOutNodes, visibleEdges, resolveNodeCollisions, setNodes, setEdges]);
 
-  useEffect(() => {
-    for (const node of internalNodes) {
+  const onNodeDragStop = useCallback(
+    (_event: unknown, node: Node<MindmapNodeData>) => {
       nodePositionMemoryRef.current.set(node.id, node.position);
-    }
-  }, [internalNodes]);
+    },
+    [],
+  );
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -366,6 +379,7 @@ export function MindmapView({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={(_, node) => onNodeClick?.(node as Node<MindmapNodeData>)}
+        onNodeDragStop={onNodeDragStop}
         fitView
         minZoom={0.05}
         maxZoom={2}
