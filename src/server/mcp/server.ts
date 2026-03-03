@@ -8,6 +8,8 @@ import { registerDataQualityTools } from "./tools/data-quality";
 import { registerDegreeTools } from "./tools/degrees";
 import { registerDepartmentTools } from "./tools/departments";
 import { registerFieldTools } from "./tools/fields-of-study";
+import { registerFlashcardTools } from "./tools/flashcards";
+import { registerQuizTools } from "./tools/quizzes";
 import { registerRatingTools } from "./tools/ratings";
 import { registerResourceTools } from "./tools/resources";
 import { registerRoundEventTools } from "./tools/rounds-events";
@@ -50,6 +52,12 @@ const mcpHandler = createMcpHandler(
 
     // Data quality tools
     registerDataQualityTools(server);
+
+    // Quiz tools
+    registerQuizTools(server);
+
+    // Flashcard tools
+    registerFlashcardTools(server);
   },
   {
     serverInfo: {
