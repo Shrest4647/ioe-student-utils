@@ -39,6 +39,57 @@ export function MindmapView({
   courseName,
   onNodeClick,
 }: MindmapViewProps) {
+  const NODE_COLLISION_WIDTH = 280;
+  const NODE_COLLISION_HEIGHT = 110;
+  const NODE_COLLISION_PADDING = 18;
+
+  const resolveNodeCollisions = useCallback(
+    <TNode extends Node>(nodesToResolve: TNode[]) => {
+      const placed: Array<{ id: string; x: number; y: number }> = [];
+      const minXDistance = NODE_COLLISION_WIDTH - 40;
+      const minYDistance = NODE_COLLISION_HEIGHT + NODE_COLLISION_PADDING;
+
+      return nodesToResolve
+        .map((node) => ({ ...node }) as TNode)
+        .sort((a, b) => {
+          if (a.position.x === b.position.x) {
+            return a.position.y - b.position.y;
+          }
+          return a.position.x - b.position.x;
+        })
+        .map((node) => {
+          let nextY = node.position.y;
+
+          while (
+            placed.some(
+              (item) =>
+                Math.abs(item.x - node.position.x) < minXDistance &&
+                Math.abs(item.y - nextY) < minYDistance,
+            )
+          ) {
+            nextY += minYDistance;
+          }
+
+          const resolved = {
+            ...node,
+            position: {
+              ...node.position,
+              y: nextY,
+            },
+          } as TNode;
+
+          placed.push({
+            id: resolved.id,
+            x: resolved.position.x,
+            y: resolved.position.y,
+          });
+
+          return resolved;
+        });
+    },
+    [],
+  );
+
   const { filteredNodes: baseNodes, filteredEdges } = useStudyPath(
     inputNodes,
     edges,
@@ -203,7 +254,7 @@ export function MindmapView({
     if (vNodes.length === 0) return { laidOutNodes: [], visibleEdges: [] };
 
     const nodeHeight = 100;
-    const horizontalGap = 400; // Increased
+    const horizontalGap = 800;
     const verticalGap = 60; // Increased
 
     const vChildrenMap = new Map<string, string[]>();
@@ -279,10 +330,10 @@ export function MindmapView({
         return nextNode;
       });
 
-      return nextNodes;
+      return resolveNodeCollisions(nextNodes);
     });
     setEdges(visibleEdges);
-  }, [laidOutNodes, visibleEdges, setNodes, setEdges]);
+  }, [laidOutNodes, visibleEdges, resolveNodeCollisions, setNodes, setEdges]);
 
   useEffect(() => {
     for (const node of internalNodes) {
