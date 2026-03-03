@@ -152,6 +152,26 @@ export function Navbar() {
                     asChild
                     className={navigationMenuTriggerStyle()}
                   >
+                    <Link href="/quiz">
+                      <span className="text-sm">Quiz</span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    <Link href="/flashcards">
+                      <span className="text-sm">Flashcards</span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
                     <Link href="/study-planner">
                       <span className="text-sm">Study Planner</span>
                     </Link>
@@ -188,6 +208,15 @@ export function Navbar() {
                         </ListItem>
                         <ListItem href="/dashboard/courses" title="Courses">
                           Manage course content.
+                        </ListItem>
+                        <ListItem href="/dashboard/quizzes" title="Quizzes">
+                          Manage quiz content and publishing.
+                        </ListItem>
+                        <ListItem
+                          href="/dashboard/flashcards"
+                          title="Flashcards"
+                        >
+                          Manage flashcard decks and publishing.
                         </ListItem>
                         <ListItem
                           href="/dashboard/scholarships"
@@ -315,6 +344,15 @@ export function Navbar() {
               >
                 Study Planner
               </MobileLink>
+              <MobileLink href="/quiz" icon={<BookOpen className="h-4 w-4" />}>
+                Quiz
+              </MobileLink>
+              <MobileLink
+                href="/flashcards"
+                icon={<BookOpen className="h-4 w-4" />}
+              >
+                Flashcards
+              </MobileLink>
 
               {isAuthenticated && (
                 <div className="space-y-1 border-t pt-2">
@@ -356,6 +394,18 @@ export function Navbar() {
                     icon={<FileText className="h-4 w-4" />}
                   >
                     Courses
+                  </MobileLink>
+                  <MobileLink
+                    href="/dashboard/quizzes"
+                    icon={<FileText className="h-4 w-4" />}
+                  >
+                    Quizzes
+                  </MobileLink>
+                  <MobileLink
+                    href="/dashboard/flashcards"
+                    icon={<FileText className="h-4 w-4" />}
+                  >
+                    Flashcards
                   </MobileLink>
                   <MobileLink
                     href="/dashboard/scholarships"
