@@ -1,10 +1,43 @@
 "use client";
 
+import { motion } from "framer-motion";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import type { FlashcardProps } from "@/types/flashcard";
 import "katex/dist/katex.min.css";
-import DOMPurify from "isomorphic-dompurify";
+
+const sanitizeHtml = (unsafeHtml: string): string => {
+  if (typeof window === "undefined") return unsafeHtml;
+
+  const template = document.createElement("template");
+  template.innerHTML = unsafeHtml;
+
+  // Remove high-risk elements entirely.
+  template.content
+    .querySelectorAll("script, style, iframe, object, embed")
+    .forEach((node) => {
+      node.remove();
+    });
+
+  // Remove inline handlers and javascript: URLs.
+  template.content.querySelectorAll("*").forEach((el) => {
+    for (const attr of [...el.attributes]) {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim().toLowerCase();
+      if (name.startsWith("on")) {
+        el.removeAttribute(attr.name);
+      }
+      if (
+        (name === "href" || name === "src" || name === "xlink:href") &&
+        value.startsWith("javascript:")
+      ) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  });
+
+  return template.innerHTML;
+};
 
 // Helper function to render LaTeX math expressions
 const renderMath = (text: string): string => {
@@ -56,10 +89,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   // Render math when component mounts or content changes
   useEffect(() => {
     if (frontRef.current) {
-      frontRef.current.innerHTML = DOMPurify.sanitize(renderMath(front));
+      frontRef.current.innerHTML = sanitizeHtml(renderMath(front));
     }
     if (backRef.current) {
-      backRef.current.innerHTML = DOMPurify.sanitize(renderMath(back));
+      backRef.current.innerHTML = sanitizeHtml(renderMath(back));
     }
   }, [front, back]);
 
@@ -76,8 +109,8 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
   return (
     <div
-      className={`perspective-1000 relative h-full w-full ${className}`}
-      style={style}
+      className={`relative h-full w-full ${className}`}
+      style={{ perspective: "1000px", ...style }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="button"
@@ -85,15 +118,29 @@ export const Flashcard: React.FC<FlashcardProps> = ({
       aria-label={isFlipped ? "Show question" : "Show answer"}
       aria-pressed={isFlipped}
     >
-      <div
-        className={`transform-style-preserve-3d relative h-full w-full transition-transform duration-600 ease-out ${isFlipped ? "rotate-y-180" : ""}
-        `}
+      <motion.div
+        className="relative h-full w-full"
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 170,
+          damping: 22,
+          mass: 0.85,
+        }}
         style={{
-          transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+          transformStyle: "preserve-3d",
+          willChange: "transform",
+          transform: "translateZ(0)",
         }}
       >
         {/* Front Face */}
-        <div className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12">
+        <div
+          className="absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg md:p-12"
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+          }}
+        >
           <div
             ref={frontRef}
             className="text-center font-semibold text-foreground text-xl leading-relaxed md:text-2xl"
@@ -107,9 +154,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
         {/* Back Face */}
         <div
-          className="backface-hidden absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg transition-shadow duration-300 hover:shadow-xl md:p-12"
+          className="absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-3xl bg-background p-8 shadow-lg md:p-12"
           style={{
             transform: "rotateY(180deg)",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
           }}
         >
           <div
@@ -119,7 +168,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             {back}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
