@@ -212,6 +212,19 @@ export const TOOL_PERMISSIONS = {
   create_flashcard_tag: { resource: "flashcards", action: "write" },
   assign_flashcard_tags: { resource: "flashcards", action: "write" },
   simulate_srs_schedule: { resource: "flashcards", action: "read" },
+
+  // Course Explorer tools
+  bulk_upsert_courses: { resource: "course_explorer", action: "write" },
+  bulk_upsert_units: { resource: "course_explorer", action: "write" },
+  bulk_upsert_topics: { resource: "course_explorer", action: "write" },
+  bulk_create_prerequisites: { resource: "course_explorer", action: "write" },
+  bulk_link_resources: { resource: "course_explorer", action: "write" },
+  fetch_courses: { resource: "course_explorer", action: "read" },
+  get_course_structure: { resource: "course_explorer", action: "read" },
+  validate_course_graph: { resource: "course_explorer", action: "write" },
+  preview_course_graph_diff: { resource: "course_explorer", action: "write" },
+  upsert_course_graph: { resource: "course_explorer", action: "write" },
+  export_course_graph: { resource: "course_explorer", action: "read" },
 } as const;
 
 /**

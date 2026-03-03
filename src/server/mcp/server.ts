@@ -1,5 +1,6 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { auth } from "@/server/better-auth";
+import { registerCourseExplorerResources } from "./resources/course-explorer";
 import { registerAcademicTools } from "./tools/academic";
 import { registerCollegeTools } from "./tools/colleges";
 import { registerCountryTools } from "./tools/countries";
@@ -43,6 +44,7 @@ const mcpHandler = createMcpHandler(
 
     // Course Explorer tools (bulk operations for courses, units, topics)
     registerCourseExplorerTools(server);
+    registerCourseExplorerResources(server);
 
     // Resource library tools
     registerResourceTools(server);
