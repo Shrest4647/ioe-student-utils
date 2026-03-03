@@ -94,6 +94,24 @@ This project includes specific instructions for AI agents (Gemini, Claude, Copil
 
 The API documentation is available at `/api/docs` when the server is running.
 
+## Testing
+
+Use the root test runner script:
+
+```bash
+./ci-test.sh
+```
+
+Optional modes:
+
+```bash
+./ci-test.sh -I      # include non-MCP integration tests
+./ci-test.sh -M      # include MCP tests
+./ci-test.sh -I -M   # include both
+```
+
+Detailed guide: [docs/testing-workflow.md](docs/testing-workflow.md)
+
 ## Contributing
 
 Contributions are welcome! Please refer to the [Contributing Guidelines](CONTRIBUTING.md) to get started. You can also open an issue or submit a pull request for any improvements or bug fixes.
