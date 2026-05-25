@@ -6,26 +6,25 @@
 
 The primary goal of this project is to create an open source, community driven ecosystem that will assist the current students and the graduates in their corresponding academic journey, especially in the process of applying to universities abroad by providing essential tools, guidelines, and resources.
 
+## Implemented Features
+
+- **University Finder**: A comprehensive list of universities that accept TU credits, including specific requirements and application processes. Includes rating category support and admin endpoints.
+- **Scholarship Database**: Global scholarships for international students with degree level, field of study, and country taxonomy filtering.
+- **GPA Calculator**: Converts TU percentage scores to US 4.0 GPA equivalents using WES/Scholaro conversion logic.
+- **Resume Builder**: Create and manage professional resumes tailored for international applications with template selections.
+- **Letter of Recommendation**: Generate, customize, and edit professional recommendation letters for study applications.
+- **Course Explorer**: Interactive BCT course navigation featuring chapter/topic marks breakdowns and dependency mappings via visual mindmaps.
+- **Study Planner**: Creates personalized schedules, logs study sessions, tracks exams/assignments, and monitors checklist progress on a visual dashboard.
+- **Resources Library**: Browse, tag, and upload academic files and URL attachments.
+- **Flashcards & Quizzes**: A flashcard-style quiz system with presentational UI, Framer Motion animations, localStorage persistence, and Elysia APIs.
+
 ## Planned Features
 
-- **University Finder**: A comprehensive list of universities that accept TU credits, including their specific requirements and application processes.
-- **Scholarship Database**: A list of scholarships available for international students, including eligibility criteria and application deadlines.
-- **GPA Calculator**: Converts TU percentage scores to US 4.0 GPA equivalents using WES/Scholaro logic.
-- **Resume Builder**: A tool to create professional resumes tailored for international applications.
-- **Letter of Recommendation**: A tool to create professional letters of recommendation tailored for international applications.
-- **Course Equivalency**: A tool to find equivalent courses for TU subjects in international universities.
 - **Alumni Network**: A platform to connect with alumni and get insights into their experiences and advice.
 - **Career Guidance**: Resources and advice on career paths, job markets, and industry trends.
-- **Subject Selector**: Helps students select subjects for their 7th and 8th semesters based on their interests and career goals.
-- **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours into standard credit hours used by International US/European universities.
-- **Syllabus Explorer**: Detailed breakdown of chapters, sub-topics, and marks distribution (Internal vs. Final) for BCT (Bachelor of Computer Engineering).
-- **Study Planner**: A comprehensive tool to plan and track academic schedules with structured day-by-day tasks, progress tracking, and smart notifications. Features include:
-  - Create personalized study plans from templates (1-day to custom durations)
-  - Daily task management with checkboxes and progress tracking
-  - Academic event tracking (exams, assignments, projects)
-  - Study session logging with time tracking
-  - Visual dashboard with progress indicators and upcoming deadlines
-- **Resources Library**: A collection of study materials, past papers, and other resources to help students prepare for exams and applications.
+- **Subject Selector**: Helps students select elective subjects for their 7th and 8th semesters.
+- **Credit Calculator**: Automatically converts Lecture, Tutorial, and Practical hours (L-T-P) into standard international credits.
+- **Course Equivalency**: A tool to find equivalent courses for TU subjects in international universities.
 
 ## Tech Stack
 
