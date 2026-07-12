@@ -1,247 +1,154 @@
 "use client";
 
-import { Download, FileText, Save } from "lucide-react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { apiClient } from "@/lib/eden";
+  ArrowDown,
+  ArrowUp,
+  ExternalLink,
+  Info,
+  ShieldCheck,
+} from "lucide-react";
+import type { ConversionResult, SourceFormat } from "@/lib/tu-grade-converter";
 
 interface GPACalculatorResultsProps {
-  result: {
-    courses: Array<{
-      name: string;
-      percentage: string;
-      credits: string;
-      gpa: number;
-      gradeLabel: string | null;
-      qualityPoints: number;
-    }>;
-    cumulativeGPA: number;
-    totalCredits: number;
-    totalQualityPoints: number;
-    standard: {
-      id: string;
-      name: string;
-      description: string;
-    };
+  result: ConversionResult | null;
+  requirement: number | null;
+  sourceFormat: SourceFormat;
+}
+
+function getRequirementStatus(result: ConversionResult, requirement: number) {
+  const meets =
+    result.comparisonDirection === "lower"
+      ? result.numericValue <= requirement
+      : result.numericValue >= requirement;
+
+  return {
+    meets,
+    label: meets
+      ? "Likely meets the stated minimum"
+      : "Below the stated minimum",
   };
 }
 
-export function GPACalculatorResults({ result }: GPACalculatorResultsProps) {
-  const exportToCSV = () => {
-    const headers = [
-      "Course Name",
-      "Percentage",
-      "Credits",
-      "GPA",
-      "Grade",
-      "Quality Points",
-    ];
+export function GPACalculatorResults({
+  result,
+  requirement,
+  sourceFormat,
+}: GPACalculatorResultsProps) {
+  const reduceMotion = useReducedMotion();
 
-    const rows = result.courses.map((course) => [
-      course.name,
-      course.percentage,
-      course.credits,
-      course.gpa.toFixed(2),
-      course.gradeLabel || "N/A",
-      course.qualityPoints.toFixed(2),
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-      "",
-      `Cumulative GPA,${result.cumulativeGPA.toFixed(2)}`,
-      `Total Credits,${result.totalCredits.toFixed(2)}`,
-      `Total Quality Points,${result.totalQualityPoints.toFixed(2)}`,
-      `Standard,${result.standard.name}`,
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `gpa-calculation-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success("Exported to CSV successfully!");
-  };
-
-  const saveCalculation = async () => {
-    try {
-      const { data, error: apiError } = await apiClient.api[
-        "gpa-converter"
-      ].save.post({
-        standardId: result.standard.id,
-        courses: result.courses.map((c) => ({
-          name: c.name,
-          percentage: c.percentage,
-          credits: c.credits,
-        })),
-        cumulativeGPA: result.cumulativeGPA.toString(),
-        totalCredits: result.totalCredits.toString(),
-        totalQualityPoints: result.totalQualityPoints.toString(),
-      });
-
-      if (!apiError && data?.success) {
-        toast.success("Calculation saved successfully!");
-      } else {
-        toast.error(
-          (apiError?.value as any)?.error ||
-            (data as any)?.error ||
-            "Failed to save calculation",
-        );
-      }
-    } catch (_error) {
-      toast.error("Failed to save calculation. Please try again.");
-    }
-  };
-
-  const getGradeColor = (gpa: number) => {
-    if (gpa >= 3.7) return "bg-primary/10 text-primary";
-    if (gpa >= 3.0) return "bg-secondary/10 text-secondary";
-    if (gpa >= 2.0) return "bg-muted/10 text-muted-foreground";
-    return "bg-destructive/10 text-destructive";
-  };
-
-  return (
-    <Card className="border-2">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Your Results</CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={saveCalculation} size="sm" variant="outline">
-              <Save className="mr-2 h-4 w-4" />
-              Save
-            </Button>
-            <Button onClick={exportToCSV} size="sm" variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card className="bg-linear-to-br from-primary to-primary/75 text-white">
-            <CardContent className="p-6">
-              <p className="font-medium text-sm opacity-90">Cumulative GPA</p>
-              <p className="mt-2 font-bold text-4xl">
-                {result.cumulativeGPA.toFixed(2)}
-              </p>
-              <p className="mt-1 text-xs opacity-75">on 4.0 scale</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-linear-to-br from-accent to-accent/75 text-white">
-            <CardContent className="p-6">
-              <p className="font-medium text-sm opacity-90">Total Credits</p>
-              <p className="mt-2 font-bold text-4xl">
-                {result.totalCredits.toFixed(1)}
-              </p>
-              <p className="mt-1 text-xs opacity-75">
-                {result.courses.length} course
-                {result.courses.length > 1 ? "s" : ""}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-linear-to-br from-accent to-accent/75 text-white">
-            <CardContent className="p-6">
-              <p className="font-medium text-sm opacity-90">Quality Points</p>
-              <p className="mt-2 font-bold text-4xl">
-                {result.totalQualityPoints.toFixed(2)}
-              </p>
-              <p className="mt-1 text-xs opacity-75">total earned</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Conversion Standard Info */}
-        <Card className="bg-muted/50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <FileText className="mt-1 h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-semibold">
-                  Conversion Standard: {result.standard.name}
-                </p>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  {result.standard.description}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Course Breakdown Table */}
+  if (!result) {
+    return (
+      <aside className="flex min-h-96 flex-col justify-between rounded-xl border bg-card p-7 shadow-sm sm:p-8 lg:sticky lg:top-24">
         <div>
-          <h3 className="mb-4 font-semibold text-lg">Course Breakdown</h3>
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Course</TableHead>
-                  <TableHead className="text-center">Percentage</TableHead>
-                  <TableHead className="text-center">Credits</TableHead>
-                  <TableHead className="text-center">GPA</TableHead>
-                  <TableHead className="text-center">Grade</TableHead>
-                  <TableHead className="text-right">Quality Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.courses.map((course, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{course.name}</TableCell>
-                    <TableCell className="text-center">
-                      {course.percentage}%
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {course.credits}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className={getGradeColor(course.gpa)}>
-                        {course.gpa.toFixed(2)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline">
-                        {course.gradeLabel || "N/A"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {course.qualityPoints.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Disclaimer */}
-        <div className="rounded-lg border border-border bg-muted/50 p-4">
-          <p className="text-foreground text-sm">
-            <strong>Disclaimer:</strong> This is an estimate only. Official
-            evaluation requires WES/Scholaro assessment. Different universities
-            may convert grades differently. Many US universities accept TU
-            transcripts directly without requiring credential evaluation.
+          <p className="font-medium text-primary text-xs">Your estimate</p>
+          <p className="mt-6 max-w-xs font-semibold text-2xl leading-tight tracking-tight">
+            Your result will appear here
+          </p>
+          <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-6">
+            Enter the result exactly as it appears on your TU transcript, then
+            choose a destination.
           </p>
         </div>
-      </CardContent>
-    </Card>
+        <div className="border-t pt-5 text-muted-foreground text-sm leading-6">
+          Nothing is uploaded or saved. The estimate is calculated in your
+          browser.
+        </div>
+      </aside>
+    );
+  }
+
+  const status =
+    requirement === null ? null : getRequirementStatus(result, requirement);
+
+  return (
+    <motion.aside
+      key={`${result.destination}-${result.value}`}
+      initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border bg-card p-7 shadow-sm sm:p-8 lg:sticky lg:top-24"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-medium text-primary text-xs">Your estimate</p>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-primary text-xs">
+          <ShieldCheck className="size-3.5 text-primary" />
+          {result.confidence}
+        </span>
+      </div>
+
+      <div className="mt-8 border-b pb-7">
+        <div className="flex items-end gap-3">
+          <span className="font-bold text-5xl leading-none tracking-tight sm:text-6xl">
+            {result.value}
+          </span>
+          {result.comparisonDirection === "lower" ? (
+            <ArrowDown
+              className="mb-2 size-5 text-primary"
+              aria-label="Lower is better"
+            />
+          ) : (
+            <ArrowUp
+              className="mb-2 size-5 text-primary"
+              aria-label="Higher is better"
+            />
+          )}
+        </div>
+        <p className="mt-3 text-muted-foreground text-sm">{result.scale}</p>
+        <p className="mt-5 font-medium text-lg">{result.classification}</p>
+      </div>
+
+      {status && (
+        <div
+          className={`mt-6 border-l-2 py-1 pl-4 ${status.meets ? "border-primary" : "border-destructive"}`}
+        >
+          <p className="font-medium text-sm">{status.label}</p>
+          <p className="mt-1 text-muted-foreground text-xs">
+            Based only on the minimum you entered. Admissions decisions use more
+            than grades.
+          </p>
+        </div>
+      )}
+
+      <p className="mt-7 text-muted-foreground text-sm leading-6">
+        {result.summary}
+      </p>
+
+      <details className="group mt-7 border-t pt-5">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-sm">
+          How this was worked out
+          <Info className="size-4 text-muted-foreground transition-transform group-open:rotate-45" />
+        </summary>
+        <p className="mt-4 text-muted-foreground text-sm leading-6">
+          {result.method}
+        </p>
+      </details>
+
+      <div className="mt-7 rounded-lg bg-muted p-4">
+        <p className="font-medium text-muted-foreground text-xs">
+          What to do next
+        </p>
+        <p className="mt-2 text-sm leading-6">{result.nextStep}</p>
+      </div>
+
+      <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3">
+        {result.sources.map((source) => (
+          <a
+            key={source.url}
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-muted-foreground text-xs underline underline-offset-4 hover:text-foreground"
+          >
+            {source.label} <ExternalLink className="size-3" />
+          </a>
+        ))}
+      </div>
+
+      <p className="mt-7 border-t pt-5 text-muted-foreground text-xs leading-5">
+        {sourceFormat === "percentage"
+          ? "Keep the percentage and division exactly as printed on your TU transcript."
+          : `Keep the ${sourceFormat === "cgpa" ? "CGPA" : "GPA"} and grading scale exactly as printed on your TU transcript.`}
+      </p>
+    </motion.aside>
   );
 }
