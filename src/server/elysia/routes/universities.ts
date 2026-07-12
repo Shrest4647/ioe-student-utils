@@ -141,7 +141,26 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         return { success: false, error: "University not found" };
       }
 
-      return { success: true, data: university };
+      const ratingAggregates = await db
+        .select({
+          ratingCount: sql<number>`count(*)`,
+          averageRating: sql<number>`avg(${ratings.rating}::numeric)`,
+        })
+        .from(universityToRatings)
+        .innerJoin(ratings, eq(universityToRatings.ratingId, ratings.id))
+        .where(eq(universityToRatings.universityId, university.id))
+        .groupBy(universityToRatings.universityId);
+
+      const ratingAgg = ratingAggregates[0];
+
+      return {
+        success: true,
+        data: {
+          ...university,
+          ratingCount: Number(ratingAgg?.ratingCount ?? 0),
+          averageRating: Number(ratingAgg?.averageRating ?? null),
+        },
+      };
     },
     {
       params: t.Object({
