@@ -7,7 +7,6 @@ import {
   type Connection,
   Controls,
   type Edge,
-  MarkerType,
   MiniMap,
   type Node,
   type NodeTypes,
@@ -15,7 +14,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import type { MindmapNodeData } from "@/types/course-explorer";
 import { MindmapNode } from "./mindmap-node";
@@ -40,6 +39,70 @@ export function MindmapView({
   courseName,
   onNodeClick,
 }: MindmapViewProps) {
+  const NODE_COLLISION_WIDTH = 280;
+  const NODE_COLLISION_HEIGHT = 110;
+  const NODE_COLLISION_PADDING = 18;
+
+  const resolveNodeCollisions = useCallback(
+    <TNode extends Node>(nodesToResolve: TNode[]) => {
+      const placed: Array<{ id: string; x: number; y: number }> = [];
+      const minXDistance = NODE_COLLISION_WIDTH - 40;
+      const minYDistance = NODE_COLLISION_HEIGHT + NODE_COLLISION_PADDING;
+      const isColliding = (x: number, y: number) =>
+        placed.some(
+          (item) =>
+            Math.abs(item.x - x) < minXDistance &&
+            Math.abs(item.y - y) < minYDistance,
+        );
+
+      return nodesToResolve
+        .map((node) => ({ ...node }) as TNode)
+        .sort((a, b) => {
+          if (a.position.x === b.position.x) {
+            return a.position.y - b.position.y;
+          }
+          return a.position.x - b.position.x;
+        })
+        .map((node) => {
+          const preferredY = node.position.y;
+          let nextY = preferredY;
+
+          if (isColliding(node.position.x, nextY)) {
+            for (let step = 1; step <= 60; step++) {
+              const upY = preferredY - step * minYDistance;
+              if (!isColliding(node.position.x, upY)) {
+                nextY = upY;
+                break;
+              }
+
+              const downY = preferredY + step * minYDistance;
+              if (!isColliding(node.position.x, downY)) {
+                nextY = downY;
+                break;
+              }
+            }
+          }
+
+          const resolved = {
+            ...node,
+            position: {
+              ...node.position,
+              y: nextY,
+            },
+          } as TNode;
+
+          placed.push({
+            id: resolved.id,
+            x: resolved.position.x,
+            y: resolved.position.y,
+          });
+
+          return resolved;
+        });
+    },
+    [],
+  );
+
   const { filteredNodes: baseNodes, filteredEdges } = useStudyPath(
     inputNodes,
     edges,
@@ -88,9 +151,28 @@ export function MindmapView({
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(
     new Set(),
   );
+  const initializedGraphRef = useRef<string>("");
+  const nodePositionMemoryRef = useRef<Map<string, { x: number; y: number }>>(
+    new Map(),
+  );
 
   // Initialize expanded nodes: Only level 0 or nodes without parents
   useEffect(() => {
+    const nodeIds = nodes
+      .map((node) => node.id)
+      .sort()
+      .join("|");
+    const edgeIds = finalEdges
+      .map((edge) => `${edge.source}->${edge.target}`)
+      .sort()
+      .join("|");
+    const graphSignature = `${courseName ?? "course"}::${nodeIds}::${edgeIds}`;
+
+    if (initializedGraphRef.current === graphSignature) {
+      return;
+    }
+    initializedGraphRef.current = graphSignature;
+
     const initialExpanded = new Set<string>();
     const roots = nodes.filter(
       (n) => !finalEdges.some((e) => e.target === n.id),
@@ -99,7 +181,7 @@ export function MindmapView({
       initialExpanded.add(root.id);
     }
     setExpandedNodeIds(initialExpanded);
-  }, [nodes, finalEdges]);
+  }, [nodes, finalEdges, courseName]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedNodeIds((prev) => {
@@ -171,13 +253,13 @@ export function MindmapView({
       )
       .map((e) => ({
         ...e,
-        animated: true,
-        style: { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "5,5" },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: "#94a3b8",
-          width: 15,
-          height: 15,
+        type: "bezier" as const,
+        animated: false,
+        style: {
+          stroke: "#9ca3af",
+          strokeWidth: 2,
+          strokeLinecap: "round" as const,
+          strokeOpacity: 0.8,
         },
       }));
 
@@ -185,7 +267,7 @@ export function MindmapView({
     if (vNodes.length === 0) return { laidOutNodes: [], visibleEdges: [] };
 
     const nodeHeight = 100;
-    const horizontalGap = 400; // Increased
+    const horizontalGap = 800;
     const verticalGap = 60; // Increased
 
     const vChildrenMap = new Map<string, string[]>();
@@ -238,9 +320,39 @@ export function MindmapView({
   const [internalEdges, setEdges, onEdgesChange] = useEdgesState(visibleEdges);
 
   useEffect(() => {
-    setNodes(laidOutNodes);
+    setNodes((prevNodes) => {
+      const previousPositions = new Map(
+        prevNodes.map((node) => [node.id, node.position]),
+      );
+
+      const nextNodes = laidOutNodes.map((node) => {
+        const isSubjectRoot = node.id === "subject-root";
+        const rememberedPosition =
+          nodePositionMemoryRef.current.get(node.id) ??
+          previousPositions.get(node.id);
+
+        const nextNode = {
+          ...node,
+          position:
+            isSubjectRoot || !rememberedPosition
+              ? node.position
+              : rememberedPosition,
+        };
+
+        return nextNode;
+      });
+
+      return resolveNodeCollisions(nextNodes);
+    });
     setEdges(visibleEdges);
-  }, [laidOutNodes, visibleEdges, setNodes, setEdges]);
+  }, [laidOutNodes, visibleEdges, resolveNodeCollisions, setNodes, setEdges]);
+
+  const onNodeDragStop = useCallback(
+    (_event: unknown, node: Node<MindmapNodeData>) => {
+      nodePositionMemoryRef.current.set(node.id, node.position);
+    },
+    [],
+  );
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -266,13 +378,27 @@ export function MindmapView({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={(_, node) => onNodeClick?.(node as Node<MindmapNodeData>)}
+        onNodeClick={(_, node) => {
+          const clickedNode = node as Node<
+            MindmapNodeData & {
+              hasChildren?: boolean;
+              onToggleExpand?: (id: string) => void;
+            }
+          >;
+
+          if (clickedNode.data.hasChildren && clickedNode.data.onToggleExpand) {
+            clickedNode.data.onToggleExpand(clickedNode.id);
+          }
+
+          onNodeClick?.(node as Node<MindmapNodeData>);
+        }}
+        onNodeDragStop={onNodeDragStop}
         fitView
         minZoom={0.05}
         maxZoom={2}
         defaultEdgeOptions={{
-          type: "smoothstep",
-          animated: true,
+          type: "bezier",
+          animated: false,
         }}
       >
         <Background

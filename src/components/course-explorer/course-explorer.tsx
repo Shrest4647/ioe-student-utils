@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Edge, Node } from "@xyflow/react";
 import { AlertCircle, BookOpen, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/eden";
 import type { MindmapNodeData, StudyPath } from "@/types/course-explorer";
@@ -39,10 +39,42 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
     },
   });
 
+  // Keep node/edge references stable across sidebar-only state updates
+  const nodes: Node<MindmapNodeData>[] = useMemo(
+    () =>
+      (mindmapData?.nodes ?? []).map((node) => ({
+        id: node.id,
+        data: {
+          id: node.id,
+          label: node.label,
+          slug: node.slug,
+          priority: node.priority as "core" | "important" | "optional",
+          hours: node.hours,
+          weightage: node.weightage,
+          description: node.description,
+          unitName: node.unitName,
+          resourceCount: node.resources?.length ?? 0,
+          level: node.level,
+        } as MindmapNodeData,
+        position: { x: 0, y: 0 }, // Position will be calculated by MindmapView
+      })),
+    [mindmapData],
+  );
+
+  const edges: Edge[] = useMemo(
+    () =>
+      (mindmapData?.edges ?? []).map((e) => ({
+        id: `${e.from}-${e.to}`,
+        source: e.from,
+        target: e.to,
+      })),
+    [mindmapData],
+  );
+
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
           <p className="mt-2 text-muted-foreground text-sm">
@@ -56,7 +88,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   // Handle error state
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center px-4">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center px-4">
         <div className="max-w-md text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -82,7 +114,7 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
   // Handle empty data
   if (!mindmapData || !mindmapData.nodes || mindmapData.nodes.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center px-4">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center px-4">
         <div className="max-w-md text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <BookOpen className="h-8 w-8 text-muted-foreground" />
@@ -99,34 +131,8 @@ export function CourseExplorer({ courseSlug }: CourseExplorerProps) {
     );
   }
 
-  // Pass raw nodes and edges to MindmapView, which handles its own layout and expansion
-  const nodes: Node<MindmapNodeData>[] = (mindmapData?.nodes || []).map(
-    (node) => ({
-      id: node.id,
-      data: {
-        id: node.id,
-        label: node.label,
-        slug: node.slug,
-        priority: node.priority as "core" | "important" | "optional",
-        hours: node.hours,
-        weightage: node.weightage,
-        description: node.description,
-        unitName: node.unitName,
-        resourceCount: node.resources?.length ?? 0,
-        level: node.level,
-      } as MindmapNodeData,
-      position: { x: 0, y: 0 }, // Position will be calculated by MindmapView
-    }),
-  );
-
-  const edges: Edge[] = (mindmapData?.edges || []).map((e) => ({
-    id: `${e.from}-${e.to}`,
-    source: e.from,
-    target: e.to,
-  }));
-
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-[calc(100dvh-4rem)] bg-background">
       {/* Study Path Selector */}
       <div className="w-64 border-border border-r bg-muted p-4">
         <h2 className="mb-4 font-semibold text-foreground">Study Paths</h2>

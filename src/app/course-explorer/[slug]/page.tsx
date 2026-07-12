@@ -9,7 +9,7 @@ export default function CourseExplorerPage() {
 
   if (!slug) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">Loading...</p>
         </div>

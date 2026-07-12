@@ -1,4 +1,4 @@
-import { db } from "@/server/db";
+import { conn, db } from "@/server/db";
 import {
   gpaConversionRanges,
   gpaConversionStandards,
@@ -292,6 +292,7 @@ seedGPAStandards()
     console.error("❌ Seeding failed:", error);
     process.exit(1);
   })
-  .finally(() => {
+  .finally(async () => {
+    await conn.end();
     process.exit(0);
   });

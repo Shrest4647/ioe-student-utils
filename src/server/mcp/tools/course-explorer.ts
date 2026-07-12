@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "@/server/elysia/eden";
+import type { CourseGraphInputV1 } from "@/types/course-graph";
+import { ensureToolAccess } from "../guards";
 
 /**
  * Register all course explorer bulk operation tools with MCP server
@@ -69,13 +71,13 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "bulk_upsert_courses",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
 
         const results = [];
         const errors = [];
@@ -264,13 +266,13 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "bulk_upsert_units",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
 
         const results = [];
         const errors = [];
@@ -469,13 +471,13 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "bulk_upsert_topics",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
 
         const results = [];
         const errors = [];
@@ -651,13 +653,13 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "bulk_create_prerequisites",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
 
         const results = [];
         const errors = [];
@@ -789,13 +791,13 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "bulk_link_resources",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
 
         const results = [];
         const errors = [];
@@ -919,13 +921,10 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "fetch_courses",
+        );
 
         const page = Math.floor(params.offset / params.limit) + 1;
 
@@ -1024,13 +1023,10 @@ export function registerCourseExplorerTools(server: McpServer): void {
     },
     async (params, requestContext) => {
       try {
-        const apiKey = requestContext?.authInfo?.token;
-
-        if (!apiKey) {
-          throw new Error(
-            "MCP Authorization key is not configured. Please contact the owners.",
-          );
-        }
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "get_course_structure",
+        );
 
         if (!params.courseId && !params.courseSlug) {
           throw new Error("Either courseId or courseSlug must be provided");
@@ -1096,6 +1092,375 @@ export function registerCourseExplorerTools(server: McpServer): void {
                     error instanceof Error
                       ? error.message
                       : "Failed to fetch course structure",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "validate_course_graph",
+    {
+      title: "Validate Course Graph",
+      description:
+        "Validate a nested course graph payload before persistence. Returns structured warnings/errors.",
+      inputSchema: z.object({
+        input: z.custom<CourseGraphInputV1>(),
+      }),
+    },
+    async (params, requestContext) => {
+      try {
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "validate_course_graph",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
+
+        const response = await api.api["course-explorer"].admin[
+          "course-graphs"
+        ].validate.post(
+          {
+            input: params.input as unknown as Record<string, unknown>,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+          },
+        );
+
+        if (response.error || !response.data?.success) {
+          throw new Error(
+            response.error?.value?.message || "Failed to validate graph",
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  data: response.data.data,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("validate_course_graph error:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to validate course graph",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "preview_course_graph_diff",
+    {
+      title: "Preview Course Graph Diff",
+      description:
+        "Preview deterministic create/update/deactivate changes for a nested course graph payload.",
+      inputSchema: z.object({
+        input: z.custom<CourseGraphInputV1>(),
+        targetCourseId: z.string().optional(),
+        targetCourseSlug: z.string().optional(),
+        mode: z
+          .enum(["create", "merge", "replace"])
+          .optional()
+          .default("merge"),
+      }),
+    },
+    async (params, requestContext) => {
+      try {
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "preview_course_graph_diff",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
+
+        const response = await api.api["course-explorer"].admin[
+          "course-graphs"
+        ].diff.post(
+          {
+            input: params.input as unknown as Record<string, unknown>,
+            targetCourseId: params.targetCourseId,
+            targetCourseSlug: params.targetCourseSlug,
+            mode: params.mode,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+          },
+        );
+
+        if (response.error || !response.data?.success) {
+          throw new Error(
+            response.error?.value?.message || "Failed to preview graph diff",
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  data: response.data.data,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("preview_course_graph_diff error:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to preview course graph diff",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "upsert_course_graph",
+    {
+      title: "Upsert Course Graph",
+      description:
+        "Apply a nested course graph atomically (create/merge/replace). Supports dry run mode.",
+      inputSchema: z.object({
+        input: z.custom<CourseGraphInputV1>(),
+        targetCourseId: z.string().optional(),
+        targetCourseSlug: z.string().optional(),
+        mode: z.enum(["create", "merge", "replace"]).default("merge"),
+        dryRun: z.boolean().optional().default(false),
+      }),
+    },
+    async (params, requestContext) => {
+      try {
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "upsert_course_graph",
+          {
+            roles: ["admin", "instructor", "mcp_admin"],
+          },
+        );
+
+        if (params.dryRun) {
+          const [validation, diff] = await Promise.all([
+            api.api["course-explorer"].admin["course-graphs"].validate.post(
+              {
+                input: params.input as unknown as Record<string, unknown>,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
+                },
+              },
+            ),
+            api.api["course-explorer"].admin["course-graphs"].diff.post(
+              {
+                input: params.input as unknown as Record<string, unknown>,
+                targetCourseId: params.targetCourseId,
+                targetCourseSlug: params.targetCourseSlug,
+                mode: params.mode,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${apiKey}`,
+                },
+              },
+            ),
+          ]);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    dryRun: true,
+                    validation: validation.data?.data,
+                    diff: diff.data?.data,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+          };
+        }
+
+        const response = await api.api["course-explorer"].admin[
+          "course-graphs"
+        ].upsert.post(
+          {
+            input: params.input as unknown as Record<string, unknown>,
+            targetCourseId: params.targetCourseId,
+            targetCourseSlug: params.targetCourseSlug,
+            mode: params.mode,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+          },
+        );
+
+        if (response.error || !response.data?.success) {
+          throw new Error(
+            response.error?.value?.message || "Failed to upsert graph",
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  data: response.data.data,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("upsert_course_graph error:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to upsert course graph",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "export_course_graph",
+    {
+      title: "Export Course Graph",
+      description:
+        "Export an existing course into the canonical course graph payload shape.",
+      inputSchema: z.object({
+        courseId: z.string(),
+      }),
+    },
+    async (params, requestContext) => {
+      try {
+        const apiKey = await ensureToolAccess(
+          requestContext as any,
+          "export_course_graph",
+        );
+        const response = await api.api["course-explorer"].admin
+          .courses({ id: params.courseId })
+          .graph.get({
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+          });
+
+        if (response.error || !response.data?.success) {
+          throw new Error(
+            response.error?.value?.message || "Failed to export course graph",
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  data: response.data.data,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("export_course_graph error:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to export course graph",
                 },
                 null,
                 2,

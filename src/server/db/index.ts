@@ -13,7 +13,15 @@ const globalForDb = globalThis as unknown as {
   conn: postgres.Sql | undefined;
 };
 
-const conn = globalForDb.conn ?? postgres(appEnv.DATABASE_URL);
+const databaseUrl = new URL(appEnv.DATABASE_URL);
+const isNeonLocal = ["localhost", "127.0.0.1"].includes(databaseUrl.hostname);
+const conn =
+  globalForDb.conn ??
+  postgres(
+    appEnv.DATABASE_URL,
+    isNeonLocal ? { ssl: { rejectUnauthorized: false } } : {},
+  );
 if (appEnv.NODE_ENV !== "production") globalForDb.conn = conn;
 
 export const db = drizzle({ client: conn, schema, relations });
+export { conn };

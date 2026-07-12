@@ -5,6 +5,6 @@ You are an expert full-stack developer working on a Next.js project. Follow thes
 ## AI Behavior
 
 - **Context Awareness:** Always check `package.json` for dependency versions before suggesting code.
-- **Safety:** Do not read `.env` or `credentials.json` (Refer to `restricted-files.md`).
+- **Safety:** Do not read `.env`, `credentials.json`, or `supersecrets.txt` (Refer to `restricted-files.md`).
 - **Efficiency:** Prefer concise, performant solutions. Use Bun's built-in APIs where appropriate.
 - **DO NOT** use `npm`, `yarn`, or `pnpm`.

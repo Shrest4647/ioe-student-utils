@@ -13,16 +13,19 @@ interface SourcesPanelProps {
 }
 
 export function SourcesPanel({ selectedNode, isLoading }: SourcesPanelProps) {
+  const isSyntheticRootNode =
+    selectedNode?.id === "subject-root" || selectedNode?.data.slug === "root";
+
   const { data: topic } = useQuery({
-    queryKey: ["topic", selectedNode?.id],
+    queryKey: ["topic", selectedNode?.id ?? "none"],
     queryFn: async () => {
-      if (!selectedNode) return null;
+      if (!selectedNode || isSyntheticRootNode) return null;
       const response = await apiClient.api["course-explorer"].topics
         .slug({ slug: selectedNode.data.slug })
         .get();
-      return response.data?.data;
+      return response.data?.data ?? null;
     },
-    enabled: !!selectedNode,
+    enabled: !!selectedNode && !isSyntheticRootNode,
   });
   if (isLoading) {
     return <SourcesPanelSkeleton />;

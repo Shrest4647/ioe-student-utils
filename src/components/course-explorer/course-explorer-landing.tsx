@@ -104,7 +104,7 @@ export function CourseExplorerLanding() {
       className="min-h-screen bg-background text-foreground transition-colors duration-500"
     >
       {/* Hero Section */}
-      <section className="relative flex h-[70vh] items-center justify-center overflow-hidden border-border/10 border-b">
+      <section className="relative flex h-[66vh] items-center justify-center overflow-hidden border-border/10 border-b">
         <StarField />
 
         {/* Animated Background Orbs */}
@@ -117,7 +117,7 @@ export function CourseExplorerLanding() {
               y: [0, -30, 0],
             }}
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-[10%] -right-[5%] h-[600px] w-[600px] rounded-full bg-linear-to-br from-primary/20 to-primary/10 blur-[120px]"
+            className="absolute -top-[10%] -right-[5%] h-[600px] w-[600px] rounded-full bg-linear-to-br from-primary/15 via-muted/40 to-muted/25 blur-[120px]"
           />
           <motion.div
             animate={{
@@ -127,7 +127,7 @@ export function CourseExplorerLanding() {
               y: [0, 40, 0],
             }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-[10%] -left-[5%] h-[600px] w-[600px] rounded-full bg-linear-to-br from-primary/10 to-primary/20 blur-[120px]"
+            className="absolute -bottom-[10%] -left-[5%] h-[600px] w-[600px] rounded-full bg-linear-to-br from-muted/30 via-muted/60 to-primary/10 blur-[120px]"
           />
         </div>
 
@@ -140,17 +140,17 @@ export function CourseExplorerLanding() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <h1 className="mb-6 font-black text-5xl tracking-tight sm:text-7xl">
-              <span className="bg-linear-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+            <h1 className="mb-5 font-black text-4xl tracking-tight sm:text-6xl">
+              <span className="bg-linear-to-r from-foreground via-foreground/85 to-foreground bg-clip-text text-transparent">
                 Navigate Your
               </span>
               <br />
-              <span className="bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-foreground via-primary/75 to-foreground/60 bg-clip-text text-transparent">
                 Academic Universe
               </span>
             </h1>
 
-            <p className="mx-auto mb-12 max-w-2xl text-lg text-muted-foreground leading-relaxed sm:text-xl">
+            <p className="mx-auto mb-10 max-w-2xl text-base text-muted-foreground leading-relaxed sm:text-lg">
               Explore your degree like never before. From prerequisite maps to
               exam focus paths, discover the connections that define your
               learning.
@@ -159,15 +159,15 @@ export function CourseExplorerLanding() {
             {/* Futuristic Search Bar */}
             <div className="relative mx-auto max-w-3xl">
               <div className="group relative flex items-center">
-                <div className="absolute -inset-1 rounded-full bg-linear-to-r from-primary via-primary/50 to-primary/30 opacity-20 blur transition duration-500 group-focus-within:opacity-40 dark:opacity-30" />
-                <div className="relative flex w-full items-center rounded-full border border-border bg-card/80 p-1 shadow-xl backdrop-blur-xl transition-colors">
-                  <div className="pointer-events-none pl-6">
-                    <Search className="h-5 w-5 text-muted-foreground" />
+                <div className="absolute -inset-1 rounded-full bg-linear-to-r from-primary/20 via-muted-foreground/10 to-transparent opacity-20 blur transition duration-500 group-focus-within:opacity-50 dark:opacity-30" />
+                <div className="relative flex w-full items-center rounded-full border border-border bg-card/80 p-1 shadow-lg backdrop-blur-xl transition-colors">
+                  <div className="pointer-events-none pl-5">
+                    <Search className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <input
                     type="text"
                     placeholder="Search by course name, code, or topic..."
-                    className="h-14 w-full bg-transparent pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none sm:text-lg"
+                    className="h-12 w-full bg-transparent pr-10 pl-3 text-foreground placeholder:text-muted-foreground focus:outline-none sm:text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -181,9 +181,9 @@ export function CourseExplorerLanding() {
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="mr-6 text-muted-foreground transition-colors hover:text-foreground"
+                      className="mr-5 text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -200,8 +200,8 @@ export function CourseExplorerLanding() {
 
       {/* Stats Bar */}
       {stats && !isLoading && stats.totalCourses > 0 && (
-        <section className="relative z-20 mx-auto -mt-16 max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-6 sm:grid-cols-3">
+        <section className="relative z-20 mx-auto -mt-14 max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-5 sm:grid-cols-3">
             {[
               {
                 label: "Total Courses",
@@ -223,13 +223,13 @@ export function CourseExplorerLanding() {
                 key={stat.label}
                 className="group relative"
               >
-                <div className="absolute -inset-0.5 rounded-2xl bg-primary/20 opacity-0 blur-sm transition duration-300 group-hover:opacity-100" />
-                <div className="relative flex items-center gap-4 rounded-2xl border border-border bg-card/60 p-6 shadow-lg backdrop-blur-xl transition-colors hover:border-primary/30">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <stat.icon className="h-6 w-6" />
+                <div className="absolute -inset-0.5 rounded-2xl bg-linear-to-r from-primary/15 to-transparent opacity-0 blur-sm transition duration-300 group-hover:opacity-100" />
+                <div className="relative flex items-center gap-3 rounded-2xl border border-border bg-card/60 p-5 shadow-lg backdrop-blur-xl transition-colors hover:border-muted-foreground/30">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <stat.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="bg-linear-to-br from-foreground to-foreground/50 bg-clip-text font-bold text-3xl text-transparent">
+                    <p className="bg-linear-to-br from-foreground to-primary/70 bg-clip-text font-bold text-2xl text-transparent">
                       {stat.value}
                     </p>
                     <p className="font-medium text-muted-foreground text-sm">
@@ -244,7 +244,7 @@ export function CourseExplorerLanding() {
       )}
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         {/* Error Handling */}
         {error && (
           <motion.div
@@ -274,9 +274,9 @@ export function CourseExplorerLanding() {
         )}
 
         {/* Result Header */}
-        <div className="mb-12 flex items-center justify-between">
+        <div className="mb-10 flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="font-bold text-3xl text-foreground tracking-tight">
+            <h2 className="font-bold text-2xl text-foreground tracking-tight">
               Available Courses
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -299,15 +299,15 @@ export function CourseExplorerLanding() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="py-32 text-center"
+            className="py-28 text-center"
           >
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-border bg-card shadow-xl">
-              <Search className="h-10 w-10 text-muted-foreground/30" />
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card shadow-lg">
+              <Search className="h-8 w-8 text-muted-foreground/30" />
             </div>
-            <h3 className="font-bold text-2xl text-foreground">
+            <h3 className="font-bold text-foreground text-xl">
               No signals found
             </h3>
-            <p className="mx-auto mt-3 max-w-md text-muted-foreground leading-relaxed">
+            <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm leading-relaxed">
               {searchQuery
                 ? `The coordinates "${searchQuery}" yielded no results. Try adjusting your search query.`
                 : "This sector appears to be uncharted. Check back soon for new course data."}
@@ -316,7 +316,7 @@ export function CourseExplorerLanding() {
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="mt-8 rounded-full bg-primary px-8 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:bg-primary/90 active:scale-95"
+                className="mt-6 rounded-full bg-secondary px-7 py-2.5 font-semibold text-secondary-foreground text-sm shadow-md transition-all hover:scale-105 hover:bg-secondary/80 active:scale-95"
               >
                 Clear Sensors
               </button>

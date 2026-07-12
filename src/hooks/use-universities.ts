@@ -24,6 +24,8 @@ export interface UniversityResponse {
     isActive: boolean;
     createdAt: string | Date | null;
     updatedAt: string | Date | null;
+    ratingCount: number;
+    averageRating: number | null;
   }[];
   metadata: {
     totalCount: number;

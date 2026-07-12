@@ -1,0 +1,19 @@
+services:
+  db:
+    image: neondatabase/neon_local:latest
+    ports:
+      - "${NEON_LOCAL_PORT:-5432}:5432"
+    environment:
+      NEON_API_KEY: ${NEON_API_KEY}
+      NEON_PROJECT_ID: ${NEON_PROJECT_ID}
+      PARENT_BRANCH_ID: ${PARENT_BRANCH_ID:-}
+      DELETE_BRANCH: "false"
+    volumes:
+      - ./.neon_local:/tmp/.neon_local
+      - ./.git/HEAD:/tmp/.git/HEAD:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped

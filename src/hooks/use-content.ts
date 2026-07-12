@@ -19,6 +19,8 @@ export interface CollegeResponse {
     isActive: boolean;
     createdAt: string | Date | null;
     updatedAt: string | Date;
+    ratingCount: number;
+    averageRating: number | null;
   }[];
   metadata: {
     totalCount: number;

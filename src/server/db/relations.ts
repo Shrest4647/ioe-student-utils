@@ -39,6 +39,38 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.studentProfileData.userId,
     }),
+    createdQuizzes: r.many.quizzes({
+      from: r.user.id,
+      to: r.quizzes.createdById,
+    }),
+    updatedQuizzes: r.many.quizzes({
+      from: r.user.id,
+      to: r.quizzes.updatedById,
+    }),
+    quizAttempts: r.many.quizAttempts({
+      from: r.user.id,
+      to: r.quizAttempts.userId,
+    }),
+    createdFlashcardDecks: r.many.flashcardDecks({
+      from: r.user.id,
+      to: r.flashcardDecks.createdById,
+    }),
+    updatedFlashcardDecks: r.many.flashcardDecks({
+      from: r.user.id,
+      to: r.flashcardDecks.updatedById,
+    }),
+    flashcardStudySessions: r.many.flashcardStudySessions({
+      from: r.user.id,
+      to: r.flashcardStudySessions.userId,
+    }),
+    flashcardReviews: r.many.flashcardReviews({
+      from: r.user.id,
+      to: r.flashcardReviews.userId,
+    }),
+    flashcardUserCardStates: r.many.flashcardUserCardStates({
+      from: r.user.id,
+      to: r.flashcardUserCardStates.userId,
+    }),
   },
   account: {
     user: r.one.user({
@@ -547,6 +579,194 @@ export const relations = defineRelations(schema, (r) => ({
     standard: r.one.gpaConversionStandards({
       from: r.gpaConversions.standardId,
       to: r.gpaConversionStandards.id,
+    }),
+  },
+
+  quizzes: {
+    createdBy: r.one.user({
+      from: r.quizzes.createdById,
+      to: r.user.id,
+    }),
+    updatedBy: r.one.user({
+      from: r.quizzes.updatedById,
+      to: r.user.id,
+    }),
+    questions: r.many.quizQuestions({
+      from: r.quizzes.id,
+      to: r.quizQuestions.quizId,
+    }),
+    attempts: r.many.quizAttempts({
+      from: r.quizzes.id,
+      to: r.quizAttempts.quizId,
+    }),
+  },
+
+  quizQuestions: {
+    quiz: r.one.quizzes({
+      from: r.quizQuestions.quizId,
+      to: r.quizzes.id,
+    }),
+    options: r.many.quizOptions({
+      from: r.quizQuestions.id,
+      to: r.quizOptions.questionId,
+    }),
+    attemptAnswers: r.many.quizAttemptAnswers({
+      from: r.quizQuestions.id,
+      to: r.quizAttemptAnswers.questionId,
+    }),
+  },
+
+  quizOptions: {
+    question: r.one.quizQuestions({
+      from: r.quizOptions.questionId,
+      to: r.quizQuestions.id,
+    }),
+  },
+
+  quizAttempts: {
+    quiz: r.one.quizzes({
+      from: r.quizAttempts.quizId,
+      to: r.quizzes.id,
+    }),
+    user: r.one.user({
+      from: r.quizAttempts.userId,
+      to: r.user.id,
+    }),
+    answers: r.many.quizAttemptAnswers({
+      from: r.quizAttempts.id,
+      to: r.quizAttemptAnswers.attemptId,
+    }),
+  },
+
+  quizAttemptAnswers: {
+    attempt: r.one.quizAttempts({
+      from: r.quizAttemptAnswers.attemptId,
+      to: r.quizAttempts.id,
+    }),
+    question: r.one.quizQuestions({
+      from: r.quizAttemptAnswers.questionId,
+      to: r.quizQuestions.id,
+    }),
+  },
+
+  flashcardDecks: {
+    createdBy: r.one.user({
+      from: r.flashcardDecks.createdById,
+      to: r.user.id,
+    }),
+    updatedBy: r.one.user({
+      from: r.flashcardDecks.updatedById,
+      to: r.user.id,
+    }),
+    cards: r.many.flashcardCards({
+      from: r.flashcardDecks.id,
+      to: r.flashcardCards.deckId,
+    }),
+    tags: r.many.flashcardTags({
+      from: r.flashcardDecks.id.through(r.flashcardDeckTags.deckId),
+      to: r.flashcardTags.id.through(r.flashcardDeckTags.tagId),
+    }),
+    deckTags: r.many.flashcardDeckTags({
+      from: r.flashcardDecks.id,
+      to: r.flashcardDeckTags.deckId,
+    }),
+    sessions: r.many.flashcardStudySessions({
+      from: r.flashcardDecks.id,
+      to: r.flashcardStudySessions.deckId,
+    }),
+    reviews: r.many.flashcardReviews({
+      from: r.flashcardDecks.id,
+      to: r.flashcardReviews.deckId,
+    }),
+    userCardStates: r.many.flashcardUserCardStates({
+      from: r.flashcardDecks.id,
+      to: r.flashcardUserCardStates.deckId,
+    }),
+  },
+
+  flashcardCards: {
+    deck: r.one.flashcardDecks({
+      from: r.flashcardCards.deckId,
+      to: r.flashcardDecks.id,
+    }),
+    reviews: r.many.flashcardReviews({
+      from: r.flashcardCards.id,
+      to: r.flashcardReviews.cardId,
+    }),
+    userCardStates: r.many.flashcardUserCardStates({
+      from: r.flashcardCards.id,
+      to: r.flashcardUserCardStates.cardId,
+    }),
+  },
+
+  flashcardTags: {
+    decks: r.many.flashcardDecks({
+      from: r.flashcardTags.id.through(r.flashcardDeckTags.tagId),
+      to: r.flashcardDecks.id.through(r.flashcardDeckTags.deckId),
+    }),
+    deckTags: r.many.flashcardDeckTags({
+      from: r.flashcardTags.id,
+      to: r.flashcardDeckTags.tagId,
+    }),
+  },
+
+  flashcardDeckTags: {
+    deck: r.one.flashcardDecks({
+      from: r.flashcardDeckTags.deckId,
+      to: r.flashcardDecks.id,
+    }),
+    tag: r.one.flashcardTags({
+      from: r.flashcardDeckTags.tagId,
+      to: r.flashcardTags.id,
+    }),
+  },
+
+  flashcardStudySessions: {
+    deck: r.one.flashcardDecks({
+      from: r.flashcardStudySessions.deckId,
+      to: r.flashcardDecks.id,
+    }),
+    user: r.one.user({
+      from: r.flashcardStudySessions.userId,
+      to: r.user.id,
+    }),
+    reviews: r.many.flashcardReviews({
+      from: r.flashcardStudySessions.id,
+      to: r.flashcardReviews.sessionId,
+    }),
+  },
+
+  flashcardReviews: {
+    session: r.one.flashcardStudySessions({
+      from: r.flashcardReviews.sessionId,
+      to: r.flashcardStudySessions.id,
+    }),
+    deck: r.one.flashcardDecks({
+      from: r.flashcardReviews.deckId,
+      to: r.flashcardDecks.id,
+    }),
+    card: r.one.flashcardCards({
+      from: r.flashcardReviews.cardId,
+      to: r.flashcardCards.id,
+    }),
+    user: r.one.user({
+      from: r.flashcardReviews.userId,
+      to: r.user.id,
+    }),
+  },
+
+  flashcardUserCardStates: {
+    user: r.one.user({
+      from: r.flashcardUserCardStates.userId,
+      to: r.user.id,
+    }),
+    deck: r.one.flashcardDecks({
+      from: r.flashcardUserCardStates.deckId,
+      to: r.flashcardDecks.id,
+    }),
+    card: r.one.flashcardCards({
+      from: r.flashcardUserCardStates.cardId,
+      to: r.flashcardCards.id,
     }),
   },
 }));

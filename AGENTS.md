@@ -50,7 +50,7 @@ This document provides comprehensive guidelines for AI agents (Gemini, Claude, C
   - `src/hooks/`: Custom client-side hooks.
 - **Error Handling:** Use try/catch blocks in Elysia API handlers and async functions. Use Elysia's `onError` hook for global error handling. Provide user-friendly error messages with structured responses.
 - **Formatting:** At the end of each coding session, run `bun run check:write` and `bun run typecheck`.
-- **Schema Changes:** After each `src/lib/db/schema.ts` changes and run `bun run db:generate` to generate migrations and `bun run db:migrate` to apply them.
+- **Schema Changes:** After making changes to `src/server/db/schema.ts` (or schemas in `src/server/db/schema/`), run `bun run db:generate` to generate migrations and `bun run db:migrate` to apply them.
 
 ## 6. Prohibited Actions
 

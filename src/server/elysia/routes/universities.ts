@@ -1,9 +1,10 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
 import { db } from "@/server/db";
 import {
   countries,
+  ratings,
   universities,
   universityToRatings,
 } from "@/server/db/schema";
@@ -48,6 +49,42 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         orderBy: { createdAt: "desc" },
       });
 
+      const ratingAggregates =
+        results.length > 0
+          ? await db
+              .select({
+                universityId: universityToRatings.universityId,
+                ratingCount: sql<number>`count(*)`,
+                averageRating: sql<number>`avg(${ratings.rating}::numeric)`,
+              })
+              .from(universityToRatings)
+              .innerJoin(ratings, eq(universityToRatings.ratingId, ratings.id))
+              .where(
+                inArray(
+                  universityToRatings.universityId,
+                  results.map((university) => university.id),
+                ),
+              )
+              .groupBy(universityToRatings.universityId)
+          : [];
+
+      const ratingsByUniversity = new Map(
+        ratingAggregates.map((aggregate) => [
+          aggregate.universityId,
+          {
+            ratingCount: Number(aggregate.ratingCount),
+            averageRating: Number(aggregate.averageRating),
+          },
+        ]),
+      );
+
+      const resultsWithRatings = results.map((university) => ({
+        ...university,
+        ratingCount: ratingsByUniversity.get(university.id)?.ratingCount ?? 0,
+        averageRating:
+          ratingsByUniversity.get(university.id)?.averageRating ?? null,
+      }));
+
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(universities)
@@ -58,7 +95,7 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
 
       return {
         success: true,
-        data: results,
+        data: resultsWithRatings,
         metadata: {
           totalCount: realTotal,
           totalPages,
@@ -104,7 +141,26 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         return { success: false, error: "University not found" };
       }
 
-      return { success: true, data: university };
+      const ratingAggregates = await db
+        .select({
+          ratingCount: sql<number>`count(*)`,
+          averageRating: sql<number>`avg(${ratings.rating}::numeric)`,
+        })
+        .from(universityToRatings)
+        .innerJoin(ratings, eq(universityToRatings.ratingId, ratings.id))
+        .where(eq(universityToRatings.universityId, university.id))
+        .groupBy(universityToRatings.universityId);
+
+      const ratingAgg = ratingAggregates[0];
+
+      return {
+        success: true,
+        data: {
+          ...university,
+          ratingCount: Number(ratingAgg?.ratingCount ?? 0),
+          averageRating: Number(ratingAgg?.averageRating ?? null),
+        },
+      };
     },
     {
       params: t.Object({
@@ -171,10 +227,19 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         "/",
         async ({ body, user }) => {
           const id = nanoid();
-          const slug = body.name
+          const baseSlug = body.name
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)/g, "");
+          let slug = baseSlug;
+
+          const existingUniversity = await db.query.universities.findFirst({
+            where: { slug },
+            columns: { id: true },
+          });
+          if (existingUniversity) {
+            slug = `${baseSlug}-${nanoid(4)}`;
+          }
 
           await db.insert(universities).values({
             ...body,
@@ -207,10 +272,16 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
       .patch(
         "/:id",
         async ({ params: { id }, body, user }) => {
-          await db
+          const updated = await db
             .update(universities)
             .set({ ...body, updatedById: user.id, updatedAt: new Date() })
-            .where(eq(universities.id, id));
+            .where(eq(universities.id, id))
+            .returning({ id: universities.id });
+          if (updated.length === 0) {
+            console.warn(
+              `[universities.admin.patch] No university row updated for id=${id}`,
+            );
+          }
           return { success: true };
         },
         {

@@ -17,6 +17,8 @@ import {
   scholarshipsToDegrees,
   scholarshipsToFields,
 } from "../schema";
+import { seedFlashcards } from "./seed-flashcards";
+import { seedQuizzes } from "./seed-quizzes";
 
 const categories = [
   {
@@ -1061,6 +1063,9 @@ async function seed() {
     } else {
       console.log("⏭️ GPA conversion standards already seeded.");
     }
+
+    await seedQuizzes();
+    await seedFlashcards();
 
     console.log("✨ Seeding completed!");
   } catch (error) {

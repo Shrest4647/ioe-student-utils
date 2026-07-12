@@ -167,10 +167,13 @@ export * from "./schema/recommendations";
 // --- Resume Builder Tables ---
 export * from "./schema/resume";
 export * from "./schema/universities";
+
 // --- GPA Converter Tables ---
 
+export * from "./schema/flashcards";
 export * from "./schema/gpa-converter";
 export * from "./schema/prerequisites";
+export * from "./schema/quizzes";
 export * from "./schema/resource-links";
 // --- Study Planner Tables ---
 export * from "./schema/study-planners";

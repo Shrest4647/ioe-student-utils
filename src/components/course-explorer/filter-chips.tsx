@@ -34,7 +34,7 @@ export function FilterChips({ courses }: FilterChipsProps) {
   };
 
   return (
-    <div className="scrollbar-hide flex items-center justify-center gap-3 overflow-x-auto px-4 pb-2">
+    <div className="scrollbar-hide flex items-center justify-center gap-2.5 overflow-x-auto px-4 pb-2">
       {chips.map((chip) => {
         const isActive = activeFilter === chip.id;
         return (
@@ -43,10 +43,10 @@ export function FilterChips({ courses }: FilterChipsProps) {
             key={chip.id}
             onClick={() => handleFilterClick(chip.id)}
             className={cn(
-              "relative flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 font-bold text-xs uppercase tracking-wider transition-all duration-300",
+              "relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 font-semibold text-[11px] uppercase tracking-wide transition-all duration-300",
               isActive
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "border border-border bg-card shadow-sm backdrop-blur-md hover:border-primary/50 hover:text-primary",
+                ? "bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
+                : "border border-border bg-card shadow-sm backdrop-blur-md hover:border-muted-foreground/30 hover:text-foreground",
             )}
             aria-pressed={isActive}
           >

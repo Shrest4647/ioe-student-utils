@@ -1,0 +1,42 @@
+name: Production database migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "drizzle/**"
+      - "drizzle.config.ts"
+      - "package.json"
+      - "bun.lockb"
+      - ".github/workflows/production-database-migrate.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: production-database-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Apply committed Drizzle migrations
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout the merged revision
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          SKIP_ENV_VALIDATION: "1"
+        run: bun run db:migrate

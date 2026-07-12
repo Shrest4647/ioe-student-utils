@@ -72,6 +72,7 @@ export const auth = betterAuth({
           departments: ["read"],
           programs: ["read"],
           courses: ["read"],
+          course_explorer: ["read"],
           resources: ["read", "write"],
           recommendations: ["read", "write"],
           resumes: ["read", "write"],
