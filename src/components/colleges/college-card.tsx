@@ -32,6 +32,8 @@ export interface College {
   };
   isActive: boolean;
   createdAt: string | Date | null;
+  ratingCount: number;
+  averageRating: number | null;
 }
 
 interface CollegeCardProps {
@@ -93,6 +95,20 @@ export function CollegeCard({ college }: CollegeCardProps) {
               {college.name}
             </Link>
           </CardTitle>
+          {college.ratingCount > 1 && college.averageRating !== null && (
+            <div
+              className="flex items-center gap-1 text-sm"
+              aria-label={`${college.averageRating.toFixed(1)} average rating`}
+            >
+              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+              <span className="font-medium">
+                {college.averageRating.toFixed(1)}
+              </span>
+              <span className="text-muted-foreground">
+                ({college.ratingCount})
+              </span>
+            </div>
+          )}
           <CardDescription className="line-clamp-2 text-xs">
             {college.description || "No description available"}
           </CardDescription>

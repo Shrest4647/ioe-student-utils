@@ -8,6 +8,7 @@ import {
   collegeDepartmentsToPrograms,
   colleges,
   collegeToRatings,
+  ratings,
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
@@ -43,6 +44,41 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
         orderBy: { createdAt: "desc" },
       });
 
+      const ratingAggregates =
+        results.length > 0
+          ? await db
+              .select({
+                collegeId: collegeToRatings.collegeId,
+                ratingCount: sql<number>`count(*)`,
+                averageRating: sql<number>`avg(${ratings.rating}::numeric)`,
+              })
+              .from(collegeToRatings)
+              .innerJoin(ratings, eq(collegeToRatings.ratingId, ratings.id))
+              .where(
+                inArray(
+                  collegeToRatings.collegeId,
+                  results.map((college) => college.id),
+                ),
+              )
+              .groupBy(collegeToRatings.collegeId)
+          : [];
+
+      const ratingsByCollege = new Map(
+        ratingAggregates.map((aggregate) => [
+          aggregate.collegeId,
+          {
+            ratingCount: Number(aggregate.ratingCount),
+            averageRating: Number(aggregate.averageRating),
+          },
+        ]),
+      );
+
+      const resultsWithRatings = results.map((college) => ({
+        ...college,
+        ratingCount: ratingsByCollege.get(college.id)?.ratingCount ?? 0,
+        averageRating: ratingsByCollege.get(college.id)?.averageRating ?? null,
+      }));
+
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(colleges)
@@ -53,7 +89,7 @@ export const collegeRoutes = new Elysia({ prefix: "/colleges" })
 
       return {
         success: true,
-        data: results,
+        data: resultsWithRatings,
         metadata: {
           totalCount: realTotal,
           totalPages,

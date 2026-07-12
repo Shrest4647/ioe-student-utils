@@ -12,6 +12,8 @@
 /prisma/db.sqlite
 /prisma/db.sqlite-journal
 db.sqlite
+/.neon_local/
+/.env.neon-local
 
 # next.js
 /.next/

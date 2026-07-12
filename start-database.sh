@@ -1,88 +1,54 @@
 #!/usr/bin/env bash
-# Use this script to start a docker container for a local development database
+set -euo pipefail
 
-# TO RUN ON WINDOWS:
-# 1. Install WSL (Windows Subsystem for Linux) - https://learn.microsoft.com/en-us/windows/wsl/install
-# 2. Install Docker Desktop or Podman Deskop
-# - Docker Desktop for Windows - https://docs.docker.com/docker-for-windows/install/
-# - Podman Desktop - https://podman.io/getting-started/installation
-# 3. Open WSL - `wsl`
-# 4. Run this script - `./start-database.sh`
+cd "$(dirname "$0")"
 
-# On Linux and macOS you can run this script directly - `./start-database.sh`
+env_file=".env.neon-local"
+compose_file="compose.neon-local.yml"
 
-# import env variables from .env
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker is required. Install it from https://docs.docker.com/engine/install/" >&2
+  exit 1
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Docker Compose is required." >&2
+  exit 1
+fi
+
+if [[ ! -f "$env_file" ]]; then
+  cp .env.neon-local.example "$env_file"
+  echo "Created $env_file. Add NEON_API_KEY and NEON_PROJECT_ID, then run this command again." >&2
+  exit 1
+fi
+
 set -a
-source .env
+# shellcheck disable=SC1090
+source "$env_file"
+set +a
 
-DB_PASSWORD=$(echo "$DATABASE_URL" | awk -F':' '{print $3}' | awk -F'@' '{print $1}')
-DB_PORT=$(echo "$DATABASE_URL" | awk -F':' '{print $4}' | awk -F'\/' '{print $1}')
-DB_NAME=$(echo "$DATABASE_URL" | awk -F'/' '{print $4}')
-DB_CONTAINER_NAME="$DB_NAME-postgres"
+: "${NEON_API_KEY:?Set NEON_API_KEY in $env_file}"
+: "${NEON_PROJECT_ID:?Set NEON_PROJECT_ID in $env_file}"
 
-if ! [ -x "$(command -v docker)" ] && ! [ -x "$(command -v podman)" ]; then
-  echo -e "Docker or Podman is not installed. Please install docker or podman and try again.\nDocker install guide: https://docs.docker.com/engine/install/\nPodman install guide: https://podman.io/getting-started/installation"
-  exit 1
+database_name="ioesu-db-prod"
+port="${NEON_LOCAL_PORT:-5432}"
+database_url="postgres://neon:npg@localhost:${port}/${database_name}?sslmode=require"
+
+# Neon Local runs as an unprivileged container user and needs to persist its
+# per-Git-branch mapping in this ignored directory.
+mkdir -p .neon_local
+chmod 0777 .neon_local
+
+docker compose --env-file "$env_file" --file "$compose_file" up --detach --wait db
+
+if [[ ! -f .env.development.local ]]; then
+  printf 'DATABASE_URL=%s\n' "$database_url" > .env.development.local
+  echo "Created .env.development.local with the static Neon Local URL."
 fi
 
-# determine which docker command to use
-if [ -x "$(command -v docker)" ]; then
-  DOCKER_CMD="docker"
-elif [ -x "$(command -v podman)" ]; then
-  DOCKER_CMD="podman"
-fi
+echo "Applying pending migrations to the isolated development branch..."
+DATABASE_URL="$database_url" bun run db:migrate
 
-if ! $DOCKER_CMD info > /dev/null 2>&1; then
-  echo "$DOCKER_CMD daemon is not running. Please start $DOCKER_CMD and try again."
-  exit 1
-fi
-
-if command -v nc >/dev/null 2>&1; then
-  if nc -z localhost "$DB_PORT" 2>/dev/null; then
-    echo "Port $DB_PORT is already in use."
-    exit 1
-  fi
-else
-  echo "Warning: Unable to check if port $DB_PORT is already in use (netcat not installed)"
-  read -p "Do you want to continue anyway? [y/N]: " -r REPLY
-  if ! [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborting."
-    exit 1
-  fi
-fi
-
-if [ "$($DOCKER_CMD ps -q -f name=$DB_CONTAINER_NAME)" ]; then
-  echo "Database container '$DB_CONTAINER_NAME' already running"
-  exit 0
-fi
-
-if [ "$($DOCKER_CMD ps -q -a -f name=$DB_CONTAINER_NAME)" ]; then
-  $DOCKER_CMD start "$DB_CONTAINER_NAME"
-  echo "Existing database container '$DB_CONTAINER_NAME' started"
-  exit 0
-fi
-
-if [ "$DB_PASSWORD" = "password" ]; then
-  echo "You are using the default database password"
-  read -p "Should we generate a random password for you? [y/N]: " -r REPLY
-  if ! [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Please change the default password in the .env file and try again"
-    exit 1
-  fi
-  # Generate a random URL-safe password
-  DB_PASSWORD=$(openssl rand -base64 12 | tr '+/' '-_')
-  if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS requires an empty string to be passed with the `i` flag
-    sed -i '' "s#:password@#:$DB_PASSWORD@#" .env
-  else
-    sed -i "s#:password@#:$DB_PASSWORD@#" .env
-  fi
-fi
-
-$DOCKER_CMD run -d \
-  --name $DB_CONTAINER_NAME \
-  -e POSTGRES_USER="postgres" \
-  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
-  -e POSTGRES_DB="$DB_NAME" \
-  -p "$DB_PORT":5432 \
-  docker.io/postgres && echo "Database container '$DB_CONTAINER_NAME' was successfully created"
+echo
+echo "Neon Local is ready."
+echo "DATABASE_URL=$database_url"

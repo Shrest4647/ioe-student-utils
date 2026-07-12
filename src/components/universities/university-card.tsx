@@ -31,6 +31,8 @@ export interface University {
   logoUrl: string | null;
   isActive: boolean;
   createdAt: string | Date | null;
+  ratingCount: number;
+  averageRating: number | null;
 }
 
 interface UniversityCardProps {
@@ -106,6 +108,21 @@ export function UniversityCard({ university }: UniversityCardProps) {
                 {university.name}
               </Link>
             </CardTitle>
+            {university.ratingCount > 1 &&
+              university.averageRating !== null && (
+                <div
+                  className="flex items-center gap-1 text-sm"
+                  aria-label={`${university.averageRating.toFixed(1)} average rating`}
+                >
+                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                  <span className="font-medium">
+                    {university.averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    ({university.ratingCount})
+                  </span>
+                </div>
+              )}
             <CardDescription className="line-clamp-2 overflow-hidden text-xs">
               {university.description || "No description available"}
             </CardDescription>

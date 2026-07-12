@@ -69,23 +69,28 @@ This project includes specific instructions for AI agents (Gemini, Claude, Copil
 
     Then update the values in the `.env` file to match your local environment.
 
-4.  Setup the local postgres database
-    If you have docker installed, you can run the following command to setup the database:
+4.  Set up Neon Local
+
+    Neon Local creates a persistent development branch from the Neon project's
+    default branch (normally production), so local development starts with
+    production-like data while keeping schema changes isolated.
 
     ```bash
-    ./start-database.sh
+    cp .env.neon-local.example .env.neon-local
     ```
 
-    If you don't have docker installed, you can manually create a new database and update the `.env` file with the database credentials.
-
-5.  Run the database migrations
+    Add your personal `NEON_API_KEY` and `NEON_PROJECT_ID` to
+    `.env.neon-local`, then start the proxy:
 
     ```bash
-    bun db:generate
-    bun db:migrate
+    bun run db:local
     ```
 
-6.  **Run the development server**
+    The command writes the static development `DATABASE_URL` when needed and
+    applies pending migrations. Neon Local keeps one Neon branch per Git
+    branch; its metadata and credentials are ignored by Git.
+
+5.  **Run the development server**
     ```bash
     bun dev
     ```

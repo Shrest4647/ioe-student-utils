@@ -2,6 +2,46 @@
 
 The application uses committed Drizzle SQL migrations as the database change log. Local and production databases contain different data, but they must reach the same schema by applying the same files under `drizzle/`.
 
+## Neon Local development
+
+The preferred local workflow uses [Neon Local](https://neon.com/docs/local/neon-local). It exposes a stable Postgres endpoint on `localhost:5432` while routing to an isolated Neon branch. This repository persists Neon Local metadata per Git branch, so switching Git branches switches database branches without changing the application connection string.
+
+1. Create a personal Neon API key and find the project ID under Neon Project Settings.
+2. Configure the ignored credentials file:
+
+   ```sh
+   cp .env.neon-local.example .env.neon-local
+   ```
+
+3. Start Neon Local:
+
+   ```sh
+   bun run db:local
+   ```
+
+4. The startup command creates `.env.development.local` with this static URL
+   when that file does not already exist:
+
+   ```text
+   DATABASE_URL=postgres://neon:npg@localhost:5432/ioesu-db-prod?sslmode=require
+   ```
+
+5. Pending migrations are applied automatically to the isolated branch. Start
+   Next.js:
+
+   ```sh
+   bun dev
+   ```
+
+Useful lifecycle commands:
+
+```sh
+bun run db:local:logs
+bun run db:local:down
+```
+
+By default, Neon Local branches from the project's default branch. Set `PARENT_BRANCH_ID` in `.env.neon-local` to pin a specific production parent. `DELETE_BRANCH=false` and the `.neon_local` metadata mount keep the development branch across container restarts. Never reuse the production branch as `BRANCH_ID` for development migrations.
+
 ## One-time GitHub setup
 
 1. In GitHub, create an environment named `production`.
@@ -50,7 +90,9 @@ CONFIRM_DATABASE_REPLACE=replace-local-database \
 bun run db:pull-production
 ```
 
-The command creates a temporary custom-format dump, replaces the contents of the local database, and deletes the dump on exit. It refuses non-local targets. The source URL is passed only through the environment and must never be added to `.env`, shell history, logs, or GitHub.
+The command creates a temporary data-only dump of production's `public` schema, truncates the local `public` tables, and imports the production rows in a single transaction. It preserves the local schema and Drizzle migration journal, so local migrations may safely be ahead of production when the changes are backward-compatible (for example, additive nullable columns or columns with defaults). The command deletes the dump on exit and refuses non-local targets. The source URL is passed only through the environment and must never be added to `.env`, shell history, logs, or GitHub.
+
+If a newer local migration removed or renamed a production column, or added a required column without a database default, the import stops and rolls back the local data transaction. Update the migration to use an expand/contract-compatible shape or perform an explicit data transformation rather than replacing the local schema with production's older schema.
 
 Production copies contain user, account, session, uploaded-resource metadata, and other personal data. Use access controls appropriate for production data, never send email or OAuth callbacks from the copy, and prefer a sanitized dataset when contributors do not have production-data authorization. Copying rows does not copy Neon roles or Vercel secrets, but active session/account records remain sensitive.
 

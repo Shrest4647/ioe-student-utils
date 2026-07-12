@@ -1,9 +1,10 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
 import { db } from "@/server/db";
 import {
   countries,
+  ratings,
   universities,
   universityToRatings,
 } from "@/server/db/schema";
@@ -48,6 +49,42 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
         orderBy: { createdAt: "desc" },
       });
 
+      const ratingAggregates =
+        results.length > 0
+          ? await db
+              .select({
+                universityId: universityToRatings.universityId,
+                ratingCount: sql<number>`count(*)`,
+                averageRating: sql<number>`avg(${ratings.rating}::numeric)`,
+              })
+              .from(universityToRatings)
+              .innerJoin(ratings, eq(universityToRatings.ratingId, ratings.id))
+              .where(
+                inArray(
+                  universityToRatings.universityId,
+                  results.map((university) => university.id),
+                ),
+              )
+              .groupBy(universityToRatings.universityId)
+          : [];
+
+      const ratingsByUniversity = new Map(
+        ratingAggregates.map((aggregate) => [
+          aggregate.universityId,
+          {
+            ratingCount: Number(aggregate.ratingCount),
+            averageRating: Number(aggregate.averageRating),
+          },
+        ]),
+      );
+
+      const resultsWithRatings = results.map((university) => ({
+        ...university,
+        ratingCount: ratingsByUniversity.get(university.id)?.ratingCount ?? 0,
+        averageRating:
+          ratingsByUniversity.get(university.id)?.averageRating ?? null,
+      }));
+
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(universities)
@@ -58,7 +95,7 @@ export const universityRoutes = new Elysia({ prefix: "/universities" })
 
       return {
         success: true,
-        data: results,
+        data: resultsWithRatings,
         metadata: {
           totalCount: realTotal,
           totalPages,

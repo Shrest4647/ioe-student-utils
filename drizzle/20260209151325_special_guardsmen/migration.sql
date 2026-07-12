@@ -3,8 +3,8 @@ ALTER TABLE "study_plans" ADD COLUMN "slug" varchar(255);--> statement-breakpoin
 
 -- Generate slugs for existing records
 UPDATE "study_plans" SET "slug" = LOWER(REGEXP_REPLACE(TRIM(subject_name), '[^\w\s-]', '', 'g')) WHERE "slug" IS NULL;--> statement-breakpoint
-UPDATE "study_plans" SET "slug" = REGEXP_REPLACE("slug", '[\s_-]+', '-', 'g') WHERE "slug" IS NULL;--> statement-breakpoint
-UPDATE "study_plans" SET "slug" = REGEXP_REPLACE("slug", '^-+|-+$', '') WHERE "slug" IS NULL;--> statement-breakpoint
+UPDATE "study_plans" SET "slug" = REGEXP_REPLACE("slug", '[\s_-]+', '-', 'g') WHERE "slug" IS NOT NULL;--> statement-breakpoint
+UPDATE "study_plans" SET "slug" = REGEXP_REPLACE("slug", '^-+|-+$', '') WHERE "slug" IS NOT NULL;--> statement-breakpoint
 
 -- Handle duplicate slugs by appending counter
 DO $$
