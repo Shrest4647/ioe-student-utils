@@ -13,10 +13,11 @@ The primary goal of this project is to create an open source, community driven e
 - **GPA Calculator**: Converts TU percentage scores to US 4.0 GPA equivalents using WES/Scholaro conversion logic.
 - **Resume Builder**: Create and manage professional resumes tailored for international applications with template selections.
 - **Letter of Recommendation**: Generate, customize, and edit professional recommendation letters for study applications.
-- **Course Explorer**: Interactive BCT course navigation featuring chapter/topic marks breakdowns and dependency mappings via visual mindmaps.
+- **Course Explorer**: Interactive BCT and Civil Engineering course navigation featuring chapter/topic marks breakdowns and dependency mappings via visual mindmaps.
 - **Study Planner**: Creates personalized schedules, logs study sessions, tracks exams/assignments, and monitors checklist progress on a visual dashboard.
 - **Resources Library**: Browse, tag, and upload academic files and URL attachments.
-- **Flashcards & Quizzes**: A flashcard-style quiz system with presentational UI, Framer Motion animations, localStorage persistence, and Elysia APIs.
+- **Quiz Platform**: Interactive multiple-choice quizzes with progress indicators, correct answer reveals, rationale displays, attempt history tracking, and admin dashboard controls.
+- **Flashcard Platform**: Spaced repetition system (supporting SM-2 and FSRS algorithms) with an interactive card flipper UI, study sessions, local/server progress synchronization, deck/card/tag management, and detailed SRS scheduling simulators. Full MCP toolset support for AI agents.
 
 ## Planned Features
 
@@ -117,7 +118,7 @@ Contributions are welcome! Please refer to the [Contributing Guidelines](CONTRIB
 
 ## Roadmap
 
-- [ ] Add support for Civil, Mechanical, Electrical and Electronics Engineering.
+- [ ] Add support for Mechanical, Electrical and Electronics Engineering (BCT and Civil are already supported).
 - [ ] Add dark mode.
 
 ## License

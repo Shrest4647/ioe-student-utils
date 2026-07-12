@@ -134,7 +134,7 @@ mkdir -p "$DATA_DIR"
 mkdir -p "$LOGS_DIR"
 
 # Change the owner of these directories
-chown -R 10001:10001 "$DATA_DIR" "$LOGS_DIR"
+# chown -R 10001:10001 "$DATA_DIR" "$LOGS_DIR"
 
 
 # -----------------------------

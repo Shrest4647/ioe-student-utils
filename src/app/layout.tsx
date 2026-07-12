@@ -1,6 +1,8 @@
 import { Analytics } from "@vercel/analytics/next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "@/styles/globals.css";
 import { Navbar } from "@/components/common/navbar";
 import { VibeKanbanCompanion } from "@/components/common/vibe-kanban-companion";
@@ -8,16 +10,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -136,7 +128,7 @@ export default function RootLayout({
   return (
     <html className={outfit.variable} lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
         <Providers>
           <div className="min-h-screen">
