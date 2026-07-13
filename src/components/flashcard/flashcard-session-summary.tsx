@@ -1,6 +1,6 @@
+import { CheckCircle2, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FlashcardSessionSummaryProps {
   cardsStudied: number;
@@ -18,35 +18,43 @@ export function FlashcardSessionSummary({
   onRestart,
 }: FlashcardSessionSummaryProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Session Complete</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm">
-          You reviewed <strong>{cardsStudied}</strong> cards with{" "}
-          <strong>{accuracyPercentage}%</strong> recall.
-        </p>
+    <section className="text-center" aria-labelledby="session-complete-title">
+      <div className="mx-auto flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <CheckCircle2 className="size-6" />
+      </div>
+      <p className="mt-5 font-medium text-primary text-sm">Review complete</p>
+      <h1
+        id="session-complete-title"
+        className="mt-1 font-semibold text-2xl tracking-tight"
+      >
+        Good work. Your schedule is updated.
+      </h1>
+      <p className="mx-auto mt-3 max-w-md text-muted-foreground text-sm leading-6">
+        You answered {cardsStudied} {cardsStudied === 1 ? "card" : "cards"} with{" "}
+        {accuracyPercentage}% recall. Difficult cards will return sooner.
+      </p>
 
-        {!canPersistProgress ? (
-          <p className="rounded-md border border-dashed p-3 text-muted-foreground text-sm">
-            You are studying as a guest. Sign in to save SRS progress and review
-            history.
-          </p>
-        ) : null}
+      <div className="mt-7 flex flex-wrap justify-center gap-2">
+        <Button onClick={onRestart}>
+          <RotateCcw className="size-4" /> Review another round
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/flashcards">Choose another deck</Link>
+        </Button>
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={onRestart}>Retry</Button>
-          <Button variant="outline" asChild>
-            <Link href="/flashcards">All Decks</Link>
+      {!canPersistProgress ? (
+        <div className="mx-auto mt-7 max-w-lg rounded-xl bg-muted/50 px-4 py-4 text-sm">
+          <p>Your learning history is safe on this device.</p>
+          <Button variant="link" className="mt-1 h-auto p-0" asChild>
+            <Link
+              href={`/auth/signin?callbackURL=/flashcards/${deckSlug ?? ""}`}
+            >
+              Sign in to migrate it and sync across devices
+            </Link>
           </Button>
-          {deckSlug ? (
-            <Button variant="outline" asChild>
-              <Link href={`/flashcards/${deckSlug}`}>Deck Page</Link>
-            </Button>
-          ) : null}
         </div>
-      </CardContent>
-    </Card>
+      ) : null}
+    </section>
   );
 }

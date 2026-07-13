@@ -69,3 +69,19 @@ export function useMyQuizAttempts(quizId: string, enabled = true) {
     enabled: Boolean(quizId) && enabled,
   });
 }
+
+export function useQuizStudyProfile(quizId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["quiz", "study-profile", quizId],
+    queryFn: async () => {
+      const response = await apiClient.api.quizzes
+        .quiz({ quizId })
+        ["study-profile"].get();
+      if (response.error || !response.data?.success) {
+        throw new Error("Failed to fetch study profile");
+      }
+      return response.data.data;
+    },
+    enabled: Boolean(quizId) && enabled,
+  });
+}

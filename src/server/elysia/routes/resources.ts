@@ -188,31 +188,29 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
       const limitNum = Math.min(100, Math.max(1, parseInt(l, 10) || 10));
       const offset = (pageNum - 1) * limitNum;
 
-      // Get total count for pagination metadata
-      const allResources = await db.query.resources.findMany({
-        with: {
-          contentType: true,
-          categories: true,
-          uploader: {
-            columns: {
-              id: true,
-              name: true,
-              image: true,
+      const where = {
+        ...(contentType && { contentTypeId: contentType }),
+        ...(search && {
+          OR: [
+            { title: { ilike: `%${search}%` } },
+            { description: { ilike: `%${search}%` } },
+          ],
+        }),
+        ...(category && {
+          categories: {
+            id: {
+              arrayContained: [category],
             },
           },
-          attachments: true,
+        }),
+      };
+
+      // Get total count for pagination metadata
+      const allResources = await db.query.resources.findMany({
+        columns: {
+          id: true,
         },
-        where: {
-          ...(contentType && { contentTypeId: contentType }),
-          ...(search && { title: { ilike: `%${search}%` } }),
-          ...(category && {
-            categories: {
-              id: {
-                arrayContained: [category],
-              },
-            },
-          }),
-        },
+        where,
       });
 
       const totalCount = allResources.length;
@@ -232,17 +230,7 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
           },
           attachments: true,
         },
-        where: {
-          ...(contentType && { contentTypeId: contentType }),
-          ...(search && { title: { ilike: `%${search}%` } }),
-          ...(category && {
-            categories: {
-              id: {
-                arrayContained: [category],
-              },
-            },
-          }),
-        },
+        where,
         orderBy: { createdAt: "desc" },
         limit: limitNum,
         offset: offset,

@@ -228,6 +228,20 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         return { success: false, error: "Quiz not found" };
       }
 
+      const resumable = await db.query.quizAttempts.findFirst({
+        where: { quizId, userId: user.id, status: "in_progress" },
+        orderBy: { startedAt: "desc" },
+      });
+      if (resumable) {
+        const answers = await db.query.quizAttemptAnswers.findMany({
+          where: { attemptId: resumable.id },
+        });
+        return {
+          success: true,
+          data: { ...resumable, answers, resumed: true },
+        };
+      }
+
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(quizQuestions)
@@ -249,7 +263,10 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         })
         .returning();
 
-      return { success: true, data: attempt };
+      return {
+        success: true,
+        data: { ...attempt, answers: [], resumed: false },
+      };
     },
     {
       auth: true,
@@ -341,6 +358,18 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
               .returning()
           )[0];
 
+      if (body.confidence) {
+        const metadata = (attempt.metadata ?? {}) as Record<string, unknown>;
+        const confidenceByQuestion = {
+          ...((metadata.confidenceByQuestion ?? {}) as Record<string, number>),
+          [body.questionId]: body.confidence,
+        };
+        await db
+          .update(quizAttempts)
+          .set({ metadata: { ...metadata, confidenceByQuestion } })
+          .where(eq(quizAttempts.id, attemptId));
+      }
+
       return { success: true, data: answer };
     },
     {
@@ -349,6 +378,7 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         questionId: t.String(),
         selectedOptionIds: t.Array(t.String(), { minItems: 1 }),
         timeSpentSeconds: t.Optional(t.Number()),
+        confidence: t.Optional(t.Integer({ minimum: 1, maximum: 3 })),
       }),
       detail: {
         tags: ["Quizzes"],
@@ -493,6 +523,160 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
       detail: {
         tags: ["Quizzes"],
         summary: "List current user's attempts by quiz",
+      },
+    },
+  )
+  .get(
+    "/quiz/:quizId/study-profile",
+    async ({ params: { quizId }, user }) => {
+      const attempts = await db.query.quizAttempts.findMany({
+        where: { quizId, userId: user.id },
+        orderBy: { startedAt: "desc" },
+      });
+      const attemptIds = attempts.map((attempt) => attempt.id);
+      const answers =
+        attemptIds.length > 0
+          ? await db.query.quizAttemptAnswers.findMany({
+              where: { attemptId: { in: attemptIds } },
+            })
+          : [];
+      const attemptsById = new Map(
+        attempts.map((attempt) => [attempt.id, attempt]),
+      );
+      const questionHistory: Record<
+        string,
+        {
+          attempts: number;
+          correct: number;
+          totalResponseSeconds: number;
+          confidenceTotal: number;
+          confidenceCount: number;
+          lastCorrect: boolean | null;
+          latestAnsweredAt: number;
+        }
+      > = {};
+
+      for (const answer of answers) {
+        const current = questionHistory[answer.questionId] ?? {
+          attempts: 0,
+          correct: 0,
+          totalResponseSeconds: 0,
+          confidenceTotal: 0,
+          confidenceCount: 0,
+          lastCorrect: null,
+          latestAnsweredAt: 0,
+        };
+        current.attempts += 1;
+        current.correct += answer.isCorrect ? 1 : 0;
+        current.totalResponseSeconds += answer.timeSpentSeconds;
+        const attempt = attemptsById.get(answer.attemptId);
+        const metadata = (attempt?.metadata ?? {}) as Record<string, unknown>;
+        const confidence = (
+          (metadata.confidenceByQuestion ?? {}) as Record<string, number>
+        )[answer.questionId];
+        if (confidence) {
+          current.confidenceTotal += confidence;
+          current.confidenceCount += 1;
+        }
+        const answeredAt = new Date(answer.answeredAt).getTime();
+        if (answeredAt >= current.latestAnsweredAt) {
+          current.latestAnsweredAt = answeredAt;
+          current.lastCorrect = answer.isCorrect;
+        }
+        questionHistory[answer.questionId] = current;
+      }
+
+      const completedAttempts = attempts.filter(
+        (attempt) => attempt.status === "completed",
+      ).length;
+      const correctAnswers = answers.filter(
+        (answer) => answer.isCorrect,
+      ).length;
+      const latestMetadata = (attempts[0]?.metadata ?? {}) as Record<
+        string,
+        unknown
+      >;
+
+      return {
+        success: true,
+        data: {
+          questions: Object.fromEntries(
+            Object.entries(questionHistory).map(([questionId, history]) => [
+              questionId,
+              {
+                attempts: history.attempts,
+                correct: history.correct,
+                averageResponseSeconds: Math.round(
+                  history.totalResponseSeconds / history.attempts,
+                ),
+                averageConfidence:
+                  history.confidenceCount > 0
+                    ? Number(
+                        (
+                          history.confidenceTotal / history.confidenceCount
+                        ).toFixed(1),
+                      )
+                    : null,
+                lastCorrect: history.lastCorrect,
+              },
+            ]),
+          ),
+          bookmarkedQuestionIds: Array.isArray(
+            latestMetadata.bookmarkedQuestionIds,
+          )
+            ? latestMetadata.bookmarkedQuestionIds
+            : [],
+          completedAttempts,
+          overallAccuracy:
+            answers.length > 0
+              ? Math.round((correctAnswers / answers.length) * 100)
+              : 0,
+        },
+      };
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Quizzes"],
+        summary: "Get adaptive study profile",
+      },
+    },
+  )
+  .patch(
+    "/attempts/:attemptId/preferences",
+    async ({ params: { attemptId }, body, user, set }) => {
+      const attempt = await db.query.quizAttempts.findFirst({
+        where: { id: attemptId },
+      });
+      if (!attempt) {
+        set.status = 404;
+        return { success: false, error: "Attempt not found" };
+      }
+      if (attempt.userId !== user.id && user.role !== "admin") {
+        set.status = 403;
+        return { success: false, error: "Unauthorized" };
+      }
+      const metadata = (attempt.metadata ?? {}) as Record<string, unknown>;
+      const [updated] = await db
+        .update(quizAttempts)
+        .set({
+          metadata: {
+            ...metadata,
+            bookmarkedQuestionIds: body.bookmarkedQuestionIds,
+          },
+        })
+        .where(eq(quizAttempts.id, attemptId))
+        .returning();
+      return { success: true, data: updated };
+    },
+    {
+      auth: true,
+      body: t.Object({
+        bookmarkedQuestionIds: t.Array(t.String()),
+      }),
+      detail: {
+        tags: ["Quizzes"],
+        summary: "Update study preferences",
       },
     },
   )

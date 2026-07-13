@@ -18,6 +18,7 @@ export interface ResourceFilters {
   contentType?: string;
   search?: string;
   limit?: string;
+  page?: number;
 }
 
 export function useResources(filters: ResourceFilters) {
@@ -82,7 +83,7 @@ export function useResources(filters: ResourceFilters) {
       }
       return undefined;
     },
-    initialPageParam: 1,
+    initialPageParam: filters.page ?? 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });

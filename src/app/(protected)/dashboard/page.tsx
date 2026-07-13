@@ -1,32 +1,33 @@
 "use client";
 
-import { addDays } from "date-fns";
-import { motion } from "framer-motion";
+import { addDays, format, formatDistanceToNowStrict } from "date-fns";
+import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle,
+  ArrowRight,
   BookOpen,
   Building2,
-  Calendar,
-  ChevronRight,
-  Clock,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
   FileText,
   GraduationCap,
-  LayoutDashboard,
+  LibraryBig,
   MapPin,
+  NotebookPen,
   Settings2,
+  Sparkles,
   Upload,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -51,13 +52,56 @@ const DEADLINE_RANGE_OPTIONS = [
   { value: 30, label: "30 days" },
 ];
 
+const EVENT_LABELS: Record<string, string> = {
+  deadline: "Deadline",
+  open: "Applications open",
+  interview: "Interview",
+  webinar: "Webinar",
+  result_announcement: "Results",
+};
+
+const STUDENT_ACTIONS: DashboardAction[] = [
+  {
+    title: "Find study resources",
+    description: "Browse notes, books, and past papers.",
+    href: "/resources",
+    icon: LibraryBig,
+  },
+  {
+    title: "Build a study plan",
+    description: "Turn a syllabus into manageable tasks.",
+    href: "/study-planner",
+    icon: NotebookPen,
+  },
+  {
+    title: "Practise with quizzes",
+    description: "Check your understanding by topic.",
+    href: "/quiz",
+    icon: CheckCircle2,
+  },
+  {
+    title: "Review flashcards",
+    description: "Recall key ideas in short sessions.",
+    href: "/flashcards",
+    icon: Sparkles,
+  },
+];
+
+interface DashboardAction {
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+}
+
 export default function DashboardPage() {
   const { user, isEmailVerified } = useAuth();
-  const router = useRouter();
   const [deadlineRange, setDeadlineRange] = useState(14);
-
-  const startDate = useMemo(() => new Date(), []);
-  const endDate = addDays(startDate, deadlineRange);
+  const today = useMemo(() => new Date(), []);
+  const endDate = useMemo(
+    () => addDays(today, deadlineRange),
+    [today, deadlineRange],
+  );
 
   const resourcesQuery = useResources({ search: "", limit: "1" });
   const scholarshipsQuery = useScholarships({
@@ -67,11 +111,11 @@ export default function DashboardPage() {
     field: "",
     page: 1,
   });
-  const eventsQuery = useScholarshipEvents(startDate, endDate);
+  const eventsQuery = useScholarshipEvents(today, endDate);
   const myResourcesQuery = useMyResources();
-  const adminStatsQuery = useAdminStats();
-
   const isAdmin = user?.role === "admin";
+  const adminStatsQuery = useAdminStats(isAdmin);
+
   const totalResources =
     resourcesQuery.data?.pages[0]?.metadata.totalCount ?? 0;
   const totalScholarships =
@@ -79,159 +123,142 @@ export default function DashboardPage() {
   const myResourcesCount = myResourcesQuery.data?.data.length ?? 0;
   const upcomingDeadlinesCount = eventsQuery.data?.length ?? 0;
   const adminStats = adminStatsQuery.data;
+  const hasDataError =
+    resourcesQuery.isError ||
+    scholarshipsQuery.isError ||
+    eventsQuery.isError ||
+    myResourcesQuery.isError ||
+    (isAdmin && adminStatsQuery.isError);
 
-  const quickActions = [
-    {
-      id: "browse-resources",
-      title: "Browse Resources",
-      icon: BookOpen,
-      color: "text-chart-3",
-      bg: "bg-chart-3/10",
-      href: "/resources",
-    },
-    {
-      id: "browse-scholarships",
-      title: "Browse Scholarships",
-      icon: GraduationCap,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      href: "/scholarships",
-    },
-    {
-      id: "scholarship-calendar",
-      title: "Scholarship Calendar",
-      icon: Calendar,
-      color: "text-chart-3",
-      bg: "bg-chart-3/10",
-      href: "/scholarships/calendar",
-    },
-    {
-      id: "upload-resource",
-      title: "Upload Resource",
-      icon: Upload,
-      color: "text-chart-3",
-      bg: "bg-chart-3/10",
-      href: "/dashboard/resources",
-    },
-    {
-      id: "browse-universities",
-      title: "Browse Universities",
-      icon: MapPin,
-      color: "text-chart-3",
-      bg: "bg-chart-3/10",
-      href: "/universities",
-    },
-    ...(isAdmin
-      ? [
-          {
-            id: "manage-universities",
-            title: "Manage Universities",
-            icon: Building2,
-            color: "text-chart-3",
-            bg: "bg-chart-3/10",
-            href: "/dashboard/universities",
-          },
-          {
-            id: "manage-scholarships",
-            title: "Manage Scholarships",
-            icon: GraduationCap,
-            color: "text-chart-3",
-            bg: "bg-chart-3/10",
-            href: "/dashboard/scholarships",
-          },
-          {
-            id: "manage-resources",
-            title: "Manage Resources",
-            icon: FileText,
-            color: "text-chart-3",
-            bg: "bg-chart-3/10",
-            href: "/dashboard/resources",
-          },
-        ]
-      : []),
-  ];
+  const firstName = user?.name?.trim().split(/\s+/)[0] || "Student";
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 p-4 md:p-8">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col gap-2"
-      >
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <LayoutDashboard className="h-4 w-4" />
-          <span className="font-medium text-sm">Dashboard</span>
+    <main className="min-h-[calc(100svh-4rem)] bg-muted/20">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+        <header className="grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="max-w-2xl">
+            <p className="mb-3 font-medium text-muted-foreground text-sm">
+              {format(today, "EEEE, d MMMM")}
+            </p>
+            <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
+              Welcome back, {firstName}
+            </h1>
+            <p className="mt-3 max-w-xl text-base text-muted-foreground leading-7">
+              Keep an eye on upcoming opportunities, then pick up the study tool
+              you need.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="lg" variant="outline">
+              <Link href="/resources">
+                <BookOpen data-icon="inline-start" />
+                Browse resources
+              </Link>
+            </Button>
+            <Button asChild size="lg">
+              <Link href="/study-planner">
+                Plan my study
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+          </div>
+        </header>
+
+        <div className="space-y-3 py-6">
+          {!isEmailVerified && (
+            <Alert className="border-primary/25 bg-primary/5 py-3">
+              <AlertCircle className="text-primary" />
+              <AlertTitle>Verify your email to unlock every feature</AlertTitle>
+              <AlertDescription>
+                Confirm your address so your account can use all student tools.
+              </AlertDescription>
+              <AlertAction>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/verify-email">Verify email</Link>
+                </Button>
+              </AlertAction>
+            </Alert>
+          )}
+
+          {hasDataError && (
+            <Alert variant="destructive" className="py-3">
+              <AlertCircle />
+              <AlertTitle>Some dashboard data could not be loaded</AlertTitle>
+              <AlertDescription>
+                The available sections are still usable. Refresh to try loading
+                the remaining statistics again.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
-        <h1 className="bg-linear-to-r from-foreground to-foreground/70 bg-clip-text font-bold text-3xl tracking-tight md:text-4xl">
-          Welcome back, {user?.name?.split(" ")[0] || "Student"}!
-        </h1>
-        <p className="text-lg text-muted-foreground italic">
-          "The beautiful thing about learning is that no one can take it away
-          from you."
-        </p>
-      </motion.div>
 
-      {!isEmailVerified && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <Alert variant="default" className="border-chart-3/30 bg-chart-3/10">
-            <AlertCircle className="h-4 w-4 text-chart-3" />
-            <AlertTitle className="text-chart-3">
-              Email Verification Required
-            </AlertTitle>
-            <AlertDescription>
-              Please verify your email address to access all features.
-              <Button
-                variant="link"
-                className="h-auto p-0 text-chart-3 underline-offset-4 hover:text-chart-3/80"
-                onClick={() => router.push("/verify-email")}
-              >
-                Verify Email
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </motion.div>
-      )}
+        <section aria-labelledby="snapshot-heading" className="pb-10">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <p className="font-medium text-primary text-xs uppercase tracking-[0.16em]">
+                Live from the catalogue
+              </p>
+              <h2 id="snapshot-heading" className="mt-1 font-semibold text-lg">
+                Your academic snapshot
+              </h2>
+            </div>
+            <p className="hidden text-muted-foreground text-xs sm:block">
+              Updated as catalogue data changes
+            </p>
+          </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-      >
-        <StatCard
-          title="Total Resources"
-          value={totalResources}
-          description="Notes, papers & books"
-          icon={BookOpen}
-          color="text-chart-3"
-          bg="bg-chart-3/10"
-          isLoading={resourcesQuery.isLoading}
-        />
-        <StatCard
-          title="Total Scholarships"
-          value={totalScholarships}
-          description="Available opportunities"
-          icon={GraduationCap}
-          color="text-primary"
-          bg="bg-primary/10"
-          isLoading={scholarshipsQuery.isLoading}
-        />
-        <Card className="group relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="flex items-center gap-2">
-              <CardTitle className="font-medium text-sm">
-                Upcoming Deadlines
-              </CardTitle>
+          <div className="grid overflow-hidden rounded-xl border bg-background shadow-xs sm:grid-cols-2 lg:grid-cols-4">
+            <SnapshotMetric
+              label="Library resources"
+              value={totalResources}
+              detail="Available to browse"
+              icon={BookOpen}
+              isLoading={resourcesQuery.isLoading}
+            />
+            <SnapshotMetric
+              label="Scholarships listed"
+              value={totalScholarships}
+              detail="Across all providers"
+              icon={GraduationCap}
+              isLoading={scholarshipsQuery.isLoading}
+            />
+            <SnapshotMetric
+              label="Dates ahead"
+              value={upcomingDeadlinesCount}
+              detail={`Within ${deadlineRange} days`}
+              icon={CalendarDays}
+              isLoading={eventsQuery.isLoading}
+            />
+            <SnapshotMetric
+              label="Your contributions"
+              value={myResourcesCount}
+              detail="Resources uploaded"
+              icon={Upload}
+              isLoading={myResourcesQuery.isLoading}
+              isLast
+            />
+          </div>
+        </section>
+
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)] lg:gap-14">
+          <section aria-labelledby="deadlines-heading">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 id="deadlines-heading" className="font-semibold text-xl">
+                  Scholarship timeline
+                </h2>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Application dates and events that need your attention.
+                </p>
+              </div>
               <Select
                 value={String(deadlineRange)}
                 onValueChange={(value) => setDeadlineRange(Number(value))}
               >
-                <SelectTrigger className="h-6 w-auto border-none bg-transparent p-0 font-medium text-muted-foreground text-xs hover:bg-transparent focus:ring-0 focus:ring-offset-0">
+                <SelectTrigger
+                  className="w-32 bg-background"
+                  aria-label="Scholarship timeline range"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,297 +270,333 @@ export default function DashboardPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-lg bg-chart-3/10 p-2">
-              <Calendar className="h-4 w-4 text-chart-3" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {eventsQuery.isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="font-bold text-2xl">{upcomingDeadlinesCount}</div>
-            )}
-            <p className="mt-1 text-muted-foreground text-xs">
-              Next {deadlineRange} days
-            </p>
-          </CardContent>
-        </Card>
-        <StatCard
-          title="My Uploaded Resources"
-          value={myResourcesCount}
-          description="Your contributions"
-          icon={Upload}
-          color="text-chart-3"
-          bg="bg-chart-3/10"
-          isLoading={myResourcesQuery.isLoading}
-        />
-      </motion.div>
 
-      {isAdmin && adminStatsQuery.data && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-chart-3" />
-                <CardTitle>Admin Overview</CardTitle>
-              </div>
-              <CardDescription>
-                Platform content management statistics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
-                <StatCard
-                  title="Universities"
-                  value={adminStats?.universities ?? 0}
-                  description="Institutions"
-                  icon={Building2}
-                  color="text-chart-3"
-                  bg="bg-chart-3/10"
-                  isLoading={adminStatsQuery.isLoading}
-                  compact
-                />
-                <StatCard
-                  title="Colleges"
-                  value={adminStats?.colleges ?? 0}
-                  description="Campuses"
-                  icon={Building2}
-                  color="text-chart-3"
-                  bg="bg-chart-3/10"
-                  isLoading={adminStatsQuery.isLoading}
-                  compact
-                />
-                <StatCard
-                  title="Programs"
-                  value={adminStats?.programs ?? 0}
-                  description="Degree programs"
-                  icon={GraduationCap}
-                  color="text-chart-3"
-                  bg="bg-chart-3/10"
-                  isLoading={adminStatsQuery.isLoading}
-                  compact
-                />
-                <StatCard
-                  title="Courses"
-                  value={adminStats?.courses ?? 0}
-                  description="Academic courses"
-                  icon={BookOpen}
-                  color="text-chart-3"
-                  bg="bg-chart-3/10"
-                  isLoading={adminStatsQuery.isLoading}
-                  compact
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-        className="grid gap-8 md:grid-cols-2"
-      >
-        <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Upcoming Scholarship Deadlines</CardTitle>
-            <CardDescription>
-              Events and deadlines in the next {deadlineRange} days
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {eventsQuery.isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
-                    <Skeleton className="h-8 w-24" />
+            <div className="overflow-hidden rounded-xl border bg-background shadow-xs">
+              {eventsQuery.isLoading ? (
+                <DeadlineSkeleton />
+              ) : eventsQuery.data && eventsQuery.data.length > 0 ? (
+                <div className="divide-y">
+                  {eventsQuery.data.slice(0, 5).map((event) => (
+                    <DeadlineRow key={event.id} event={event} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
+                  <div className="mb-4 grid size-11 place-items-center rounded-full bg-primary/10 text-primary">
+                    <CalendarDays className="size-5" />
                   </div>
-                ))}
-              </div>
-            ) : eventsQuery.data?.length === 0 ? (
-              <div className="py-8 text-center">
-                <Clock className="mx-auto mb-2 h-12 w-12 text-muted-foreground/50" />
-                <p className="text-muted-foreground text-sm">
-                  No upcoming deadlines in the selected period
-                </p>
-              </div>
-            ) : (
-              eventsQuery.data?.map((event: any, index: number) => {
-                const eventDate = new Date(event.date);
-                const isDeadline = event.type === "deadline";
-                const isResult = event.type === "result_announcement";
-
-                return (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
-                    className="group flex items-center justify-between rounded-xl p-3 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "rounded-full p-2",
-                          isDeadline
-                            ? "bg-destructive/10"
-                            : isResult
-                              ? "bg-chart-3/10"
-                              : "bg-primary/10",
-                        )}
-                      >
-                        <Calendar
-                          className={cn(
-                            "h-4 w-4",
-                            isDeadline
-                              ? "text-destructive"
-                              : isResult
-                                ? "text-chart-3"
-                                : "text-primary",
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm leading-none">
-                          {event.name}
-                        </p>
-                        <p className="mt-1 text-muted-foreground text-xs">
-                          {event.round?.scholarship?.name} •{" "}
-                          {event.type.replace("_", " ")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-xs">
-                        {eventDate.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {eventDate.toLocaleDateString("en-US", {
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })
-            )}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.7 }}
-            >
-              <Button
-                variant="outline"
-                className="group mt-2 w-full border-dashed hover:border-solid"
-                onClick={() => router.push("/scholarships/calendar")}
-              >
-                View Full Calendar
-                <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </motion.div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-background/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Most used features</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {quickActions.map((action, index) => (
-              <motion.div
-                key={action.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
-              >
+                  <h3 className="font-medium">No dates in this window</h3>
+                  <p className="mt-1 max-w-sm text-muted-foreground text-sm leading-6">
+                    Try a longer range, or browse all scholarships while you
+                    have time to prepare.
+                  </p>
+                  <Button asChild className="mt-5" variant="outline">
+                    <Link href="/scholarships">Browse scholarships</Link>
+                  </Button>
+                </div>
+              )}
+              <div className="border-t bg-muted/30 px-4 py-3 sm:px-5">
                 <Button
-                  className="h-12 w-full justify-start gap-3"
-                  variant="outline"
-                  onClick={() => router.push(action.href)}
+                  asChild
+                  variant="ghost"
+                  className="w-full justify-between"
                 >
-                  <div
-                    className={cn("rounded-md p-1.5", action.bg, action.color)}
-                  >
-                    <action.icon className="h-4 w-4" />
-                  </div>
-                  {action.title}
+                  <Link href="/scholarships/calendar">
+                    Open the full scholarship calendar
+                    <ArrowRight />
+                  </Link>
                 </Button>
-              </motion.div>
-            ))}
-          </CardContent>
-        </Card>
-      </motion.div>
+              </div>
+            </div>
+          </section>
+
+          <section aria-labelledby="tools-heading">
+            <h2 id="tools-heading" className="font-semibold text-xl">
+              Continue your work
+            </h2>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Direct paths to the most useful student tools.
+            </p>
+
+            <div className="mt-4 divide-y border-y">
+              {STUDENT_ACTIONS.map((action) => (
+                <ActionRow key={action.href} action={action} />
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/15">
+              <div className="flex items-start gap-3">
+                <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                  <Upload className="size-4" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm">Share what helped you</h3>
+                  <p className="mt-1 text-muted-foreground text-sm leading-6">
+                    Add a useful resource to the student library and manage your
+                    existing contributions.
+                  </p>
+                  <Button asChild variant="link" className="mt-2 h-auto p-0">
+                    <Link href="/dashboard/resources">
+                      Manage my resources
+                      <ArrowRight />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {isAdmin && (
+          <AdminOverview
+            stats={adminStats}
+            isLoading={adminStatsQuery.isLoading}
+          />
+        )}
+      </div>
+    </main>
+  );
+}
+
+interface SnapshotMetricProps {
+  label: string;
+  value: number;
+  detail: string;
+  icon: LucideIcon;
+  isLoading: boolean;
+  isLast?: boolean;
+}
+
+function SnapshotMetric({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  isLoading,
+  isLast = false,
+}: SnapshotMetricProps) {
+  return (
+    <div
+      className={cn(
+        "relative min-h-32 border-b p-5 lg:border-r lg:border-b-0 sm:[&:nth-child(odd)]:border-r",
+        isLast && "border-b-0 lg:border-r-0",
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-medium text-muted-foreground text-sm">{label}</p>
+        <Icon className="size-4 text-primary" aria-hidden="true" />
+      </div>
+      {isLoading ? (
+        <Skeleton className="mt-4 h-8 w-16" />
+      ) : (
+        <p className="mt-3 font-semibold text-3xl tabular-nums tracking-tight">
+          {value.toLocaleString()}
+        </p>
+      )}
+      <p className="mt-1 text-muted-foreground text-xs">{detail}</p>
     </div>
   );
 }
 
-interface StatCardProps {
-  title: string;
-  value: number;
-  description: string;
-  icon: any;
-  color: string;
-  bg: string;
-  isLoading?: boolean;
-  compact?: boolean;
+function DeadlineSkeleton() {
+  return (
+    <output
+      className="block divide-y"
+      aria-label="Loading scholarship timeline"
+    >
+      {[1, 2, 3].map((item) => (
+        <div key={item} className="flex items-center gap-4 px-4 py-5 sm:px-5">
+          <Skeleton className="size-10 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ))}
+    </output>
+  );
 }
 
-function StatCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  color,
-  bg,
-  isLoading = false,
-  compact = false,
-}: StatCardProps) {
+interface DeadlineRowProps {
+  event: NonNullable<ReturnType<typeof useScholarshipEvents>["data"]>[number];
+}
+
+function DeadlineRow({ event }: DeadlineRowProps) {
+  const eventDate = new Date(event.date);
+  const scholarship = event.round?.scholarship;
+  const href = scholarship?.slug
+    ? `/scholarships/${scholarship.slug}`
+    : "/scholarships/calendar";
+  const eventLabel = EVENT_LABELS[event.type] ?? "Event";
+
   return (
-    <Card
-      className={cn(
-        "group relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50",
-        compact && "border-none bg-transparent shadow-none",
-      )}
+    <Link
+      href={href}
+      className="group grid gap-3 px-4 py-4 outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
-      {!compact && (
-        <div
-          className={cn(
-            "absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-10",
-            bg,
-          )}
-        />
-      )}
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="font-medium text-sm">{title}</CardTitle>
-        <div className={cn("rounded-lg p-2", compact ? "p-1.5" : "", bg)}>
-          <Icon
-            className={cn("h-4 w-4", color, compact ? "h-3.5 w-3.5" : "")}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className={cn("h-8 w-16", compact && "h-7 w-12")} />
-        ) : (
-          <div className={cn("font-bold text-2xl", compact && "text-xl")}>
-            {value.toLocaleString()}
-          </div>
+      <div
+        className={cn(
+          "hidden size-10 place-items-center rounded-lg sm:grid",
+          event.type === "deadline"
+            ? "bg-destructive/10 text-destructive"
+            : "bg-primary/10 text-primary",
         )}
-        <p className="mt-1 text-muted-foreground text-xs">{description}</p>
-      </CardContent>
-    </Card>
+      >
+        {event.type === "deadline" ? (
+          <Clock3 className="size-4" />
+        ) : (
+          <CalendarDays className="size-4" />
+        )}
+      </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-medium text-sm">
+            {scholarship?.name ?? event.name}
+          </p>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 font-medium text-[0.6875rem]",
+              event.type === "deadline"
+                ? "bg-destructive/10 text-destructive"
+                : "bg-primary/10 text-primary",
+            )}
+          >
+            {eventLabel}
+          </span>
+        </div>
+        <p className="mt-1 truncate text-muted-foreground text-xs">
+          {event.name}
+          {event.round?.roundName ? ` · ${event.round.roundName}` : ""}
+        </p>
+      </div>
+      <div className="flex items-center justify-between gap-4 sm:justify-end sm:text-right">
+        <div>
+          <p className="font-medium text-sm tabular-nums">
+            {format(eventDate, "d MMM")}
+          </p>
+          <p className="mt-0.5 text-[0.6875rem] text-muted-foreground">
+            {formatDistanceToNowStrict(eventDate, { addSuffix: true })}
+          </p>
+        </div>
+        <ArrowRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-foreground" />
+      </div>
+    </Link>
+  );
+}
+
+function ActionRow({ action }: { action: DashboardAction }) {
+  const Icon = action.icon;
+
+  return (
+    <Link
+      href={action.href}
+      className="group flex items-center gap-3 py-4 outline-none transition-colors hover:text-primary focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm">{action.title}</p>
+        <p className="mt-0.5 text-muted-foreground text-xs">
+          {action.description}
+        </p>
+      </div>
+      <ArrowRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+    </Link>
+  );
+}
+
+interface AdminOverviewProps {
+  stats:
+    | {
+        universities: number;
+        colleges: number;
+        programs: number;
+        courses: number;
+      }
+    | undefined;
+  isLoading: boolean;
+}
+
+function AdminOverview({ stats, isLoading }: AdminOverviewProps) {
+  const items = [
+    {
+      label: "Universities",
+      value: stats?.universities ?? 0,
+      icon: Building2,
+      href: "/dashboard/universities",
+    },
+    {
+      label: "Colleges",
+      value: stats?.colleges ?? 0,
+      icon: MapPin,
+      href: "/dashboard/colleges",
+    },
+    {
+      label: "Programs",
+      value: stats?.programs ?? 0,
+      icon: GraduationCap,
+      href: "/dashboard/programs",
+    },
+    {
+      label: "Courses",
+      value: stats?.courses ?? 0,
+      icon: FileText,
+      href: "/dashboard/courses",
+    },
+  ];
+
+  return (
+    <section aria-labelledby="admin-heading" className="mt-12 border-t pt-10">
+      <div className="grid gap-6 lg:grid-cols-[minmax(14rem,0.55fr)_minmax(0,1.45fr)] lg:items-start">
+        <div>
+          <div className="flex items-center gap-2 text-primary">
+            <Settings2 className="size-4" />
+            <p className="font-medium text-xs uppercase tracking-[0.16em]">
+              Admin workspace
+            </p>
+          </div>
+          <h2 id="admin-heading" className="mt-2 font-semibold text-xl">
+            Catalogue inventory
+          </h2>
+          <p className="mt-2 max-w-sm text-muted-foreground text-sm leading-6">
+            Current database totals for the academic structure you manage.
+          </p>
+        </div>
+
+        <div className="grid overflow-hidden rounded-xl border bg-background shadow-xs sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                href={item.href}
+                key={item.label}
+                className={cn(
+                  "group border-b p-4 outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:border-r lg:border-b-0 sm:[&:nth-child(odd)]:border-r",
+                  index === items.length - 1 && "border-b-0 lg:border-r-0",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                  <span className="font-medium text-xs">{item.label}</span>
+                  <Icon className="size-3.5 transition-colors group-hover:text-primary" />
+                </div>
+                {isLoading ? (
+                  <Skeleton className="mt-3 h-7 w-12" />
+                ) : (
+                  <p className="mt-2 font-semibold text-2xl tabular-nums">
+                    {item.value.toLocaleString()}
+                  </p>
+                )}
+                <span className="mt-1 flex items-center gap-1 text-[0.6875rem] text-muted-foreground group-hover:text-foreground">
+                  Manage
+                  <ArrowRight className="size-3" />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }

@@ -193,9 +193,16 @@ export const flashcardReviews = pgTable(
     userId: text("user_id").references(() => user.id, {
       onDelete: "set null",
     }),
+    clientReviewId: varchar("client_review_id", { length: 255 }).unique(),
     rating: text("rating", {
       enum: ["again", "hard", "good", "easy"],
     }).notNull(),
+    confidence: integer("confidence"),
+    studyMode: text("study_mode", {
+      enum: ["adaptive", "random", "cram"],
+    })
+      .notNull()
+      .default("adaptive"),
     responseMs: integer("response_ms"),
     wasRecalled: boolean("was_recalled").notNull(),
     reviewedAt: timestamp("reviewed_at")
@@ -209,6 +216,7 @@ export const flashcardReviews = pgTable(
     index("flashcard_reviews_user_id_idx").on(t.userId),
     index("flashcard_reviews_reviewed_at_idx").on(t.reviewedAt),
     index("flashcard_reviews_deck_id_idx").on(t.deckId),
+    index("flashcard_reviews_client_review_id_idx").on(t.clientReviewId),
   ],
 );
 
@@ -258,6 +266,54 @@ export const flashcardUserCardStates = pgTable(
   ],
 );
 
+export const flashcardUserDeckPreferences = pgTable(
+  "flashcard_user_deck_preferences",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    deckId: uuid("deck_id")
+      .notNull()
+      .references(() => flashcardDecks.id, { onDelete: "cascade" }),
+    studyMode: text("study_mode", {
+      enum: ["adaptive", "random", "cram"],
+    })
+      .notNull()
+      .default("adaptive"),
+    schedulingAggressiveness: text("scheduling_aggressiveness", {
+      enum: ["relaxed", "balanced", "intensive"],
+    })
+      .notNull()
+      .default("balanced"),
+    confidenceScale: integer("confidence_scale").notNull().default(4),
+    newCardsPerDay: integer("new_cards_per_day"),
+    maxReviewsPerDay: integer("max_reviews_per_day"),
+    autoAdvance: boolean("auto_advance").notNull().default(true),
+    showHints: boolean("show_hints").notNull().default(true),
+    appearance: text("appearance", {
+      enum: ["comfortable", "compact"],
+    })
+      .notNull()
+      .default("comfortable"),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    unique("flashcard_user_deck_preferences_user_deck_unique").on(
+      t.userId,
+      t.deckId,
+    ),
+    index("flashcard_user_deck_preferences_user_idx").on(t.userId),
+    index("flashcard_user_deck_preferences_deck_idx").on(t.deckId),
+  ],
+);
+
 export type FlashcardDeck = typeof flashcardDecks.$inferSelect;
 export type NewFlashcardDeck = typeof flashcardDecks.$inferInsert;
 export type FlashcardCard = typeof flashcardCards.$inferSelect;
@@ -273,3 +329,7 @@ export type FlashcardUserCardState =
   typeof flashcardUserCardStates.$inferSelect;
 export type NewFlashcardUserCardState =
   typeof flashcardUserCardStates.$inferInsert;
+export type FlashcardUserDeckPreference =
+  typeof flashcardUserDeckPreferences.$inferSelect;
+export type NewFlashcardUserDeckPreference =
+  typeof flashcardUserDeckPreferences.$inferInsert;

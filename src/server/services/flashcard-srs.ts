@@ -8,6 +8,7 @@ export interface FlashcardSrsPolicy {
   learningSteps: number[];
   graduatingIntervalDays: number;
   easyIntervalDays: number;
+  desiredRetention?: number;
 }
 
 export interface FlashcardSrsState {
@@ -164,31 +165,86 @@ function nextSm2State({ policy, previous, rating, now }: FlashcardSrsInput) {
   } satisfies FlashcardSrsState;
 }
 
-function nextFsrsState(input: FlashcardSrsInput) {
-  // v1 approximation. Keeps a separate strategy key while returning a deterministic schedule.
-  const sm2 = nextSm2State(input);
-  const factor =
-    input.rating === "again"
-      ? 0.5
-      : input.rating === "hard"
-        ? 0.8
-        : input.rating === "good"
-          ? 1.1
-          : 1.35;
-  const intervalDays =
-    input.rating === "again"
-      ? 0
-      : Math.max(1, Math.round(sm2.intervalDays * factor));
-  const dueAt =
-    intervalDays === 0
-      ? addMinutes(input.now, input.policy.learningSteps[0] ?? 1)
-      : addDays(input.now, intervalDays);
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function estimateRetrievability(
+  state: Pick<FlashcardSrsState, "stability" | "lastReviewedAt">,
+  now: Date,
+) {
+  if (!state.lastReviewedAt || state.stability <= 0) return 0;
+  const elapsedDays = Math.max(
+    0,
+    (now.getTime() - state.lastReviewedAt.getTime()) / 86_400_000,
+  );
+  return clamp(Math.exp(-elapsedDays / state.stability), 0, 1);
+}
+
+function nextFsrsState({ policy, previous, rating, now }: FlashcardSrsInput) {
+  const prev =
+    previous ??
+    ({
+      state: "new",
+      dueAt: now,
+      stability: 0,
+      difficulty: 5,
+      easeFactor: 2.5,
+      intervalDays: 0,
+      repetition: 0,
+      lapses: 0,
+      lastReviewedAt: null,
+    } satisfies FlashcardSrsState);
+  const desiredRetention = clamp(policy.desiredRetention ?? 0.9, 0.75, 0.97);
+  const retrievability = estimateRetrievability(prev, now);
+  const ratingWeight = { again: 1, hard: 2, good: 3, easy: 4 }[rating];
+  const difficulty = clamp(
+    prev.difficulty + (3 - ratingWeight) * 0.7 - (ratingWeight === 4 ? 0.2 : 0),
+    1,
+    10,
+  );
+
+  if (rating === "again") {
+    const stability = Math.max(0.15, prev.stability * 0.35);
+    return {
+      state: prev.state === "new" ? "learning" : "relearning",
+      dueAt: addMinutes(now, policy.learningSteps[0] ?? 1),
+      stability,
+      difficulty,
+      easeFactor: Math.max(1.3, prev.easeFactor - 0.2),
+      intervalDays: 0,
+      repetition: 0,
+      lapses: prev.lapses + 1,
+      lastReviewedAt: now,
+    } satisfies FlashcardSrsState;
+  }
+
+  const initialStability =
+    rating === "hard" ? 0.6 : rating === "good" ? 1.4 : 3.5;
+  const recallBonus = 1 + (1 - retrievability) * (11 - difficulty) * 0.12;
+  const ratingBonus = rating === "hard" ? 0.75 : rating === "easy" ? 1.45 : 1;
+  const stability = Math.max(
+    initialStability,
+    (prev.stability || initialStability) * recallBonus * ratingBonus,
+  );
+  const intervalMultiplier = Math.log(desiredRetention) / Math.log(0.9);
+  const intervalDays = Math.max(1, Math.round(stability * intervalMultiplier));
 
   return {
-    ...sm2,
-    dueAt,
+    state: "review",
+    dueAt: addDays(now, intervalDays),
+    stability,
+    difficulty,
+    easeFactor: clamp(
+      prev.easeFactor +
+        (rating === "easy" ? 0.1 : rating === "hard" ? -0.05 : 0),
+      1.3,
+      3,
+    ),
     intervalDays,
-    stability: Math.max(0, sm2.stability * factor),
+    repetition: prev.repetition + 1,
+    lapses: prev.lapses,
+    lastReviewedAt: now,
   } satisfies FlashcardSrsState;
 }
 
@@ -200,4 +256,25 @@ export function computeNextState(input: FlashcardSrsInput): FlashcardSrsState {
 
 export function isRatingRecalled(rating: FlashcardReviewRating) {
   return ratingToRecall[rating];
+}
+
+export function confidenceToRating(
+  confidence: number,
+  scale: 3 | 4 = 4,
+): FlashcardReviewRating {
+  const bounded = Math.round(clamp(confidence, 1, scale));
+  if (scale === 3) {
+    return bounded === 1 ? "again" : bounded === 2 ? "good" : "easy";
+  }
+  return (["again", "again", "hard", "good", "easy"] as const)[bounded];
+}
+
+export function ratingToConfidence(
+  rating: FlashcardReviewRating,
+  scale: 3 | 4 = 4,
+) {
+  if (scale === 3) {
+    return rating === "again" ? 1 : rating === "easy" ? 3 : 2;
+  }
+  return { again: 1, hard: 2, good: 3, easy: 4 }[rating];
 }

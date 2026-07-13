@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { AlertCircle, Library, Rows3 } from "lucide-react";
+import { useRef, useState } from "react";
 import { ResourceGrid } from "@/components/resources/resource-grid";
-import { ResourceHero } from "@/components/resources/resource-hero";
+import {
+  ResourceHero,
+  type ResourceLibraryFilters,
+} from "@/components/resources/resource-hero";
+import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -10,71 +15,83 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDebouncedSearch } from "@/hooks/use-debounced-search";
 import { useResourceMetadata } from "@/hooks/use-resource-metadata";
 import { useResources } from "@/hooks/use-resources";
 
-export default function ResourceLibraryPage() {
-  const [filters, setFilters] = useState({
-    category: "",
-    contentType: "",
-    search: "",
-    limit: "12",
-  });
+const EMPTY_FILTERS: ResourceLibraryFilters = {
+  category: "",
+  contentType: "",
+  search: "",
+  limit: "12",
+};
 
-  // Debounce the search input
+export default function ResourceLibraryPage() {
+  const [filters, setFilters] = useState<ResourceLibraryFilters>(EMPTY_FILTERS);
+  const [page, setPage] = useState(1);
+  const resultsRef = useRef<HTMLElement>(null);
   const debouncedSearch = useDebouncedSearch(filters.search, 300);
 
-  // Fetch metadata (categories and content types)
   const {
     categories,
     contentTypes,
     isLoading: isLoadingMetadata,
   } = useResourceMetadata();
-
-  // Fetch resources with infinite query
   const {
     data: resourcesData,
     isLoading: isLoadingResources,
+    isFetching,
     isError,
     error,
-    fetchNextPage,
-    fetchPreviousPage,
-    hasNextPage,
-    hasPreviousPage,
   } = useResources({
     category: filters.category || undefined,
     contentType: filters.contentType || undefined,
     search: debouncedSearch || undefined,
-    limit: filters.limit || "12",
+    limit: filters.limit,
+    page,
   });
 
-  // Flatten the infinite query data
-  const allResources = resourcesData?.pages.flatMap((page) => page.data) || [];
-  const pagination = resourcesData?.pages[0]?.metadata;
+  const currentResponse = resourcesData?.pages.at(-1);
+  const resources = currentResponse?.data ?? [];
+  const pagination = currentResponse?.metadata;
+  const isLoading = isLoadingMetadata || isLoadingResources;
+  const hasActiveQuery = Boolean(
+    filters.search || filters.category || filters.contentType,
+  );
 
-  const featuredResources = allResources.filter((r) => r.isFeatured);
-  const nonFeaturedResources = allResources.filter((r) => !r.isFeatured);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage > (pagination?.currentPage || 1)) {
-      fetchNextPage();
-    } else if (newPage < (pagination?.currentPage || 1)) {
-      fetchPreviousPage();
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const updateFilters = (nextFilters: ResourceLibraryFilters) => {
+    setFilters(nextFilters);
+    setPage(1);
   };
 
-  const isLoading = isLoadingMetadata || isLoadingResources;
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   if (isError) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="rounded-lg bg-red-50 p-4">
-          <h2 className="text-red-800">Error loading resources</h2>
-          <p className="text-red-600">{error?.message}</p>
+      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
+          <AlertCircle className="mb-3 size-5 text-destructive" />
+          <h1 className="font-semibold text-lg">
+            Resources could not be loaded
+          </h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            {error?.message || "Please try again in a moment."}
+          </p>
+          <Button className="mt-4" onClick={() => window.location.reload()}>
+            Try again
+          </Button>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -84,63 +101,96 @@ export default function ResourceLibraryPage() {
         categories={categories}
         contentTypes={contentTypes}
         filters={filters}
-        setFilters={setFilters}
+        setFilters={updateFilters}
       />
 
-      <main className="container mx-auto px-4 py-8" id="resources-main">
-        <div className="mb-4 flex w-full items-center justify-end">
-          <h2 className="flex-1 font-bold text-xl">
-            {isLoading
-              ? "Finding resources..."
-              : `${pagination?.totalCount || 0} resources found`}
-          </h2>
-          {pagination && pagination.totalPages > 1 && (
-            <Pagination className="w-full flex-2 justify-end">
-              <PaginationContent className="items-center">
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() =>
-                      handlePageChange((pagination.currentPage || 1) - 1)
-                    }
-                    disabled={
-                      !hasPreviousPage || (pagination.currentPage || 1) === 1
-                    }
-                  />
-                </PaginationItem>
-                <PaginationItem>
-                  <span className="px-2 text-muted-foreground text-sm">
-                    Page {pagination.currentPage} of {pagination.totalPages}
-                  </span>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      handlePageChange((pagination.currentPage || 1) + 1)
-                    }
-                    disabled={!hasNextPage}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </div>
-        <div className="mb-4 flex w-full items-center justify-between"></div>
-        {featuredResources.length > 0 && (
-          <div className="mb-8">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="h-8 w-1 rounded-full bg-orange-500" />
-              <h2 className="font-bold text-xl tracking-tight">
-                Featured Resources
+      <main
+        ref={resultsRef}
+        className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+        id="resources-main"
+      >
+        <div className="mb-5 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Library className="size-4 text-primary" aria-hidden="true" />
+              <h2 className="font-semibold text-lg tracking-tight">
+                {hasActiveQuery ? "Search results" : "All resources"}
               </h2>
             </div>
-            <ResourceGrid resources={featuredResources} isLoading={isLoading} />
+            <p
+              className="mt-1 text-muted-foreground text-xs"
+              aria-live="polite"
+            >
+              {isLoading || isFetching
+                ? "Updating results…"
+                : `${pagination?.totalCount ?? 0} ${pagination?.totalCount === 1 ? "resource" : "resources"}`}
+              {pagination && pagination.totalPages > 1
+                ? `, page ${pagination.currentPage} of ${pagination.totalPages}`
+                : ""}
+            </p>
           </div>
-        )}
-        <div className="mb-4 flex items-center gap-3">
-          <div className="h-8 w-1 rounded-full bg-orange-500" />
-          <h2 className="font-bold text-xl tracking-tight">All Resources</h2>
+
+          <div className="flex items-center gap-2">
+            <Rows3
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span className="text-muted-foreground text-xs">Show</span>
+            <Select
+              value={filters.limit}
+              onValueChange={(limit) => updateFilters({ ...filters, limit })}
+            >
+              <SelectTrigger
+                aria-label="Resources per page"
+                className="h-8 w-20"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="12">12</SelectItem>
+                <SelectItem value="24">24</SelectItem>
+                <SelectItem value="48">48</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <ResourceGrid resources={nonFeaturedResources} isLoading={isLoading} />
+
+        <ResourceGrid
+          resources={resources}
+          isLoading={isLoading}
+          onClear={
+            hasActiveQuery
+              ? () => {
+                  setFilters(EMPTY_FILTERS);
+                  setPage(1);
+                }
+              : undefined
+          }
+        />
+
+        {pagination && pagination.totalPages > 1 && (
+          <Pagination className="mt-8 justify-between border-t pt-5">
+            <PaginationContent className="w-full justify-between">
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="px-3 text-muted-foreground text-xs">
+                  {page} / {pagination.totalPages}
+                </span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= pagination.totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </main>
     </div>
   );
