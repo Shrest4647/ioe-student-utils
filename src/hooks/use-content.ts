@@ -208,7 +208,7 @@ export interface ProgramResponse {
     id: string;
     name: string;
     code: string;
-    slug: string | null;
+    slug: string;
     description: string | null;
     credits: string | null;
     degreeLevels:
@@ -339,7 +339,7 @@ export interface CourseResponse {
     id: string;
     name: string;
     code: string;
-    slug: string | null;
+    slug: string;
     description: string | null;
     credits: string | null;
     isActive: boolean;
@@ -421,17 +421,18 @@ export function useCourses(filters: CourseFilters) {
   });
 }
 
-export function useCourse(code: string) {
+export function useCourse(slug: string) {
   return useQuery({
-    queryKey: ["course", code],
+    queryKey: ["course", slug],
     queryFn: async () => {
-      const response = await apiClient.api.courses.code({ code }).get();
+      const response = await apiClient.api.courses.slug({ slug }).get();
 
       if (response?.data?.success) {
         return response.data.data;
       }
       throw new Error("Failed to fetch course");
     },
+    enabled: !!slug,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -441,12 +442,12 @@ export function useCollegeDeptProgramCourse(
   collegeSlug: string,
   departmentSlug: string,
   programCode: string,
-  courseCode: string,
+  courseSlug: string,
 ) {
   const { data: college } = useCollege(collegeSlug);
   const { data: department } = useCollege(departmentSlug);
   const { data: program } = useProgram(programCode);
-  const { data: course } = useCourse(courseCode);
+  const { data: course } = useCourse(courseSlug);
 
   return useQuery({
     queryKey: [
@@ -454,7 +455,7 @@ export function useCollegeDeptProgramCourse(
       collegeSlug,
       departmentSlug,
       programCode,
-      courseCode,
+      courseSlug,
     ],
     queryFn: async () => {
       const response = await apiClient.api

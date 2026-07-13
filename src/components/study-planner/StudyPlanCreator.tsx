@@ -1,637 +1,873 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  CalendarIcon,
-  CheckCircle2,
-  PlusIcon,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  Check,
+  Search,
   Sparkles,
-  XIcon,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/hooks/use-auth";
-import { apiClient } from "@/lib/eden";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-interface Topic {
-  name: string;
-}
+import type { CourseCatalogResult } from "@/types/course-learning";
+import {
+  DEFAULT_STUDY_AVAILABILITY,
+  type PlanningTopic,
+  type StudyAvailability,
+  type StudyPlanGoal,
+  type StudyPlanningContext,
+  type StudyPlanPreview,
+  type StudyPlanPreviewInput,
+  type WeekdayKey,
+} from "@/types/study-planner";
+import { OfflineNotice } from "./OfflineNotice";
 
 interface StudyPlanCreatorProps {
-  onSuccess?: () => void;
+  initialCourseSlug?: string;
+  initialTopicSlugs?: string[];
+  initialMode?: "course" | "manual";
+  initialGoal?: StudyPlanGoal;
+  initialExamDate?: string;
+  onCancel?: () => void;
+  onSuccess?: (slug: string) => void;
 }
 
-interface Template {
-  id: string;
-  name: string;
-  durationDays: number;
-}
+const WEEKDAYS: Array<{ key: WeekdayKey; label: string }> = [
+  { key: "monday", label: "Mon" },
+  { key: "tuesday", label: "Tue" },
+  { key: "wednesday", label: "Wed" },
+  { key: "thursday", label: "Thu" },
+  { key: "friday", label: "Fri" },
+  { key: "saturday", label: "Sat" },
+  { key: "sunday", label: "Sun" },
+];
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
+const GOALS: Array<{
+  value: StudyPlanGoal;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "minimum",
+    title: "Pass essentials",
+    description: "Core topics and their required foundations.",
   },
-};
+  {
+    value: "exam-prep",
+    title: "Exam preparation",
+    description: "Core and important topics, weighted toward practice.",
+  },
+  {
+    value: "full-coverage",
+    title: "Full syllabus",
+    description: "Broad coverage when you have enough time.",
+  },
+];
 
-const topicTagVariants = {
-  hidden: { opacity: 0, scale: 0.8, x: -10 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    x: 0,
-    transition: {
-      duration: 0.3,
-      ease: "easeOut" as const,
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.8,
-    x: 10,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  },
-};
-
-const successVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.8,
-    transition: {
-      duration: 0.3,
-    },
-  },
-};
-
-export function StudyPlanCreator({ onSuccess }: StudyPlanCreatorProps) {
-  const { user } = useAuth();
-  const [subjectName, setSubjectName] = useState("");
-  const [templateId, setTemplateId] = useState<string>("");
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [currentTopic, setCurrentTopic] = useState("");
-  const [examDate, setExamDate] = useState<Date | undefined>(undefined);
-  const [isCreating, setIsCreating] = useState(false);
+export function StudyPlanCreator({
+  initialCourseSlug,
+  initialTopicSlugs = [],
+  initialMode = initialCourseSlug ? "course" : "course",
+  initialGoal = "exam-prep",
+  initialExamDate,
+  onCancel,
+  onSuccess,
+}: StudyPlanCreatorProps) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [mode, setMode] = useState<"course" | "manual">(initialMode);
+  const [courseSearch, setCourseSearch] = useState("");
+  const [courseSlug, setCourseSlug] = useState(initialCourseSlug ?? "");
+  const [selectedTopics, setSelectedTopics] =
+    useState<string[]>(initialTopicSlugs);
+  const [knownTopics, setKnownTopics] = useState<string[]>([]);
+  const [manualSubject, setManualSubject] = useState("");
+  const [manualTopics, setManualTopics] = useState<string[]>([]);
+  const [manualTopic, setManualTopic] = useState("");
+  const [goal, setGoal] = useState<StudyPlanGoal>(initialGoal);
+  const [startDate, setStartDate] = useState(todayInKathmandu());
+  const [examDate, setExamDate] = useState(
+    initialExamDate || shiftDate(todayInKathmandu(), 14),
+  );
+  const [availability, setAvailability] = useState<StudyAvailability>(
+    DEFAULT_STUDY_AVAILABILITY,
+  );
+  const [preview, setPreview] = useState<StudyPlanPreview | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const {
-    data: templates,
-    isLoading: templatesLoading,
-    error: templatesError,
-  } = useQuery({
-    queryKey: ["study-templates"],
+  const { data: catalog, isLoading: catalogLoading } = useQuery({
+    queryKey: ["study-planner-course-search", courseSearch],
     queryFn: async () => {
-      const { data, error } =
-        await apiClient.api["study-plans"].templates.get();
-      if (error) {
-        throw new Error("Failed to load templates");
-      }
-      return data?.data as Template[];
+      const params = new URLSearchParams({
+        readiness: "ready",
+        limit: "12",
+      });
+      if (courseSearch.trim()) params.set("search", courseSearch.trim());
+      const response = await fetch(`/api/course-explorer/catalog?${params}`);
+      if (!response.ok) throw new Error("Could not load courses");
+      return (await response.json()) as CourseCatalogResult & {
+        success: boolean;
+      };
     },
+    enabled: mode === "course" && !courseSlug,
+    staleTime: 60_000,
   });
 
-  const isFormValid =
-    subjectName.trim() !== "" &&
-    templateId !== "" &&
-    examDate !== undefined &&
-    topics.length > 0 &&
-    !isCreating;
+  const { data: context, isLoading: contextLoading } = useQuery({
+    queryKey: ["study-planning-context", courseSlug],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/course-explorer/courses/slug/${encodeURIComponent(courseSlug)}/planning-context`,
+      );
+      if (!response.ok) throw new Error("Could not load the course syllabus");
+      const payload = (await response.json()) as {
+        success: boolean;
+        data: StudyPlanningContext;
+      };
+      return payload.data;
+    },
+    enabled: mode === "course" && Boolean(courseSlug),
+    staleTime: 5 * 60_000,
+  });
 
-  const handleAddTopic = () => {
-    const trimmedTopic = currentTopic.trim();
-    if (trimmedTopic && !topics.some((t) => t.name === trimmedTopic)) {
-      setTopics([...topics, { name: trimmedTopic }]);
-      setCurrentTopic("");
-    }
-  };
-
-  const handleTopicKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTopic();
-    }
-  };
-
-  const handleRemoveTopic = (topicName: string) => {
-    setTopics(topics.filter((t) => t.name !== topicName));
-  };
-
-  const handleSubmit = async () => {
-    if (!user || !isFormValid) return;
-
-    setIsCreating(true);
-    setError(null);
-
-    try {
-      const { data, error: apiError } = await apiClient.api[
-        "study-plans"
-      ].create.post({
-        templateId,
-        subjectName: subjectName.trim(),
-        topics: topics.map((t) => ({ name: t.name })),
-        examDate: examDate.toISOString(),
-        startDate: new Date().toISOString(),
-        endDate: examDate.toISOString(),
-      });
-
-      if (!apiError && data?.success) {
-        console.log("Plan created:", data.data);
-
-        // Show success animation
-        setShowSuccess(true);
-
-        // Reset form after delay
-        setTimeout(() => {
-          setSubjectName("");
-          setTemplateId("");
-          setTopics([]);
-          setCurrentTopic("");
-          setExamDate(undefined);
-          setShowSuccess(false);
-
-          // Call onSuccess callback if provided
-          onSuccess?.();
-        }, 2000);
-      } else {
-        setError(
-          (apiError?.value as any)?.error ||
-            (data as any)?.error ||
-            "Failed to create study plan. Please try again.",
-        );
-      }
-    } catch (err) {
-      console.error("Error creating study plan:", err);
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  // Success animation overlay
-  if (showSuccess) {
-    return (
-      <motion.div
-        className="flex min-h-75 items-center justify-center px-4 sm:min-h-100"
-        variants={successVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-      >
-        <div className="text-center">
-          <motion.div
-            className="relative mx-auto mb-6 flex size-20 items-center justify-center sm:size-24"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          >
-            <motion.div
-              className="absolute inset-0 rounded-full bg-green-500/20"
-              initial={{ scale: 0 }}
-              animate={{ scale: [1, 1.5, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            />
-            <motion.div
-              className="relative flex size-16 items-center justify-center rounded-full bg-green-500 sm:size-20"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <CheckCircle2 className="size-8 text-white sm:size-10" />
-            </motion.div>
-          </motion.div>
-          <motion.h3
-            className="mb-2 font-semibold text-xl sm:text-2xl"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Plan Created!
-          </motion.h3>
-          <motion.p
-            className="text-muted-foreground text-sm sm:text-base"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            Your study plan is ready to go
-          </motion.p>
-        </div>
-      </motion.div>
+  useEffect(() => {
+    if (!context || selectedTopics.length > 0) return;
+    const recommended = context.topics
+      .filter(
+        (topic) => topic.priority === "core" || topic.priority === "important",
+      )
+      .map((topic) => topic.slug);
+    setSelectedTopics(
+      recommended.length > 0
+        ? recommended
+        : context.topics.map((topic) => topic.slug),
     );
-  }
+  }, [context, selectedTopics.length]);
+
+  const groupedTopics = useMemo(() => {
+    const groups = new Map<string, PlanningTopic[]>();
+    for (const topic of context?.topics ?? []) {
+      const key = topic.unitName ?? "Course topics";
+      groups.set(key, [...(groups.get(key) ?? []), topic]);
+    }
+    return Array.from(groups.entries());
+  }, [context]);
+
+  const progress = step === 1 ? 33 : step === 2 ? 66 : 100;
+  const canContinueFromSelection =
+    mode === "course"
+      ? Boolean(courseSlug && selectedTopics.length > 0)
+      : Boolean(manualSubject.trim() && manualTopics.length > 0);
+
+  const buildInput = (): StudyPlanPreviewInput => ({
+    courseSlug: mode === "course" ? courseSlug : undefined,
+    subjectName: mode === "manual" ? manualSubject.trim() : undefined,
+    topics: mode === "manual" ? buildManualTopics(manualTopics) : undefined,
+    topicSlugs: mode === "course" ? selectedTopics : undefined,
+    knownTopicSlugs: mode === "course" ? knownTopics : undefined,
+    goal,
+    startDate,
+    examDate,
+    availability,
+    preferredSessionMinutes: 45,
+  });
+
+  const requestPreview = async () => {
+    setIsPreviewing(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/study-plans/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildInput()),
+      });
+      const payload = (await response.json()) as {
+        success: boolean;
+        data?: StudyPlanPreview;
+        error?: string;
+      };
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? "Could not preview this plan");
+      }
+      setPreview(payload.data);
+      setStep(3);
+    } catch (previewError) {
+      setError(
+        previewError instanceof Error
+          ? previewError.message
+          : "Could not preview this plan",
+      );
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
+  const activatePlan = async () => {
+    setIsActivating(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/study-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: buildInput() }),
+      });
+      const payload = (await response.json()) as {
+        success: boolean;
+        data?: { slug: string };
+        error?: string;
+      };
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? "Could not create this plan");
+      }
+      onSuccess?.(payload.data.slug);
+      router.push(`/study-planner/${payload.data.slug}`);
+    } catch (activationError) {
+      setError(
+        activationError instanceof Error
+          ? activationError.message
+          : "Could not create this plan",
+      );
+    } finally {
+      setIsActivating(false);
+    }
+  };
 
   return (
-    <div className="container relative mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      {/* Background Decorative Element */}
-      <div className="absolute -top-10 -left-10 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+    <section className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="border-b pb-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium text-muted-foreground text-sm">
+              Step {step} of 3
+            </p>
+            <h1 className="mt-1 font-semibold text-2xl tracking-tight sm:text-3xl">
+              {step === 1
+                ? "Choose what to study"
+                : step === 2
+                  ? "Set your study time"
+                  : "Review the schedule"}
+            </h1>
+          </div>
+          {onCancel && (
+            <Button variant="ghost" size="icon" onClick={onCancel}>
+              <X className="size-4" />
+              <span className="sr-only">Close plan creator</span>
+            </Button>
+          )}
+        </div>
+        <Progress value={progress} className="mt-5 max-w-sm" />
+      </div>
 
-      <Card className="overflow-hidden border-border/40 bg-card/60 backdrop-blur-md">
-        <CardHeader className="space-y-1 bg-linear-to-b from-primary/5 to-transparent pb-4">
-          <CardTitle className="bg-linear-to-r from-primary to-primary/70 bg-clip-text font-bold text-2xl text-transparent tracking-tight">
-            Architect Your Study Path
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Define your goals and let us handle the scheduling logic.
-          </p>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Subject Name Field */}
-            <motion.div
-              className="space-y-2"
-              variants={itemVariants}
-              animate={{
-                scale: focusedField === "subject" ? 1.01 : 1,
-                transition: { duration: 0.2 },
-              }}
+      <OfflineNotice />
+
+      {error && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertTitle>Plan could not be updated</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {step === 1 && (
+        <div className="py-8">
+          <div className="inline-flex rounded-lg bg-muted p-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "course" ? "default" : "ghost"}
+              onClick={() => setMode("course")}
             >
-              <Label htmlFor="subject" className="text-sm sm:text-base">
-                Subject Name
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} className="relative">
-                <Input
-                  id="subject"
-                  type="text"
-                  placeholder="e.g., Physics, Mathematics"
-                  value={subjectName}
-                  onChange={(e) => setSubjectName(e.target.value)}
-                  onFocus={() => setFocusedField("subject")}
-                  onBlur={() => setFocusedField(null)}
-                  disabled={isCreating}
-                  className={cn(
-                    "h-11 text-base transition-all duration-300 sm:h-10",
-                    focusedField === "subject" && "ring-2 ring-primary/50",
-                  )}
-                />
-                <AnimatePresence>
-                  {subjectName && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      className="absolute top-1/2 right-3 -translate-y-1/2"
-                    >
-                      <Sparkles className="size-4 text-primary" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </motion.div>
-
-            {/* Template Select Field */}
-            <motion.div
-              className="space-y-2"
-              variants={itemVariants}
-              animate={{
-                scale: focusedField === "template" ? 1.01 : 1,
-                transition: { duration: 0.2 },
-              }}
+              Use an IOE course
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "manual" ? "default" : "ghost"}
+              onClick={() => setMode("manual")}
             >
-              <Label htmlFor="template" className="text-sm sm:text-base">
-                Plan Duration
-              </Label>
-              <Select
-                value={templateId}
-                onValueChange={(value) => {
-                  setTemplateId(value);
-                  setFocusedField("template");
-                }}
-                onOpenChange={(open) => !open && setFocusedField(null)}
-                disabled={isCreating}
-              >
-                <SelectTrigger
-                  id="template"
-                  className={cn(
-                    "h-11 w-full text-base transition-all duration-300 sm:h-10",
-                    focusedField === "template" && "ring-2 ring-primary/50",
-                    templateId && "border-primary",
-                  )}
-                >
-                  <SelectValue
-                    placeholder={
-                      templatesLoading
-                        ? "Loading templates..."
-                        : "Select duration"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {templatesError && (
-                    <div className="p-2 text-destructive text-sm">
-                      Error loading templates
-                    </div>
-                  )}
-                  {templates?.map((template, index) => (
-                    <motion.div
-                      key={template.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <SelectItem
-                        value={template.id}
-                        className="py-3 text-sm sm:py-2 sm:text-base"
-                      >
-                        {template.name} ({template.durationDays} days)
-                      </SelectItem>
-                    </motion.div>
-                  ))}
-                  {templates && templates.length === 0 && (
-                    <div className="p-2 text-muted-foreground text-sm">
-                      No templates found
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </motion.div>
+              Enter topics manually
+            </Button>
+          </div>
 
-            {/* Topics Field */}
-            <motion.div className="space-y-2" variants={itemVariants}>
-              <Label htmlFor="topics" className="text-sm sm:text-base">
-                Topics
-              </Label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <motion.div
-                  className="relative flex-1"
-                  animate={{
-                    scale: focusedField === "topics" ? 1.01 : 1,
-                    transition: { duration: 0.2 },
-                  }}
-                >
-                  <Input
-                    id="topics"
-                    type="text"
-                    placeholder="Add a topic"
-                    value={currentTopic}
-                    onChange={(e) => setCurrentTopic(e.target.value)}
-                    onKeyDown={handleTopicKeyDown}
-                    onFocus={() => setFocusedField("topics")}
-                    onBlur={() => setFocusedField(null)}
-                    disabled={isCreating}
-                    className={cn(
-                      "h-11 text-base transition-all duration-300 sm:h-10",
-                      focusedField === "topics" && "ring-2 ring-primary/50",
+          {mode === "course" ? (
+            <div className="mt-8">
+              {!courseSlug ? (
+                <div>
+                  <Label htmlFor="course-search">Find a course</Label>
+                  <div className="relative mt-2 max-w-xl">
+                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="course-search"
+                      value={courseSearch}
+                      onChange={(event) => setCourseSearch(event.target.value)}
+                      placeholder="Course name, code, or topic"
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="mt-5 divide-y rounded-lg border">
+                    {catalogLoading ? (
+                      <div className="space-y-3 p-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                      </div>
+                    ) : catalog?.data.length ? (
+                      catalog.data.map((course) => (
+                        <button
+                          type="button"
+                          key={course.id}
+                          onClick={() => {
+                            setCourseSlug(course.slug);
+                            setSelectedTopics([]);
+                          }}
+                          className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
+                        >
+                          <span>
+                            <span className="block font-medium">
+                              {course.name}
+                            </span>
+                            <span className="mt-1 block text-muted-foreground text-sm">
+                              {course.code} · {course.activeTopicCount} topics
+                            </span>
+                          </span>
+                          <ArrowRight className="size-4 text-muted-foreground" />
+                        </button>
+                      ))
+                    ) : (
+                      <p className="p-5 text-muted-foreground text-sm">
+                        No ready course outlines match this search.
+                      </p>
                     )}
+                  </div>
+                </div>
+              ) : contextLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : context ? (
+                <div>
+                  <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-medium text-primary text-sm">
+                        {context.course.code}
+                      </p>
+                      <h2 className="mt-1 font-semibold text-xl">
+                        {context.course.name}
+                      </h2>
+                      <p className="mt-1 text-muted-foreground text-sm">
+                        {selectedTopics.length} of {context.topics.length}{" "}
+                        topics selected
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCourseSlug("");
+                        setSelectedTopics([]);
+                        setKnownTopics([]);
+                      }}
+                    >
+                      Change course
+                    </Button>
+                  </div>
+
+                  <div className="mt-6 space-y-7">
+                    {groupedTopics.map(([unitName, topics]) => (
+                      <section key={unitName}>
+                        <div className="flex items-center justify-between gap-4">
+                          <h3 className="font-semibold">{unitName}</h3>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const unitSlugs = topics.map(
+                                (topic) => topic.slug,
+                              );
+                              const allSelected = unitSlugs.every((slug) =>
+                                selectedTopics.includes(slug),
+                              );
+                              setSelectedTopics((current) =>
+                                allSelected
+                                  ? current.filter(
+                                      (slug) => !unitSlugs.includes(slug),
+                                    )
+                                  : Array.from(
+                                      new Set([...current, ...unitSlugs]),
+                                    ),
+                              );
+                            }}
+                          >
+                            Toggle unit
+                          </Button>
+                        </div>
+                        <div className="mt-3 divide-y rounded-lg border">
+                          {topics.map((topic) => {
+                            const checked = selectedTopics.includes(topic.slug);
+                            const known = knownTopics.includes(topic.slug);
+                            return (
+                              <div
+                                key={topic.slug}
+                                className="flex items-start gap-3 p-4"
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(value) =>
+                                    setSelectedTopics((current) =>
+                                      value
+                                        ? [...current, topic.slug]
+                                        : current.filter(
+                                            (slug) => slug !== topic.slug,
+                                          ),
+                                    )
+                                  }
+                                  aria-label={`Include ${topic.name}`}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-medium text-sm">
+                                      {topic.name}
+                                    </span>
+                                    <Badge
+                                      variant="outline"
+                                      className="capitalize"
+                                    >
+                                      {topic.priority}
+                                    </Badge>
+                                    {topic.hours > 0 && (
+                                      <span className="text-muted-foreground text-xs">
+                                        {topic.hours}h estimate
+                                      </span>
+                                    )}
+                                  </div>
+                                  {checked && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setKnownTopics((current) =>
+                                          known
+                                            ? current.filter(
+                                                (slug) => slug !== topic.slug,
+                                              )
+                                            : [...current, topic.slug],
+                                        )
+                                      }
+                                      className={cn(
+                                        "mt-2 text-muted-foreground text-xs hover:text-foreground",
+                                        known && "font-medium text-primary",
+                                      )}
+                                    >
+                                      {known
+                                        ? "Marked as already known"
+                                        : "I already know this"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <Alert variant="destructive">
+                  <AlertTitle>Course outline unavailable</AlertTitle>
+                  <AlertDescription>
+                    Choose another course or enter topics manually.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          ) : (
+            <div className="mt-8 max-w-2xl space-y-6">
+              <div>
+                <Label htmlFor="manual-subject">Subject name</Label>
+                <Input
+                  id="manual-subject"
+                  value={manualSubject}
+                  onChange={(event) => setManualSubject(event.target.value)}
+                  placeholder="For example, Engineering Mathematics"
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="manual-topic">Topics</Label>
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    id="manual-topic"
+                    value={manualTopic}
+                    onChange={(event) => setManualTopic(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addManualTopic(
+                          manualTopic,
+                          manualTopics,
+                          setManualTopics,
+                          setManualTopic,
+                        );
+                      }
+                    }}
+                    placeholder="Add one topic at a time"
                   />
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto"
-                >
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleAddTopic}
-                    disabled={!currentTopic.trim() || isCreating}
-                    className="h-11 w-full min-w-11 transition-all duration-200 sm:h-10 sm:w-auto"
+                    onClick={() =>
+                      addManualTopic(
+                        manualTopic,
+                        manualTopics,
+                        setManualTopics,
+                        setManualTopic,
+                      )
+                    }
                   >
-                    <PlusIcon className="size-4 sm:mr-2" />
-                    <span className="sm:inline">Add</span>
+                    Add
                   </Button>
-                </motion.div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {manualTopics.map((topic) => (
+                    <Badge key={topic} variant="secondary" className="gap-1.5">
+                      {topic}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setManualTopics((current) =>
+                            current.filter((item) => item !== topic),
+                          )
+                        }
+                        aria-label={`Remove ${topic}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
 
-              <AnimatePresence mode="popLayout">
-                {topics.length > 0 && (
-                  <motion.div
-                    className="mt-2 flex flex-wrap gap-2"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    {topics.map((topic, index) => (
-                      <motion.div
-                        key={topic.name}
-                        variants={topicTagVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        layout
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
-                        className="flex min-h-8 items-center gap-1 rounded-md bg-secondary px-2.5 py-1.5 text-xs sm:text-sm"
-                      >
-                        <span>{topic.name}</span>
-                        <motion.div
-                          whileHover={{ rotate: 90 }}
-                          whileTap={{ scale: 0.8 }}
-                        >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveTopic(topic.name)}
-                            disabled={isCreating}
-                            className="h-6 min-h-6 w-6 min-w-6"
-                          >
-                            <XIcon className="size-3" />
-                          </Button>
-                        </motion.div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Exam Date Field */}
-            <motion.div className="space-y-2" variants={itemVariants}>
-              <Label className="text-sm sm:text-base">Exam Date</Label>
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "h-11 w-full justify-start text-left font-normal text-base transition-all duration-300 sm:h-10",
-                        !examDate && "text-muted-foreground",
-                        examDate && "border-primary ring-1 ring-primary/20",
-                      )}
-                      disabled={isCreating}
-                    >
-                      <CalendarIcon className="mr-2 size-4" />
-                      {examDate ? (
-                        examDate.toLocaleDateString()
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </motion.div>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={examDate}
-                      onSelect={(date) => {
-                        setExamDate(date);
-                        setIsCalendarOpen(false);
-                      }}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                      className="rounded-md border"
-                    />
-                  </motion.div>
-                </PopoverContent>
-              </Popover>
-            </motion.div>
-
-            {/* Error Message */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, y: -10 }}
-                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: -10 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-md bg-destructive/10 p-3 text-destructive text-xs sm:p-4 sm:text-sm">
-                    {error}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Submit Button */}
-            <motion.div variants={itemVariants}>
-              <motion.div
-                whileHover={isFormValid ? { scale: 1.01 } : {}}
-                whileTap={isFormValid ? { scale: 0.99 } : {}}
-              >
-                <Button
-                  type="submit"
-                  className="h-12 w-full text-base transition-all duration-300 sm:h-11"
-                  disabled={!isFormValid}
-                  size="default"
-                >
-                  <AnimatePresence mode="wait">
-                    {isCreating ? (
-                      <motion.span
-                        key="creating"
-                        className="flex items-center gap-2"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                      >
-                        <Spinner className="size-4" />
-                        Creating Plan...
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="create"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                      >
-                        Create Study Plan
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </motion.div>
-            </motion.div>
-
-            {/* Form Progress Indicator */}
-            <motion.div className="space-y-2 pt-4" variants={itemVariants}>
-              <div className="flex items-center justify-between font-medium text-xs uppercase tracking-wider">
-                <span className="text-muted-foreground">Setup Progress</span>
-                <span className="text-primary">
-                  {Math.round(
-                    ((Number(subjectName.length > 0) +
-                      Number(templateId !== "") +
-                      Number(topics.length > 0) +
-                      Number(examDate !== undefined)) /
-                      4) *
-                      100,
+      {step === 2 && (
+        <div className="space-y-9 py-8">
+          <section>
+            <h2 className="font-semibold text-lg">Goal</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {GOALS.map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  onClick={() => setGoal(option.value)}
+                  className={cn(
+                    "rounded-lg border p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                    goal === option.value &&
+                      "border-primary bg-primary/5 ring-1 ring-primary/20",
                   )}
-                  %
-                </span>
+                >
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{option.title}</span>
+                    {goal === option.value && (
+                      <Check className="size-4 text-primary" />
+                    )}
+                  </span>
+                  <span className="mt-2 block text-muted-foreground text-sm">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="start-date">Start date</Label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="exam-date">Exam or target date</Label>
+              <Input
+                id="exam-date"
+                type="date"
+                value={examDate}
+                min={shiftDate(startDate, 1)}
+                onChange={(event) => setExamDate(event.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </section>
+
+          <section>
+            <div>
+              <h2 className="font-semibold text-lg">Minutes available</h2>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Set zero for rest days. The exam eve is kept light.
+              </p>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+              {WEEKDAYS.map((day) => (
+                <div key={day.key}>
+                  <Label htmlFor={`availability-${day.key}`}>{day.label}</Label>
+                  <Input
+                    id={`availability-${day.key}`}
+                    type="number"
+                    min={0}
+                    max={720}
+                    step={15}
+                    value={availability[day.key]}
+                    onChange={(event) =>
+                      setAvailability((current) => ({
+                        ...current,
+                        [day.key]: Math.max(0, Number(event.target.value)),
+                      }))
+                    }
+                    className="mt-2"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {step === 3 && preview && (
+        <div className="py-8">
+          <div className="grid gap-6 border-b pb-7 sm:grid-cols-3">
+            <Summary
+              label="Scheduled"
+              value={formatMinutes(preview.scheduledMinutes)}
+            />
+            <Summary
+              label="Available"
+              value={formatMinutes(preview.availableMinutes)}
+            />
+            <Summary
+              label="Topics"
+              value={String(preview.selectedTopicSlugs.length)}
+            />
+          </div>
+
+          {preview.warnings.length > 0 && (
+            <div className="mt-6 space-y-3">
+              {preview.warnings.map((warning) => (
+                <Alert
+                  key={`${warning.code}-${warning.message}`}
+                  variant={warning.blocking ? "destructive" : "default"}
+                >
+                  <AlertTitle>
+                    {warning.blocking
+                      ? "Schedule needs attention"
+                      : "Review note"}
+                  </AlertTitle>
+                  <AlertDescription>{warning.message}</AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          )}
+
+          <section className="mt-8" aria-labelledby="preview-days-heading">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2 id="preview-days-heading" className="font-semibold text-xl">
+                  First study days
+                </h2>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Tasks stay within the time you assigned to each day.
+                </p>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary ring-1 ring-border/50">
-                <motion.div
-                  className="h-full rounded-full bg-linear-to-r from-primary to-primary/80 shadow-[0_0_8px_-1px_rgba(var(--primary),0.4)]"
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${
-                      ((Number(subjectName.length > 0) +
-                        Number(templateId !== "") +
-                        Number(topics.length > 0) +
-                        Number(examDate !== undefined)) /
-                        4) *
-                      100
-                    }%`,
-                  }}
-                  transition={{ duration: 0.5, ease: "circOut" }}
-                />
-              </div>
-            </motion.div>
-          </motion.form>
-        </CardContent>
-      </Card>
+              <Badge variant="outline" className="hidden sm:inline-flex">
+                {preview.goal.replace("-", " ")}
+              </Badge>
+            </div>
+            <div className="mt-5 divide-y rounded-lg border">
+              {preview.days
+                .filter((day) => day.tasks.length > 0)
+                .slice(0, 7)
+                .map((day) => (
+                  <div key={day.date} className="p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="size-4 text-primary" />
+                        <h3 className="font-semibold">
+                          {formatStudyDate(day.date)}
+                        </h3>
+                      </div>
+                      <span className="text-muted-foreground text-sm">
+                        {day.scheduledMinutes} of {day.capacityMinutes} min
+                      </span>
+                    </div>
+                    <ul className="mt-3 space-y-2">
+                      {day.tasks.map((task) => (
+                        <li
+                          key={task.key}
+                          className="flex items-start justify-between gap-4 text-sm"
+                        >
+                          <span>{task.title}</span>
+                          <span className="shrink-0 text-muted-foreground">
+                            {task.estimatedMinutes} min
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            if (step > 1) {
+              setStep(step - 1);
+              setPreview(null);
+            } else {
+              onCancel?.();
+            }
+          }}
+        >
+          <ArrowLeft className="size-4" />
+          {step === 1 ? "Back to planner" : "Previous"}
+        </Button>
+        {step === 1 ? (
+          <Button
+            disabled={!canContinueFromSelection}
+            onClick={() => setStep(2)}
+          >
+            Set study time
+            <ArrowRight className="size-4" />
+          </Button>
+        ) : step === 2 ? (
+          <Button
+            disabled={isPreviewing || !startDate || !examDate}
+            onClick={requestPreview}
+          >
+            {isPreviewing ? "Building preview..." : "Preview schedule"}
+            <Sparkles className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            disabled={
+              isActivating ||
+              !preview ||
+              preview.warnings.some((warning) => warning.blocking)
+            }
+            onClick={activatePlan}
+          >
+            {isActivating ? "Creating plan..." : "Start this plan"}
+            <BookOpen className="size-4" />
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-muted-foreground text-sm">{label}</p>
+      <p className="mt-1 font-semibold text-xl">{value}</p>
     </div>
   );
+}
+
+function addManualTopic(
+  topic: string,
+  current: string[],
+  setTopics: (topics: string[]) => void,
+  setTopic: (topic: string) => void,
+) {
+  const value = topic.trim();
+  if (!value || current.includes(value)) return;
+  setTopics([...current, value]);
+  setTopic("");
+}
+
+function slugify(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "topic"
+  );
+}
+
+function buildManualTopics(names: string[]): PlanningTopic[] {
+  const slugCounts = new Map<string, number>();
+  return names.map((name) => {
+    const baseSlug = slugify(name);
+    const count = (slugCounts.get(baseSlug) ?? 0) + 1;
+    slugCounts.set(baseSlug, count);
+    return {
+      slug: count === 1 ? baseSlug : `${baseSlug}-${count}`,
+      name,
+      hours: 1,
+      weightage: null,
+      priority: "core",
+      prerequisites: [],
+    };
+  });
+}
+
+function todayInKathmandu(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kathmandu",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function shiftDate(value: string, days: number): string {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
+}
+
+function formatMinutes(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (hours === 0) return `${minutes} min`;
+  return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
+}
+
+function formatStudyDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
 }

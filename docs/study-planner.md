@@ -1,478 +1,223 @@
 # Study Planner
 
-A comprehensive study planning feature that helps IOE students plan and track their academic schedules with structured day-by-day study tasks, progress tracking, and smart notifications.
+The Study Planner turns an IOE course outline, or a manually entered subject,
+into a capacity-aware daily schedule. It is designed as a learning workspace:
+students choose what matters, preview the generated work, complete today's
+tasks, recover missed work, and open the course resources associated with each
+topic.
 
-## Overview
+## Student workflow
 
-The Study Planner provides a Gregmat-style structured approach to exam preparation, offering:
+1. Open `/study-planner` and choose **Plan a course**.
+2. Select a ready Course Explorer outline, or switch to manual topics.
+3. Select topics and mark material that is already known.
+4. Choose a goal: pass essentials, exam preparation, or full syllabus.
+5. Enter the target date and available minutes for each weekday.
+6. Review the deterministic schedule and any capacity warnings before creating
+   the plan.
+7. Use the plan workspace's **Today**, **Plan**, **Progress**, and **Resources**
+   views to do and adjust the work.
 
-- **Multiple Plan Durations**: 1-day, 3-day, 1-week, 2-week, 1-month, and custom duration plans
-- **Day-by-Day Tasks**: Each day contains small, completable tasks organized by learning, practice, review, and preparation
-- **Generic Templates**: Reusable templates that adapt to any subject through pattern replacement
-- **Progress Tracking**: Visual progress indicators with on-track/behind/ahead status
-- **Academic Events**: Track exams, assignments, projects, and lab schedules
+Course Explorer can prefill the creator with `?course=<course-slug>` and
+`?topics=<topic-slug>`. Manual plans remain supported when no course outline is
+available.
 
-## Database Schema
+## Product rules
 
-### Tables
+- PostgreSQL UUIDs remain internal primary keys. Courses, plans, topics, and
+  tasks use readable slugs at navigation and mutation boundaries.
+- Study-plan slugs are unique per user, not globally.
+- `study_tasks` is the authoritative schedule. `study_plans.daily_tasks` is
+  retained as a compatibility snapshot for older callers and must not be used
+  for completion or Today queries.
+- Date-only scheduling is evaluated in `Asia/Kathmandu`.
+- The scheduler is deterministic for the same normalized input. It respects
+  strong prerequisites, topic priority, estimated hours, exam weight, known
+  topics, weekday capacity, and a lighter exam eve.
+- A blocking capacity warning prevents activation. Non-blocking warnings remain
+  visible in the preview.
+- Completed tasks are never moved by rebalancing. Recovery changes are shown in
+  a preview before they are persisted.
+- UI progress is derived from persisted task rows; it is not a mastery score.
 
-#### 1. `academic_events`
+## Main surfaces
 
-Stores academic events like exams, assignments, projects, and labs.
+| Route | Purpose |
+| --- | --- |
+| `/study-planner` | Today-first dashboard, plan list, and inline creator |
+| `/study-planner/[planSlug]` | Canonical plan workspace |
+| `/dashboard/study-plans/[slug]` | Compatibility redirect to the canonical workspace |
+| `/course-explorer` | Searchable course and topic catalog |
+| `/course-explorer/[courseSlug]` | Outline-first course workspace and optional relationship map |
 
-```typescript
+The planner components live in `src/components/study-planner/`:
+
+- `StudyPlannerDashboard.tsx` owns the Today-first landing state.
+- `StudyPlanCreator.tsx` owns course/manual selection, capacity input, preview,
+  and activation.
+- `StudyPlanWorkspace.tsx` owns completion, notes, task dates, progress,
+  resources, and recovery.
+- `OfflineNotice.tsx` explains when mutations cannot be saved.
+
+## Data model
+
+The relevant tables are defined in
+`src/server/db/schema/study-planners.ts`.
+
+### `study_templates`
+
+Reusable planning presets. Templates have stable slugs, descriptions, a
+planning mode, and a version in addition to the legacy duration and structure
+fields.
+
+### `study_plans`
+
+A user's activated plan. Important fields include:
+
+- `user_id` and user-scoped `slug`
+- optional `course_id` and `academic_event_id`
+- `goal`, `start_date`, `exam_date`, and `end_date`
+- `daily_minutes` and weekday `availability`
+- `generation_input`, `schedule_version`, and `last_rebalanced_at`
+- legacy `daily_tasks` compatibility snapshot
+- persisted progress and lifecycle status
+
+### `study_plan_topics`
+
+The normalized set of course topics selected for a plan, including whether the
+student marked a topic as already known and the scheduler's snapshot metadata.
+
+### `study_tasks`
+
+The authoritative task rows. A task has a plan-scoped slug, optional linked
+course topic, scheduled date, stable position, origin, completion state, notes,
+and time-spent fields. New JSON snapshots and relational rows use the same task
+UUID during the compatibility period.
+
+### `academic_events` and `study_logs`
+
+Academic events provide the target exam or deadline. Study logs retain optional
+session-level time records for a task.
+
+## API contracts
+
+All endpoints are mounted below `/api`.
+
+### Planning and workspaces
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/course-explorer/catalog` | Search course names, codes, and topic names with readiness metadata |
+| `GET` | `/course-explorer/courses/slug/:slug/planning-context` | Ordered planning topics, prerequisites, estimates, priority, and resources |
+| `POST` | `/study-plans/preview` | Produce a capacity-aware schedule without writing data |
+| `POST` | `/study-plans` | Build and activate the reviewed schedule |
+| `GET` | `/study-plans` | Return real plan summaries for the current user |
+| `GET` | `/study-plans/today` | Return today's authoritative relational tasks across active plans |
+| `GET` | `/study-plans/upcoming` | Return unfinished tasks for the next seven days |
+| `GET` | `/study-plans/slug/:slug/workspace` | Return the canonical plan workspace |
+| `PATCH` | `/study-plans/slug/:planSlug/tasks/:taskSlug` | Complete, uncomplete, move, or add notes to a task |
+| `POST` | `/study-plans/slug/:slug/rebalance/preview` | Preview overdue-task recovery |
+| `POST` | `/study-plans/slug/:slug/rebalance` | Recompute and apply the accepted recovery |
+
+Preview and activation accept the same normalized `input` shape:
+
+```ts
 {
-  id: uuid,                    // Primary key
-  userId: text,                // Reference to user.id
-  subjectName: varchar(255),   // Subject name
-  eventType: varchar(50),      // 'exam', 'assignment', 'project', 'lab'
-  title: varchar(255),         // Event title
-  description: text,           // Event description
-  eventDate: date,             // Event date
-  eventTime: time,             // Optional event time
-  location: varchar(255),      // Optional location
-  createdAt: timestamp,
-  updatedAt: timestamp
+  courseSlug?: string;
+  subjectName?: string;
+  topics?: PlanningTopic[];
+  topicSlugs?: string[];
+  knownTopicSlugs?: string[];
+  goal: "minimum" | "exam-prep" | "full-coverage";
+  startDate: string;
+  examDate: string;
+  availability: {
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+    sunday: number;
+  };
+  preferredSessionMinutes: number;
 }
 ```
 
-**Indexes:**
+### Compatibility endpoints
 
-- `academic_event_user_id_idx` - For user-specific queries
-- `academic_event_date_idx` - For date-based filtering
+Legacy UUID-based plan and task endpoints remain available during migration.
+They must resolve to the same records and authorization rules as the canonical
+slug endpoints. New UI code should use slugs.
 
-#### 2. `study_templates`
+## Scheduler
 
-Reusable study plan templates with daily structure patterns.
+`src/server/utils/study-scheduler.ts` contains the pure scheduling logic.
+`src/server/elysia/services/study-plan-service.ts` resolves course context,
+persists previews, reads workspaces, updates tasks, and performs rebalancing.
 
-```typescript
-{
-  id: uuid,                    // Primary key
-  name: varchar(255),          // Template name (e.g., "2-Week Comprehensive Plan")
-  durationDays: integer,       // Number of days (1, 3, 7, 14, 30)
-  difficultyLevel: varchar(50), // 'intensive', 'moderate', 'comprehensive'
-  dailyStructure: jsonb,       // Task patterns for morning/afternoon/evening
-  intensityCurve: jsonb,       // Intensity mapping per day range
-  subjectArea: varchar(100),   // Subject category
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
-```
+The scheduler:
 
-**Daily Structure Format:**
+1. expands strong prerequisite closure;
+2. topologically orders prerequisites before dependent topics;
+3. scores work from goal, priority, weight, known state, and estimates;
+4. creates learn, practice, and review sessions with stable keys and slugs;
+5. packs sessions into weekday capacity without crossing the exam date; and
+6. reports work that could not fit instead of silently dropping it.
 
-```json
-{
-  "morning": [
-    {
-      "type": "learn",
-      "template": "Study {TOPIC} from Chapter {CHAPTER}",
-      "estimated_minutes": 45
-    }
-  ],
-  "afternoon": [
-    {
-      "type": "practice",
-      "template": "Solve {PROBLEM_COUNT} problems on {TOPIC}",
-      "estimated_minutes": 60
-    }
-  ],
-  "evening": [
-    {
-      "type": "review",
-      "template": "Review today's {TOPIC} notes",
-      "estimated_minutes": 15
-    }
-  ]
-}
-```
+## Development data
 
-**Indexes:**
-
-- `study_templates_subject_area_idx` - For subject filtering
-- `study_templates_difficulty_idx` - For difficulty filtering
-
-#### 3. `study_plans`
-
-Active study plans created by users from templates.
-
-```typescript
-{
-  id: uuid,                    // Primary key
-  userId: text,                // Reference to user.id
-  templateId: uuid,            // Reference to study_templates.id
-  subjectName: varchar(255),   // Subject being studied
-  examDate: date,              // Target exam date
-  startDate: date,             // Plan start date
-  endDate: date,               // Plan end date
-  dailyTasks: jsonb,           // Generated tasks per day
-  progressPercentage: decimal(5,2), // Completion percentage
-  status: varchar(50),         // 'active', 'completed', 'archived'
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
-```
-
-**Daily Tasks Format:**
-
-```json
-{
-  "1": [
-    {
-      "id": "uuid",
-      "title": "Study Binary Search Trees from Chapter 5",
-      "description": "",
-      "taskType": "learn",
-      "estimatedMinutes": 45
-    }
-  ],
-  "2": [...]
-}
-```
-
-**Indexes:**
-
-- `study_plans_user_id_idx` - For user-specific queries
-- `study_plans_status_idx` - For status filtering
-- `study_plans_exam_date_idx` - For exam date queries
-
-#### 4. `study_tasks`
-
-Individual completable tasks within a study plan.
-
-```typescript
-{
-  id: uuid,                    // Primary key
-  studyPlanId: uuid,           // Reference to study_plans.id
-  dayNumber: integer,          // Day in the plan (1-indexed)
-  title: varchar(255),         // Task title
-  description: text,           // Task description
-  taskType: varchar(50),       // 'learn', 'practice', 'review', 'prepare'
-  estimatedMinutes: integer,   // Estimated time
-  completed: boolean,          // Completion status
-  completedAt: timestamp,      // When completed
-  actualMinutesSpent: integer, // Actual time spent
-  notes: text,                 // User notes
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
-```
-
-**Indexes:**
-
-- `study_tasks_study_plan_id_idx` - For plan-specific queries
-- `study_tasks_completed_idx` - For completion filtering
-- `study_tasks_day_number_idx` - For day-based queries
-
-#### 5. `study_logs`
-
-Optional time tracking logs for study sessions.
-
-```typescript
-{
-  id: uuid,                    // Primary key
-  taskId: uuid,                // Reference to study_tasks.id
-  userId: text,                // Reference to user.id
-  minutesSpent: integer,       // Time spent in minutes
-  notes: text,                 // Session notes
-  loggedAt: timestamp          // When logged
-}
-```
-
-**Indexes:**
-
-- `study_logs_task_id_idx` - For task-specific queries
-- `study_logs_user_id_idx` - For user-specific queries
-
-## API Endpoints
-
-### Academic Events
-
-| Method | Endpoint                   | Description                     |
-| ------ | -------------------------- | ------------------------------- |
-| GET    | `/api/academic-events`     | List all user's academic events |
-| GET    | `/api/academic-events/:id` | Get specific academic event     |
-| POST   | `/api/academic-events`     | Create new academic event       |
-| PATCH  | `/api/academic-events/:id` | Update academic event           |
-| DELETE | `/api/academic-events/:id` | Delete academic event           |
-
-**Query Parameters for GET /api/academic-events:**
-
-- `startDate` (optional) - Filter by start date
-- `endDate` (optional) - Filter by end date
-- `eventType` (optional) - Filter by event type
-
-**Request Body for POST /api/academic-events:**
-
-```typescript
-{
-  subjectName: string;
-  eventType: string;      // 'exam', 'assignment', 'project', 'lab'
-  title: string;
-  description?: string;
-  eventDate: string;      // ISO date string
-  eventTime?: string;     // Time string
-  location?: string;
-}
-```
-
-### Study Plans
-
-| Method | Endpoint                  | Description                               |
-| ------ | ------------------------- | ----------------------------------------- |
-| GET    | `/api/study-plans`        | List all user's study plans               |
-| GET    | `/api/study-plans/today`  | Get today's tasks across all active plans |
-| GET    | `/api/study-plans/:id`    | Get specific study plan with tasks        |
-| POST   | `/api/study-plans/create` | Create new study plan from template       |
-| PATCH  | `/api/study-plans/:id`    | Update study plan                         |
-| DELETE | `/api/study-plans/:id`    | Archive study plan                        |
-
-**Request Body for POST /api/study-plans/create:**
-
-```typescript
-{
-  templateId: string;
-  subjectName: string;
-  topics: Array<{
-    name: string;
-    chapter?: string;
-    difficulty?: "easy" | "medium" | "hard";
-  }>;
-  examDate: string; // ISO date string
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
-}
-```
-
-**Response for GET /api/study-plans/today:**
-
-```typescript
-{
-  success: boolean;
-  data: Array<{
-    planId: string;
-    subjectName: string;
-    examDate: Date;
-    dayNumber: number;
-    task: {
-      id: string;
-      title: string;
-      description: string;
-      taskType: string;
-      estimatedMinutes: number;
-    };
-  }>;
-}
-```
-
-### Study Tasks
-
-| Method | Endpoint                          | Description             |
-| ------ | --------------------------------- | ----------------------- |
-| GET    | `/api/study-tasks/:id`            | Get task details        |
-| PATCH  | `/api/study-tasks/:id/complete`   | Mark task as complete   |
-| PATCH  | `/api/study-tasks/:id/uncomplete` | Mark task as incomplete |
-| POST   | `/api/study-tasks/:id/log-time`   | Log study time for task |
-
-**Request Body for POST /api/study-tasks/:id/log-time:**
-
-```typescript
-{
-  minutes: number;
-  notes?: string;
-}
-```
-
-## Components
-
-### StudyPlannerDashboard
-
-Main dashboard component that displays:
-
-- Statistics cards (Active Plans, Today's Tasks, Overall Progress)
-- List of active study plans with progress bars
-- Today's tasks section
-- Quick action to create new plans
-
-**Location:** `src/components/study-planner/StudyPlannerDashboard.tsx`
-
-**Usage:**
-
-```tsx
-import { StudyPlannerDashboard } from "@/components/study-planner";
-
-export default function StudyPlannerPage() {
-  return <StudyPlannerDashboard />;
-}
-```
-
-### StudyPlanCreator
-
-Wizard component for creating new study plans:
-
-- Subject name input
-- Template selection (1-Day Sprint, 3-Day Boost, 1-Week Plan, etc.)
-- Topic management (add/remove topics)
-- Exam date picker
-- Form validation
-
-**Location:** `src/components/study-planner/StudyPlanCreator.tsx`
-
-**Props:**
-
-```typescript
-interface StudyPlanCreatorProps {
-  onSuccess?: () => void; // Callback after successful creation
-}
-```
-
-### DailyTaskView
-
-Displays today's tasks with:
-
-- Progress bar showing completion percentage
-- Task cards with checkboxes
-- Task type badges (learn, practice, review, prepare)
-- Estimated time display
-- Toggle completion status
-
-**Location:** `src/components/study-planner/DailyTaskView.tsx`
-
-**Features:**
-
-- Color-coded task types:
-  - Learn: Blue
-  - Practice: Orange
-  - Review: Purple
-  - Prepare: Green
-- Animated progress bar using Framer Motion
-- Empty state when no tasks scheduled
-
-### Component Index
-
-All components are exported from:
-
-**Location:** `src/components/study-planner/index.ts`
-
-```typescript
-export { DailyTaskView } from "./DailyTaskView";
-export { StudyPlanCreator } from "./StudyPlanCreator";
-export { StudyPlannerDashboard } from "./StudyPlannerDashboard";
-```
-
-## User Workflow
-
-### 1. Creating a Study Plan
-
-1. Navigate to the Study Planner dashboard
-2. Click "New Study Plan" button
-3. Fill in the creation form:
-   - Enter subject name (e.g., "Data Structures")
-   - Select plan duration/template
-   - Add topics to cover (e.g., "Arrays", "Linked Lists", "Trees")
-   - Select exam date
-4. Submit to generate the plan
-
-The system will:
-
-- Distribute topics across the plan duration
-- Generate specific tasks from template patterns
-- Create individual task records in the database
-
-### 2. Managing Daily Tasks
-
-1. View today's tasks on the dashboard
-2. Check off completed tasks
-3. Track actual time spent (optional)
-4. Add notes to tasks if needed
-
-Task completion automatically:
-
-- Updates the task's `completed` status
-- Updates the plan's `progressPercentage`
-- Records completion timestamp
-
-### 3. Logging Study Sessions
-
-For detailed time tracking:
-
-1. Start a study session
-2. Log time via the API or UI
-3. Add session notes
-4. View accumulated time per task
-
-### 4. Tracking Progress
-
-The dashboard shows:
-
-- **Active Plans Count**: Number of ongoing study plans
-- **Today's Tasks**: Tasks scheduled for today across all plans
-- **Overall Progress**: Average completion percentage across all plans
-
-Individual plan cards display:
-
-- Subject name
-- Progress percentage with visual bar
-- Exam date countdown
-- Status badge (On Track / In Progress)
-
-### 5. Managing Academic Events
-
-Track important dates:
-
-1. Add exams, assignments, projects, or lab schedules
-2. View events in chronological order
-3. Filter by date range or event type
-4. Update or delete events as needed
-
-## Available Templates
-
-The system comes with pre-defined templates:
-
-| Template             | Duration | Description                    |
-| -------------------- | -------- | ------------------------------ |
-| 1-Day Sprint         | 1 day    | Intensive single-day review    |
-| 3-Day Boost          | 3 days   | Quick preparation plan         |
-| 1-Week Plan          | 7 days   | Standard weekly preparation    |
-| 2-Week Comprehensive | 14 days  | Thorough two-week plan         |
-| 1-Month Plan         | 30 days  | Comprehensive month-long study |
-
-Each template defines:
-
-- Daily structure (morning/afternoon/evening tasks)
-- Intensity curve (warmup → normal → intensive → review)
-- Estimated time per task type
-
-## Template Pattern Replacement
-
-Templates use placeholders that get replaced with actual content:
-
-| Placeholder         | Description            | Example Output        |
-| ------------------- | ---------------------- | --------------------- |
-| `{TOPIC}`           | Topic name             | "Binary Search Trees" |
-| `{CHAPTER}`         | Chapter number         | "Chapter 5"           |
-| `{PROBLEM_COUNT}`   | Number of problems     | "5"                   |
-| `{RANGE}`           | Exercise range         | "5.1 to 5.4"          |
-| `{KEY_TERMS_COUNT}` | Number of terms        | "10"                  |
-| `{PREVIOUS_DAY}`    | Previous day reference | "Day 4"               |
-
-## Seeding Templates
-
-To seed the default study templates:
+Default templates are part of the main seed composition:
 
 ```bash
-bun src/server/db/seeders/seed-study-templates.ts
+bun run db:seed
 ```
 
-Or run the main seeder:
+Create or refresh a realistic, development-only Data Structures plan for an
+existing user:
 
 ```bash
-bun src/server/db/seeders/seed.ts
+bun run db:seed:study-demo -- <user-id>
 ```
 
-## Related Documentation
+The demo is relative to the seed date and includes completed, overdue, current,
+and upcoming tasks. It is generated through the production scheduler, linked to
+course topics and an exam event, and is idempotent for that user. The command
+refuses to run in production.
 
-- [Elysia.js Guide](./elysia.md) - Backend API framework
-- [Drizzle ORM Guide](./drizzle.md) - Database ORM
-- [Study Planner Design](./plans/2026-01-31-study-planner-design.md) - Original design document
-- [Study Planner Implementation](./plans/2026-01-31-study-planner-implementation.md) - Implementation plan
+Verify the persisted demo invariants after seeding:
+
+```bash
+NODE_ENV=development bun run verify:study-demo -- <user-id>
+```
+
+## Verification
+
+Run the standard checks with Bun:
+
+```bash
+bun run check:write
+bun run typecheck
+bun test
+bun run build
+```
+
+The production service integration spec in `test/specs/study-plans.spec.ts`
+requires a migrated test database and is opt-in:
+
+```bash
+RUN_DB_INTEGRATION_TESTS=1 bun test test/specs/study-plans.spec.ts
+```
+
+Pure scheduler coverage is in `test/study-scheduler.test.ts`. Course Explorer
+query and hierarchy coverage is in `test/course-explorer-revamp.test.ts` and the
+course API specs.
+
+## Related documents
+
+- [Study Planner and Course Explorer Learning Workspace Revamp](./plans/2026-07-12-study-planner-learning-workspace-revamp.md)
+- [Course Explorer Revamp](./plans/2026-07-12-course-explorer-revamp.md)
+- [Original Study Planner Design](./plans/2026-01-31-study-planner-design.md)
+- [Original Study Planner Implementation Plan](./plans/2026-01-31-study-planner-implementation.md)
+- [Elysia guide](./elysia.md)
+- [Drizzle guide](./drizzle.md)

@@ -338,6 +338,10 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   academicCourses: {
+    slugAliases: r.many.academicCourseSlugAliases({
+      from: r.academicCourses.id,
+      to: r.academicCourseSlugAliases.courseId,
+    }),
     units: r.many.courseUnits({
       from: r.academicCourses.id,
       to: r.courseUnits.courseId,
@@ -353,6 +357,13 @@ export const relations = defineRelations(schema, (r) => ({
     ratings: r.many.ratings({
       from: r.academicCourses.id.through(r.courseToRatings.courseId),
       to: r.ratings.id.through(r.courseToRatings.ratingId),
+    }),
+  },
+
+  academicCourseSlugAliases: {
+    course: r.one.academicCourses({
+      from: r.academicCourseSlugAliases.courseId,
+      to: r.academicCourses.id,
     }),
   },
 

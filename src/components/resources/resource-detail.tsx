@@ -107,8 +107,9 @@ function AttachmentItem({ attachment }: { attachment: ResourceAttachment }) {
 }
 
 export function ResourceDetail({ resource }: ResourceDetailProps) {
-  const ContentIcon = contentTypeIcons[resource.contentType.name] || BookOpen;
-  const bgColor = contentTypeColors[resource.contentType.name] || "bg-gray-500";
+  const contentTypeName = resource.contentType?.name ?? "Other";
+  const ContentIcon = contentTypeIcons[contentTypeName] || BookOpen;
+  const bgColor = contentTypeColors[contentTypeName] || "bg-muted";
   const primaryAttachment = resource.attachments?.[0];
 
   const handleShare = async () => {
@@ -174,7 +175,7 @@ export function ResourceDetail({ resource }: ResourceDetailProps) {
                 <div className="flex-1">
                   <div className="mb-3 flex flex-wrap gap-2">
                     <Badge className="bg-white/90 text-black hover:bg-white">
-                      {resource.contentType.name}
+                      {contentTypeName}
                     </Badge>
                     {resource.isFeatured && (
                       <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">
@@ -325,7 +326,7 @@ export function ResourceDetail({ resource }: ResourceDetailProps) {
                   <div>
                     <p className="text-muted-foreground text-xs">Uploaded by</p>
                     <p className="font-medium text-sm">
-                      {resource.uploader.name}
+                      {resource.uploader?.name ?? "Former user"}
                     </p>
                   </div>
                 </div>
@@ -350,9 +351,7 @@ export function ResourceDetail({ resource }: ResourceDetailProps) {
                     <p className="text-muted-foreground text-xs">
                       Content Type
                     </p>
-                    <p className="font-medium text-sm">
-                      {resource.contentType.name}
-                    </p>
+                    <p className="font-medium text-sm">{contentTypeName}</p>
                   </div>
                 </div>
 

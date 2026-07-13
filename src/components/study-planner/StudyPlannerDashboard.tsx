@@ -1,599 +1,512 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { BookOpen, ListTodo, Plus, TrendingUp } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Plus,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
-import { apiClient } from "@/lib/eden";
-import { cn } from "@/lib/utils";
-import { DailyTaskView } from "./DailyTaskView";
+import type {
+  StudyPlanGoal,
+  StudyPlanSeed,
+  StudyPlanSummary,
+} from "@/types/study-planner";
+import { OfflineNotice } from "./OfflineNotice";
 import { StudyPlanCreator } from "./StudyPlanCreator";
 
-interface StudyPlan {
-  id: string;
+interface TodayTaskItem {
+  planId: string;
+  planSlug: string;
   subjectName: string;
-  slug: string;
   examDate: string;
-  progressPercentage: string;
-  status: string;
+  dayNumber: number;
+  task: {
+    id: string;
+    slug: string | null;
+    title: string;
+    description: string;
+    taskType: string;
+    estimatedMinutes: number;
+    completed: boolean;
+    scheduledDate: string;
+  };
 }
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  },
-};
-
-const cardHoverVariants = {
-  rest: { scale: 1 },
-  hover: {
-    scale: 1.02,
-    transition: {
-      duration: 0.2,
-      ease: "easeOut" as const,
-    },
-  },
-};
-
-const progressBarVariants = {
-  hidden: { width: 0 },
-  visible: (progress: number) => ({
-    width: `${progress}%`,
-    transition: {
-      duration: 0.8,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  }),
-};
-
-// Stats card component with enhanced aesthetics
-function StatsCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-  delay,
-  trend,
+export function StudyPlannerDashboard({
+  initialSeed,
 }: {
-  title: string;
-  value: string | number;
-  subtitle: string;
-  icon: React.ElementType;
-  delay: number;
-  trend?: { value: string; positive: boolean };
+  initialSeed?: StudyPlanSeed;
 }) {
-  return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      transition={{ delay }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-    >
-      <Card className="relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
-        <div className="absolute top-0 right-0 h-24 w-24 translate-x-12 -translate-y-12 rounded-full bg-primary/5 blur-3xl" />
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            {title}
-          </CardTitle>
-          <div className="rounded-xl bg-primary/10 p-2 transition-colors duration-300 group-hover:bg-primary/20">
-            <Icon className="size-4 text-primary" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-baseline justify-between">
-            <motion.div
-              className="font-bold text-3xl tracking-tight"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: delay + 0.2, duration: 0.3 }}
-            >
-              {value}
-            </motion.div>
-            {trend && (
-              <span
-                className={cn(
-                  "inline-flex items-center font-medium text-xs",
-                  trend.positive ? "text-emerald-500" : "text-rose-500",
-                )}
-              >
-                {trend.value}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-// Loading skeleton for stats cards rewritten for glassmorphism
-function StatsCardSkeleton({ delay = 0 }: { delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.3 }}
-    >
-      <Card className="border-border/50 bg-card/40 backdrop-blur-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Skeleton className="h-3 w-20 bg-muted/50" />
-          <Skeleton className="size-8 rounded-xl bg-muted/50" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mb-2 h-9 w-24 bg-muted/50" />
-          <Skeleton className="h-3 w-32 bg-muted/50" />
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-// Loading skeleton for plan cards
-function PlanCardSkeleton({ delay = 0 }: { delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.3 }}
-    >
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-12" />
-          </div>
-          <Skeleton className="h-2 w-full rounded-full" />
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-export function StudyPlannerDashboard() {
   const { user } = useAuth();
   const router = useRouter();
-  const [showCreator, setShowCreator] = useState(false);
-  const [showAllPlans, setShowAllPlans] = useState(false);
+  const queryClient = useQueryClient();
+  const [creatorSeed, setCreatorSeed] = useState<StudyPlanSeed | null>(
+    initialSeed ?? null,
+  );
 
-  const {
-    data: plans,
-    isLoading: loading,
-    error: queryError,
-    refetch: fetchPlans,
-  } = useQuery({
-    queryKey: ["study-plans"],
+  const plansQuery = useQuery({
+    queryKey: ["study-plans", user?.id],
     queryFn: async () => {
-      const { data, error } = await apiClient.api["study-plans"].get();
-      if (error) {
-        throw new Error(
-          typeof error.value === "string"
-            ? error.value
-            : "Failed to load study plans",
-        );
-      }
-      return (data?.data as StudyPlan[]) ?? [];
+      const response = await fetch("/api/study-plans");
+      if (!response.ok) throw new Error("Could not load study plans");
+      const payload = (await response.json()) as {
+        success: boolean;
+        data: StudyPlanSummary[];
+      };
+      return payload.data;
     },
-    enabled: !!user,
+    enabled: Boolean(user),
   });
 
-  const error = queryError
-    ? queryError.message || "Failed to load study plans. Please try again."
-    : null;
+  const todayQuery = useQuery({
+    queryKey: ["today-study-tasks", user?.id],
+    queryFn: async () => {
+      const response = await fetch("/api/study-plans/today");
+      if (!response.ok) throw new Error("Could not load today's tasks");
+      const payload = (await response.json()) as {
+        success: boolean;
+        data: TodayTaskItem[];
+      };
+      return payload.data;
+    },
+    enabled: Boolean(user),
+  });
 
-  // Calculate stats
-  const activePlansCount =
-    plans?.filter((p) => p.status === "active").length ?? 0;
+  const upcomingQuery = useQuery({
+    queryKey: ["upcoming-study-tasks", user?.id],
+    queryFn: async () => {
+      const response = await fetch("/api/study-plans/upcoming");
+      if (!response.ok) throw new Error("Could not load upcoming tasks");
+      const payload = (await response.json()) as {
+        success: boolean;
+        data: TodayTaskItem[];
+      };
+      return payload.data;
+    },
+    enabled: Boolean(user),
+  });
 
-  const todaysTasksCount =
-    plans?.reduce((sum, plan) => {
-      const progress = parseFloat(plan.progressPercentage || "0");
-      return sum + Math.floor(progress / 10);
-    }, 0) ?? 0;
+  const completionMutation = useMutation({
+    mutationFn: async ({
+      item,
+      completed,
+    }: {
+      item: TodayTaskItem;
+      completed: boolean;
+    }) => {
+      const response = item.task.slug
+        ? await fetch(
+            `/api/study-plans/slug/${encodeURIComponent(item.planSlug)}/tasks/${encodeURIComponent(item.task.slug)}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ completed }),
+            },
+          )
+        : await fetch(
+            `/api/study-tasks/${encodeURIComponent(item.task.id)}/${completed ? "complete" : "uncomplete"}`,
+            { method: "PATCH" },
+          );
+      if (!response.ok) throw new Error("The task could not be updated");
+    },
+    onMutate: async ({ item, completed }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["today-study-tasks", user?.id],
+      });
+      const previous = queryClient.getQueryData<TodayTaskItem[]>([
+        "today-study-tasks",
+        user?.id,
+      ]);
+      queryClient.setQueryData<TodayTaskItem[]>(
+        ["today-study-tasks", user?.id],
+        (current = []) =>
+          current.map((candidate) =>
+            candidate.task.id === item.task.id
+              ? {
+                  ...candidate,
+                  task: { ...candidate.task, completed },
+                }
+              : candidate,
+          ),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ["today-study-tasks", user?.id],
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-plans", user?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["today-study-tasks", user?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["upcoming-study-tasks", user?.id],
+      });
+    },
+  });
 
-  const overallProgress =
-    plans && plans.length > 0
-      ? Math.round(
-          plans.reduce(
-            (sum, plan) => sum + parseFloat(plan.progressPercentage || "0"),
-            0,
-          ) / plans.length,
-        )
-      : 0;
-
-  // Show creator with animation
-  if (showCreator) {
+  if (creatorSeed) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.div whileHover={{ x: -4 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            variant="ghost"
-            onClick={() => setShowCreator(false)}
-            className="mb-4 h-11 px-4 text-sm sm:h-10 sm:px-3"
-          >
-            ← Back to Dashboard
-          </Button>
-        </motion.div>
-        <StudyPlanCreator
-          onSuccess={() => {
-            setShowCreator(false);
-            fetchPlans();
-          }}
-        />
-      </motion.div>
+      <StudyPlanCreator
+        initialCourseSlug={creatorSeed.courseSlug}
+        initialTopicSlugs={creatorSeed.topicSlugs}
+        initialMode={creatorSeed.mode}
+        initialGoal={focusModeToGoal(creatorSeed.focusMode)}
+        initialExamDate={creatorSeed.targetDate}
+        onCancel={() => {
+          setCreatorSeed(null);
+          router.replace("/study-planner");
+        }}
+      />
     );
   }
 
-  // Loading state with enhanced skeletons
-  if (loading) {
-    return (
-      <motion.div
-        className="mx-auto max-w-7xl space-y-8 px-4 py-8"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-48 bg-muted/50" />
-            <Skeleton className="h-5 w-64 bg-muted/50" />
-          </div>
-          <Skeleton className="h-11 w-full rounded-xl bg-primary/20 sm:h-12 sm:w-40" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatsCardSkeleton delay={0} />
-          <StatsCardSkeleton delay={0.1} />
-          <StatsCardSkeleton delay={0.2} />
-        </div>
-
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-40 bg-muted/50" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <PlanCardSkeleton delay={0.3} />
-            <PlanCardSkeleton delay={0.4} />
-            <PlanCardSkeleton delay={0.5} />
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
+  const plans = plansQuery.data ?? [];
+  const activePlans = plans.filter((plan) => plan.status === "active");
+  const todayTasks = todayQuery.data ?? [];
+  const upcomingTasks = upcomingQuery.data ?? [];
+  const completedToday = todayTasks.filter(
+    (item) => item.task.completed,
+  ).length;
+  const loading =
+    plansQuery.isLoading || todayQuery.isLoading || upcomingQuery.isLoading;
+  const error = plansQuery.error ?? todayQuery.error ?? upcomingQuery.error;
 
   return (
-    <div className="relative min-h-screen bg-linear-to-b from-background via-background/95 to-background/90 text-foreground antialiased transition-colors duration-500">
-      {/* Dynamic Background Glows */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-[-5%] left-[-5%] h-[35%] w-[35%] rounded-full bg-primary/5 blur-[100px]" />
-      </div>
+    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-5 border-b pb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-medium text-primary text-sm">Study planner</p>
+          <h1 className="mt-1 font-semibold text-3xl tracking-tight">
+            What are you studying today?
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Follow today's tasks, recover missed work, or turn an IOE syllabus
+            into a plan that fits your available time.
+          </p>
+        </div>
+        <Button onClick={() => setCreatorSeed({})}>
+          <Plus className="size-4" />
+          Plan a course
+        </Button>
+      </header>
 
-      <motion.div
-        className="relative mx-auto max-w-350 space-y-12 px-4 py-12 sm:px-6 lg:px-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Error State */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="mb-8"
-          >
-            <Card className="border-destructive/30 bg-destructive/5 backdrop-blur-sm">
-              <CardContent className="flex flex-col items-center gap-4 px-4 py-8 text-center sm:px-6">
-                <div className="rounded-full bg-destructive/10 p-3">
-                  <TrendingUp className="size-6 rotate-180 text-destructive" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-destructive text-lg">
-                    Connection Error
-                  </h3>
-                  <p className="mt-1 max-w-md text-muted-foreground text-sm">
-                    {error}
-                  </p>
-                </div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={() => fetchPlans()}
-                    variant="destructive"
-                    className="h-10 px-8"
-                  >
-                    Reconnect
-                  </Button>
-                </motion.div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+      <OfflineNotice />
 
-        {/* Modern Glass Header Section */}
-        <motion.div
-          className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"
-          variants={itemVariants}
-        >
-          <div className="space-y-2">
-            <h1 className="bg-linear-to-r from-foreground to-foreground/70 bg-clip-text font-extrabold text-4xl text-transparent tracking-tight sm:text-5xl lg:text-6xl">
-              Study <span className="text-primary">Planner</span>
-            </h1>
-            <p className="max-w-2xl text-lg text-muted-foreground/80 leading-relaxed sm:text-xl">
-              Your personal assistant for exam preparation mastery
+      {error && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Planner unavailable</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : "Try again shortly."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {completionMutation.error && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertTitle>Task update failed</AlertTitle>
+          <AlertDescription>
+            The previous state was restored. Check your connection and try
+            again.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <p className="sr-only" role="status" aria-live="polite">
+        {completionMutation.isSuccess ? "Task update saved." : ""}
+      </p>
+
+      <section className="py-9" aria-labelledby="today-heading">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 id="today-heading" className="font-semibold text-2xl">
+              Today
+            </h2>
+            <p className="mt-1 text-muted-foreground text-sm">
+              {todayTasks.length > 0
+                ? `${completedToday} of ${todayTasks.length} tasks complete`
+                : "Your next useful task will appear here."}
             </p>
           </div>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="shrink-0"
-          >
-            <Button
-              onClick={() => setShowCreator(true)}
-              className="group relative h-12 overflow-hidden rounded-2xl bg-primary px-8 font-bold text-primary-foreground shadow-[0_8px_20px_-6px_rgba(var(--primary),0.3)] transition-all duration-300 hover:shadow-[0_12px_24px_-4px_rgba(var(--primary),0.4)]"
-            >
-              <div className="absolute inset-0 bg-linear-to-r from-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-              <Plus className="mr-2 size-5 transition-transform group-hover:rotate-90" />
-              New Study Plan
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatsCard
-            title="Active Journey"
-            value={activePlansCount}
-            subtitle={`${activePlansCount === 1 ? "plan" : "plans"} in progress`}
-            icon={BookOpen}
-            delay={0}
-            trend={{ value: "+12%", positive: true }}
-          />
-          <StatsCard
-            title="Tasks Today"
-            value={todaysTasksCount}
-            subtitle="items for review"
-            icon={ListTodo}
-            delay={0.1}
-          />
-          <StatsCard
-            title="Prep Mastery"
-            value={`${overallProgress}%`}
-            subtitle="average completion"
-            icon={TrendingUp}
-            delay={0.2}
-            trend={{ value: "+5%", positive: true }}
-          />
+          {todayTasks.length > 0 && (
+            <span className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Clock3 className="size-4" />
+              {todayTasks.reduce(
+                (sum, item) => sum + item.task.estimatedMinutes,
+                0,
+              )}{" "}
+              min scheduled
+            </span>
+          )}
         </div>
 
-        {/* Study Plans Section */}
-        <motion.div variants={itemVariants} className="space-y-8">
-          <div className="flex items-center justify-between border-border/10 border-b pb-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2">
-                <BookOpen className="size-6 text-primary" />
-              </div>
-              <h2 className="font-bold text-2xl tracking-tight">
-                Active Journeys
-              </h2>
-            </div>
-            {plans && plans.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="group text-primary hover:bg-primary/5"
-                onClick={() => setShowAllPlans(!showAllPlans)}
-              >
-                {showAllPlans ? "Show Active" : "View All"}
-                <span className="ml-1 transition-transform group-hover:translate-x-1">
-                  →
-                </span>
-              </Button>
-            )}
+        {loading ? (
+          <div className="mt-5 space-y-3">
+            <Skeleton className="h-18 w-full" />
+            <Skeleton className="h-18 w-full" />
           </div>
+        ) : todayTasks.length > 0 ? (
+          <div className="mt-5 divide-y rounded-lg border">
+            {todayTasks.map((item) => (
+              <div
+                key={item.task.id}
+                className="flex items-start gap-4 p-4 sm:p-5"
+              >
+                <Checkbox
+                  className="mt-0.5"
+                  checked={item.task.completed}
+                  onCheckedChange={(value) =>
+                    completionMutation.mutate({
+                      item,
+                      completed: value === true,
+                    })
+                  }
+                  aria-label={`Mark ${item.task.title} ${item.task.completed ? "incomplete" : "complete"}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/study-planner/${item.planSlug}`}
+                      className="font-medium hover:text-primary hover:underline"
+                    >
+                      {item.task.title}
+                    </Link>
+                    <Badge variant="outline" className="capitalize">
+                      {item.task.taskType}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-muted-foreground text-sm">
+                    {item.subjectName} · {item.task.estimatedMinutes} min
+                  </p>
+                </div>
+                <Button asChild variant="ghost" size="icon">
+                  <Link href={`/study-planner/${item.planSlug}`}>
+                    <ArrowRight className="size-4" />
+                    <span className="sr-only">Open {item.subjectName}</span>
+                  </Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-lg border bg-muted/20 p-6 sm:p-8">
+            <CheckCircle2 className="size-6 text-muted-foreground" />
+            <h3 className="mt-4 font-semibold">
+              {activePlans.length > 0
+                ? "No tasks scheduled today"
+                : "Turn a course syllabus into a daily plan"}
+            </h3>
+            <p className="mt-2 max-w-xl text-muted-foreground text-sm leading-6">
+              {activePlans.length > 0
+                ? "Open a plan to review upcoming work or move a task into today."
+                : "Choose a course, set your exam date and available minutes, then review the schedule before starting."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {activePlans.length > 0 ? (
+                <Button asChild variant="outline">
+                  <Link href={`/study-planner/${activePlans[0].slug}`}>
+                    Open active plan
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={() =>
+                      setCreatorSeed({
+                        courseSlug: "data-structures-algorithms",
+                      })
+                    }
+                  >
+                    <BookOpen className="size-4" />
+                    Try the Data Structures example
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/course-explorer">Browse courses</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setCreatorSeed({ mode: "manual" })}
+                  >
+                    Enter topics manually
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
 
-          {!plans || plans.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Card className="relative overflow-hidden border-border/40 border-dashed bg-card/40 backdrop-blur-md">
-                <div className="absolute top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-                <CardContent className="relative flex flex-col items-center px-4 py-20 text-center sm:px-6 sm:py-32">
-                  <div className="group relative mb-8">
-                    <div className="absolute inset-0 scale-150 animate-pulse bg-primary/20 blur-3xl transition-all group-hover:bg-primary/30" />
-                    <div className="relative rounded-3xl bg-secondary/80 p-6 shadow-2xl ring-1 ring-border/50 backdrop-blur-xl">
-                      <BookOpen className="size-16 text-primary/60" />
+      <section className="border-t py-9" aria-labelledby="upcoming-heading">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 id="upcoming-heading" className="font-semibold text-2xl">
+              Upcoming
+            </h2>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Unfinished work scheduled for the next seven days.
+            </p>
+          </div>
+          {upcomingTasks.length > 5 && (
+            <span className="text-muted-foreground text-sm">
+              Showing 5 of {upcomingTasks.length}
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="mt-5 space-y-3">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ) : upcomingTasks.length > 0 ? (
+          <div className="mt-5 divide-y rounded-lg border">
+            {upcomingTasks.slice(0, 5).map((item) => (
+              <Link
+                key={item.task.id}
+                href={`/study-planner/${item.planSlug}`}
+                className="flex items-center justify-between gap-4 p-4 hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none sm:px-5"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-sm">
+                    {item.task.title}
+                  </span>
+                  <span className="mt-1 block text-muted-foreground text-xs">
+                    {item.subjectName} · {item.task.estimatedMinutes} min
+                  </span>
+                </span>
+                <span className="shrink-0 text-muted-foreground text-sm">
+                  {formatShortDate(item.task.scheduledDate)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 text-muted-foreground text-sm">
+            No unfinished tasks are scheduled for the next seven days.
+          </p>
+        )}
+      </section>
+
+      <section className="border-t pt-9" aria-labelledby="plans-heading">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 id="plans-heading" className="font-semibold text-2xl">
+              Your plans
+            </h2>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Active plans first, with honest progress from completed tasks.
+            </p>
+          </div>
+          <Button asChild variant="ghost">
+            <Link href="/course-explorer">
+              Browse courses
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="mt-5 space-y-3">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : plans.length > 0 ? (
+          <div className="mt-5 divide-y rounded-lg border">
+            {plans.map((plan) => {
+              const progress = Number(plan.progressPercentage ?? 0);
+              return (
+                <Link
+                  key={plan.id}
+                  href={`/study-planner/${plan.slug}`}
+                  className="group block p-4 hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none sm:p-5"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold group-hover:text-primary">
+                          {plan.subjectName}
+                        </h3>
+                        <Badge variant="outline" className="capitalize">
+                          {plan.status}
+                        </Badge>
+                        {(plan.overdueTasks ?? 0) > 0 && (
+                          <Badge variant="secondary">
+                            {plan.overdueTasks} overdue
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-3 flex items-center gap-3">
+                        <Progress value={progress} className="max-w-60" />
+                        <span className="text-muted-foreground text-xs">
+                          {plan.completedTasks ?? 0}/{plan.totalTasks ?? 0}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-5 text-muted-foreground text-sm">
+                      {(plan.todayTasks ?? 0) > 0 && (
+                        <span>{plan.todayTasks} today</span>
+                      )}
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays className="size-4" />
+                        {formatExamDate(plan.examDate)}
+                      </span>
+                      <ArrowRight className="size-4" />
                     </div>
                   </div>
-                  <h3 className="font-bold text-2xl tracking-tight sm:text-3xl">
-                    Begin Your Success Story
-                  </h3>
-                  <p className="mt-4 mb-10 max-w-md text-lg text-muted-foreground/80 leading-relaxed">
-                    No active study plans yet. Design a roadmap tailored to your
-                    exams and start mastering your curriculum today.
-                  </p>
-                  <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      onClick={() => setShowCreator(true)}
-                      className="h-14 rounded-2xl bg-primary px-10 font-bold text-lg shadow-[0_8px_20px_-6px_rgba(var(--primary),0.3)] transition-all hover:shadow-[0_12px_24px_-4px_rgba(var(--primary),0.4)]"
-                    >
-                      <Plus className="mr-2 size-6" />
-                      Create Your First Journey
-                    </Button>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {plans
-                ?.filter((p) => showAllPlans || p.status === "active")
-                .map((plan, index) => {
-                  const progress = parseFloat(plan.progressPercentage || "0");
-                  return (
-                    <motion.div
-                      key={plan.id}
-                      variants={itemVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      animate="visible"
-                      custom={index}
-                      onClick={() =>
-                        router.push(`/dashboard/study-plans/${plan.slug}`)
-                      }
-                      className="cursor-pointer"
-                    >
-                      <motion.div variants={cardHoverVariants}>
-                        <Card className="group relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-md transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10">
-                          <div className="absolute top-0 right-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-primary/5 blur-2xl" />
-                          <CardHeader className="pb-4">
-                            <CardTitle className="font-bold text-foreground text-lg tracking-tight transition-colors group-hover:text-primary sm:text-xl">
-                              {plan.subjectName}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between font-bold text-muted-foreground/80 text-xs uppercase tracking-wider">
-                                <span>Mastery Progress</span>
-                                <motion.span
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: 0.5 + index * 0.1 }}
-                                  className="text-primary"
-                                >
-                                  {Math.round(progress)}%
-                                </motion.span>
-                              </div>
-                              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary ring-1 ring-border/50">
-                                <motion.div
-                                  className="h-full rounded-full bg-linear-to-r from-primary to-primary/80 shadow-[0_0_12px_-2px_rgba(var(--primary),0.4)]"
-                                  variants={progressBarVariants}
-                                  initial="hidden"
-                                  animate="visible"
-                                  custom={progress}
-                                />
-                                <motion.div
-                                  className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent"
-                                  animate={{ x: ["-100%", "200%"] }}
-                                  transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between pt-2">
-                              <div className="flex flex-col gap-1">
-                                <span className="font-bold text-muted-foreground/60 text-xs uppercase tracking-tight">
-                                  Exam Date
-                                </span>
-                                <span className="font-semibold text-sm">
-                                  {new Date(plan.examDate).toLocaleDateString(
-                                    undefined,
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    },
-                                  )}
-                                </span>
-                              </div>
-                              <Badge
-                                variant={
-                                  progress >= 80 ? "default" : "secondary"
-                                }
-                                className={cn(
-                                  "rounded-lg px-3 py-1 font-bold text-xs transition-all duration-300",
-                                  progress >= 80
-                                    ? "bg-emerald-500 hover:bg-emerald-600"
-                                    : "bg-primary/10 text-primary hover:bg-primary/20",
-                                )}
-                              >
-                                {progress >= 80 ? "On Track" : "In Progress"}
-                              </Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    </motion.div>
-                  );
-                })}
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Today's Tasks Section */}
-        <motion.div variants={itemVariants} className="space-y-8">
-          <div className="flex items-center justify-between border-border/10 border-b pb-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary/10 p-2">
-                <ListTodo className="size-6 text-primary" />
-              </div>
-              <h2 className="font-bold text-2xl tracking-tight">
-                Target for Today
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="h-7 border-emerald-500/20 bg-emerald-500/5 px-3 font-semibold text-emerald-600 dark:text-emerald-400"
-              >
-                <div className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                Focus Mode: ACTIVE
-              </Badge>
-            </div>
+                </Link>
+              );
+            })}
           </div>
-          <div className="rounded-3xl border-border/40 bg-card/40 p-1.5 shadow-2xl ring-1 ring-border/20 backdrop-blur-md">
-            <DailyTaskView />
-          </div>
-        </motion.div>
-      </motion.div>
-    </div>
+        ) : (
+          <p className="mt-5 text-muted-foreground text-sm">
+            No plans yet. Start with the example above or browse a course.
+          </p>
+        )}
+      </section>
+    </main>
   );
+}
+
+function focusModeToGoal(focusMode: StudyPlanSeed["focusMode"]): StudyPlanGoal {
+  if (focusMode === "essentials") return "minimum";
+  if (focusMode === "full") return "full-coverage";
+  return "exam-prep";
+}
+
+function formatExamDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function formatShortDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
 }

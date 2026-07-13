@@ -13,6 +13,7 @@ import {
   collegeDepartmentsToPrograms,
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
+import { resolveCourseReference } from "../services/course-explorer-query-service";
 
 export const programRoutes = new Elysia({ prefix: "/programs" })
   .use(authorizationPlugin)
@@ -466,6 +467,7 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
         const programCourseResults = await db
           .select({
             id: collegeDepartmentProgramToCourses.id,
+            slug: academicCourses.slug,
             name: academicCourses.name,
             code: academicCourses.code,
             description: academicCourses.description,
@@ -594,6 +596,56 @@ export const courseRoutes = new Elysia({ prefix: "/courses" })
       detail: {
         tags: ["Courses"],
         summary: "Get course details by code",
+      },
+    },
+  )
+  .get(
+    "/slug/:slug",
+    async ({ params: { slug }, set }) => {
+      const resolution = await resolveCourseReference(slug);
+      if (!resolution) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+
+      const course = await db.query.academicCourses.findFirst({
+        where: { id: resolution.id },
+        with: {
+          academicPrograms: {
+            with: {
+              collegeDepartments: {
+                with: {
+                  college: {
+                    with: {
+                      university: true,
+                    },
+                  },
+                  department: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!course) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+
+      return {
+        success: true,
+        data: {
+          ...course,
+          canonicalSlug: resolution.slug,
+          matchedBy: resolution.matchedBy,
+        },
+      };
+    },
+    {
+      detail: {
+        tags: ["Courses"],
+        summary: "Get course details by canonical slug or legacy reference",
       },
     },
   )

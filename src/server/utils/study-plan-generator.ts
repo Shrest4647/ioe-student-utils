@@ -8,6 +8,7 @@ interface StudyTopic {
 
 interface GeneratedTask {
   id: string;
+  slug: string;
   title: string;
   description: string;
   taskType: string;
@@ -77,11 +78,14 @@ export async function generateStudyPlan(
     for (const topic of dayTopics) {
       for (const slot of timeSlots) {
         for (const taskPattern of template.dailyStructure[slot]) {
+          const taskType = taskPattern.type;
+          const slug = `${slugify(topic.name)}-${taskType}-${day}-${tasks.length + 1}`;
           tasks.push({
             id: crypto.randomUUID(),
+            slug,
             title: replacePlaceholders(taskPattern.template, topic, day),
             description: "",
-            taskType: taskPattern.type,
+            taskType,
             estimatedMinutes: taskPattern.estimated_minutes,
           });
         }
@@ -92,6 +96,18 @@ export async function generateStudyPlan(
   }
 
   return dailyTasks;
+}
+
+function slugify(value: string): string {
+  return (
+    value
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "topic"
+  );
 }
 
 function replacePlaceholders(

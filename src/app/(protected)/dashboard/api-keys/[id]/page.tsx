@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, Key, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,16 +33,11 @@ import { apiClient } from "@/lib/eden";
  * Displays the API key's details, allows editing name, status, expiration, metadata and permissions,
  * and provides actions to regenerate or delete the key.
  *
- * @param params - Route parameters object
- * @param params.id - The API key identifier to load and manage
  * @returns The page JSX element that displays API key details and management actions
  */
-export default function ApiKeyDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ApiKeyDetailPage() {
   const router = useRouter();
+  const { id } = useParams<{ id: string }>();
   const [name, setName] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [expiresIn, setExpiresIn] = useState(30);
@@ -51,11 +46,11 @@ export default function ApiKeyDetailPage({
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["api-key", params.id],
+    queryKey: ["api-key", id],
     queryFn: async () => {
       const { data, error } = await apiClient.api
         .apikeys({
-          id: params.id,
+          id,
         })
         .get();
       if (error) {
@@ -73,7 +68,7 @@ export default function ApiKeyDetailPage({
 
       const { error } = await apiClient.api
         .apikeys({
-          id: params.id,
+          id,
         })
         .put({
           name: name.trim(),
@@ -106,10 +101,10 @@ export default function ApiKeyDetailPage({
 
       const { error } = await apiClient.api
         .apikeys({
-          id: params.id,
+          id,
         })
         .regenerate.post({
-          params: { id: params.id },
+          params: { id },
         });
 
       if (error) {
@@ -130,7 +125,7 @@ export default function ApiKeyDetailPage({
 
       const { error } = await apiClient.api
         .apikeys({
-          id: params.id,
+          id,
         })
         .put({
           name: name.trim(),

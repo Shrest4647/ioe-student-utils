@@ -11,11 +11,17 @@ import {
 } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 import {
+  getCourseLearningView,
+  listCourseCatalog,
+  resolveCourseReference,
+} from "../services/course-explorer-query-service";
+import {
   computeCourseGraphDiff,
   exportCourseGraph,
   upsertCourseGraph,
 } from "../services/course-graph-service";
 import { validateCourseGraphInput } from "../services/course-graph-validator";
+import { getCoursePlanningContext } from "../services/study-plan-service";
 
 // ============================================================================
 // Public Course Routes
@@ -24,6 +30,36 @@ import { validateCourseGraphInput } from "../services/course-graph-validator";
 export const courseExplorerPublicRoutes = new Elysia({
   prefix: "/course-explorer",
 })
+  .get(
+    "/catalog",
+    async ({ query }) => {
+      const data = await listCourseCatalog({
+        search: query.search,
+        page: Number(query.page ?? 1),
+        limit: Number(query.limit ?? 24),
+        readiness: query.readiness ?? "all",
+      });
+      return { success: true, ...data };
+    },
+    {
+      query: t.Object({
+        search: t.Optional(t.String()),
+        page: t.Optional(t.String()),
+        limit: t.Optional(t.String()),
+        readiness: t.Optional(
+          t.Union([
+            t.Literal("ready"),
+            t.Literal("upcoming"),
+            t.Literal("all"),
+          ]),
+        ),
+      }),
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "List searchable course learning summaries",
+      },
+    },
+  )
   // Get all courses with basic info
   .get(
     "/courses",
@@ -48,6 +84,17 @@ export const courseExplorerPublicRoutes = new Elysia({
           units: {
             where: { isActive: true },
             orderBy: { sortOrder: "asc" },
+            with: {
+              topics: {
+                where: { isActive: true },
+                columns: { id: true, weightage: true },
+                with: {
+                  resources: {
+                    columns: { id: true },
+                  },
+                },
+              },
+            },
             columns: {
               id: true,
               slug: true,
@@ -106,8 +153,14 @@ export const courseExplorerPublicRoutes = new Elysia({
   .get(
     "/courses/slug/:slug",
     async ({ params: { slug }, set }) => {
+      const resolution = await resolveCourseReference(slug);
+      if (!resolution) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+
       const course = await db.query.academicCourses.findFirst({
-        where: { slug, isActive: true },
+        where: { id: resolution.id, isActive: true },
         with: {
           units: {
             where: { isActive: true },
@@ -129,12 +182,59 @@ export const courseExplorerPublicRoutes = new Elysia({
         return { success: false, error: "Course not found" };
       }
 
-      return { success: true, data: course };
+      return {
+        success: true,
+        data: {
+          ...course,
+          canonicalSlug: resolution.slug,
+          matchedBy: resolution.matchedBy,
+        },
+      };
     },
     {
       detail: {
         tags: ["Course Explorer"],
         summary: "Get course by slug with units",
+      },
+    },
+  )
+  .get(
+    "/courses/slug/:slug/learning-view",
+    async ({ params: { slug }, set }) => {
+      const result = await getCourseLearningView(slug);
+      if (!result) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+
+      return {
+        success: true,
+        data: result.view,
+        canonicalSlug: result.resolution.slug,
+        matchedBy: result.resolution.matchedBy,
+      };
+    },
+    {
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "Get outline-first course learning view",
+      },
+    },
+  )
+  .get(
+    "/courses/slug/:slug/planning-context",
+    async ({ params: { slug }, set }) => {
+      const context = await getCoursePlanningContext(slug);
+      if (!context) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+      return { success: true, data: context };
+    },
+    {
+      detail: {
+        tags: ["Course Explorer"],
+        summary: "Get ordered course topics for study planning",
       },
     },
   )
@@ -186,8 +286,14 @@ export const courseExplorerPublicRoutes = new Elysia({
   .get(
     "/courses/slug/:slug/mindmap",
     async ({ params: { slug }, query, set }) => {
+      const resolution = await resolveCourseReference(slug);
+      if (!resolution) {
+        set.status = 404;
+        return { success: false, error: "Course not found" };
+      }
+
       const course = await db.query.academicCourses.findFirst({
-        where: { slug, isActive: true },
+        where: { id: resolution.id, isActive: true },
         with: {
           units: {
             where: { isActive: true },
@@ -711,7 +817,7 @@ export const courseExplorerTopicRoutes = new Elysia({
       },
     },
   )
-  // Increment topic view count
+  // Legacy compatibility endpoint. Topic analytics are not persisted here.
   .post(
     "/slug/:slug/view",
     async ({ params: { slug }, set }) => {
@@ -724,19 +830,13 @@ export const courseExplorerTopicRoutes = new Elysia({
         return { success: false, error: "Topic not found" };
       }
 
-      await db
-        .update(courseTopics)
-        .set({
-          updatedAt: new Date(),
-        })
-        .where(eq(courseTopics.id, topic.id));
-
-      return { success: true };
+      return { success: true, tracked: false };
     },
     {
       detail: {
         tags: ["Course Explorer"],
-        summary: "Track topic view",
+        summary: "Legacy topic view compatibility endpoint",
+        deprecated: true,
       },
     },
   );
@@ -845,15 +945,16 @@ export const courseExplorerAdminRoutes = new Elysia({
         return { success: false, error: "Course not found" };
       }
 
+      const copySuffix = nanoid(5).toLowerCase();
       const newCourse = await db
         .insert(academicCourses)
         .values({
           ...course,
           id: nanoid(),
-          slug: nanoid(),
-          name: course.name,
+          slug: `${course.slug}-copy-${copySuffix}`,
+          name: `${course.name} copy`,
           description: course.description,
-          code: course.code,
+          code: `${course.code}-COPY-${copySuffix.toUpperCase()}`,
           credits: course.credits,
           isActive: true,
           createdAt: new Date(),

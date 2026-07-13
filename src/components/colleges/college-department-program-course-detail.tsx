@@ -92,6 +92,9 @@ function CourseDetailContent({
     <CourseCard
       course={{
         id: course.id,
+        slug:
+          course.course?.slug ||
+          (course.code || course.course?.code || "course").toLowerCase(),
         name: course.course?.name || "",
         code: course.code || course.course?.code || "",
         description: course.description || course.course?.description || "",

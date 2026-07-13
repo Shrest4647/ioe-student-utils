@@ -41,7 +41,7 @@ export type Resource = {
   contentType: {
     id: string;
     name: string;
-  };
+  } | null;
   categories: {
     id: string;
     name: string;
@@ -52,7 +52,7 @@ export type Resource = {
   uploader: {
     id: string;
     name: string;
-  };
+  } | null;
   createdAt: string;
   isFeatured: boolean;
   attachments?: ResourceAttachment[];
@@ -92,8 +92,9 @@ const contentTypeIcons: Record<string, any> = {
 };
 
 export function ResourceCard({ resource }: ResourceCardProps) {
-  const ContentIcon = contentTypeIcons[resource.contentType.name] || BookOpen;
-  const bgColor = contentTypeColors[resource.contentType.name] || "bg-gray-500";
+  const contentTypeName = resource.contentType?.name ?? "Other";
+  const ContentIcon = contentTypeIcons[contentTypeName] || BookOpen;
+  const bgColor = contentTypeColors[contentTypeName] || "bg-muted";
 
   // Get the primary attachment for the card display
   const primaryAttachment = resource.attachments?.[0];
@@ -123,7 +124,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               <ContentIcon className="h-8 w-8 text-white" />
             </div>
             <Badge className="absolute top-3 right-2 bg-white/90 text-[10px] text-black hover:bg-white">
-              {resource.contentType.name}
+              {contentTypeName}
             </Badge>
           </div>
         </Link>
