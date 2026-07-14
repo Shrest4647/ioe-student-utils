@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -148,6 +150,9 @@ export const quizAttempts = pgTable(
     index("quiz_attempts_user_id_idx").on(t.userId),
     index("quiz_attempts_status_idx").on(t.status),
     index("quiz_attempts_started_at_idx").on(t.startedAt),
+    uniqueIndex("quiz_attempts_active_unique")
+      .on(t.quizId, t.userId)
+      .where(sql`status = 'in_progress'`),
   ],
 );
 

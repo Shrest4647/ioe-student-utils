@@ -2,18 +2,16 @@
 
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { QuizSkeleton } from "@/components/quiz";
 import { useQuizList } from "@/components/quiz/use-quiz-data";
 import { Input } from "@/components/ui/input";
 
-export default function QuizCatalogPage() {
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    setSearch(new URLSearchParams(window.location.search).get("q") ?? "");
-  }, []);
+function QuizCatalog() {
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [debounced] = useDebounceValue(search, 300);
   const { data, isLoading } = useQuizList({
     search: debounced,
@@ -92,5 +90,13 @@ export default function QuizCatalogPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function QuizCatalogPage() {
+  return (
+    <Suspense fallback={<QuizSkeleton />}>
+      <QuizCatalog />
+    </Suspense>
   );
 }

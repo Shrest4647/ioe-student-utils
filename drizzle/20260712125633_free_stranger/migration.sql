@@ -79,7 +79,7 @@ ALTER TABLE "study_templates" ADD COLUMN "slug" varchar(120);--> statement-break
 ALTER TABLE "study_templates" ADD COLUMN "description" text;--> statement-breakpoint
 ALTER TABLE "study_templates" ADD COLUMN "planning_mode" varchar(50);--> statement-breakpoint
 ALTER TABLE "study_templates" ADD COLUMN "version" integer DEFAULT 1 NOT NULL;--> statement-breakpoint
-WITH template_slugs AS (
+WITH template_slug_parts AS (
 	SELECT
 		"id",
 		COALESCE(
@@ -94,31 +94,43 @@ WITH template_slugs AS (
 			ORDER BY "id"
 		) AS "slug_position"
 	FROM "study_templates"
+),
+template_slugs AS (
+	SELECT
+		"id",
+		CASE
+			WHEN "slug_position" = 1 THEN LEFT("base_slug", 120)
+			ELSE LEFT("base_slug", 119 - LENGTH("slug_position"::text)) || '-' || "slug_position"
+		END AS "slug"
+	FROM template_slug_parts
 )
 UPDATE "study_templates" AS template
-SET "slug" = CASE
-	WHEN source."slug_position" = 1 THEN source."base_slug"
-	ELSE source."base_slug" || '-' || source."slug_position"
-END
+SET "slug" = source."slug"
 FROM template_slugs AS source
 WHERE template."id" = source."id" AND template."slug" IS NULL;--> statement-breakpoint
 UPDATE "study_tasks" AS task
 SET "scheduled_date" = plan."start_date" + (task."day_number" - 1)
 FROM "study_plans" AS plan
 WHERE task."study_plan_id" = plan."id" AND task."scheduled_date" IS NULL;--> statement-breakpoint
-WITH task_slugs AS (
+WITH task_slug_parts AS (
 	SELECT
 		"id",
-		"study_plan_id",
 		COALESCE(
 			NULLIF(TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER("title"), '[^a-z0-9]+', '-', 'g')), ''),
 			'task'
-		) || '-' || "day_number" || '-' ||
+		) AS "base_slug",
+		"day_number",
 		ROW_NUMBER() OVER (
 			PARTITION BY "study_plan_id"
 			ORDER BY "day_number", "created_at", "id"
-		) AS "task_slug"
+		) AS "row_num"
 	FROM "study_tasks"
+),
+task_slugs AS (
+	SELECT
+		"id",
+		LEFT("base_slug", 158 - LENGTH("day_number"::text) - LENGTH("row_num"::text)) || '-' || "day_number" || '-' || "row_num" AS "task_slug"
+	FROM task_slug_parts
 )
 UPDATE "study_tasks" AS task
 SET "slug" = source."task_slug"

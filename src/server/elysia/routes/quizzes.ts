@@ -252,16 +252,39 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
           ),
         );
 
-      const [attempt] = await db
-        .insert(quizAttempts)
-        .values({
-          quizId,
-          userId: user.id,
-          guestSessionId: body.guestSessionId ?? null,
-          metadata: body.metadata ?? null,
-          totalQuestions: Number(count || 0),
-        })
-        .returning();
+      let attempt: typeof quizAttempts.$inferSelect;
+      try {
+        [attempt] = await db
+          .insert(quizAttempts)
+          .values({
+            quizId,
+            userId: user.id,
+            guestSessionId: body.guestSessionId ?? null,
+            metadata: body.metadata ?? null,
+            totalQuestions: Number(count || 0),
+          })
+          .returning();
+      } catch (error: any) {
+        if (
+          error &&
+          (error.code === "23505" || String(error).includes("unique"))
+        ) {
+          const resumableConflict = await db.query.quizAttempts.findFirst({
+            where: { quizId, userId: user.id, status: "in_progress" },
+            orderBy: { startedAt: "desc" },
+          });
+          if (resumableConflict) {
+            const answers = await db.query.quizAttemptAnswers.findMany({
+              where: { attemptId: resumableConflict.id },
+            });
+            return {
+              success: true,
+              data: { ...resumableConflict, answers, resumed: true },
+            };
+          }
+        }
+        throw error;
+      }
 
       return {
         success: true,

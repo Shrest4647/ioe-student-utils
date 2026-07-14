@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CourseStatusBadge } from "@/components/instructor/course-status-badge";
 import {
@@ -70,6 +70,20 @@ export default function InstructorCoursesPage() {
       return response.data.data;
     },
   });
+
+  useEffect(() => {
+    if (!courses) return;
+    const currentIds = new Set(courses.map((c) => c.id));
+    setSelectedCourses((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (currentIds.has(id)) {
+          next.add(id);
+        }
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [courses]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
