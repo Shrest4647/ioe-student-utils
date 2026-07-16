@@ -1,139 +1,76 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { eq } from "drizzle-orm";
 import { conn, db } from "../index";
 import { quizOptions, quizQuestions, quizzes } from "../schema";
 
-type SeedOption = {
-  orderNo: number;
+type AssetOption = {
   text: string;
   isCorrect: boolean;
   rationale?: string;
 };
 
-type SeedQuestion = {
-  orderNo: number;
-  prompt: string;
+type AssetQuestion = {
+  question: string;
+  answerOptions: AssetOption[];
   hint?: string;
-  rationale?: string;
-  options: SeedOption[];
 };
 
-const sampleQuiz: {
-  slug: string;
+type AssetQuiz = {
   title: string;
-  description: string;
-  difficulty: "easy" | "medium" | "hard";
-  estimatedMinutes: number;
-  passPercentage: number;
-  questions: SeedQuestion[];
-} = {
-  slug: "ioe-computer-networks-basics",
-  title: "Computer Networks Basics",
-  description:
-    "Fundamental networking concepts for IOE students. Covers OSI model, protocols, addressing, and transport basics.",
-  difficulty: "medium",
-  estimatedMinutes: 10,
-  passPercentage: 60,
-  questions: [
-    {
-      orderNo: 1,
-      prompt: "Which layer of the OSI model is responsible for routing?",
-      hint: "Think about IP packets and path selection.",
-      options: [
-        {
-          orderNo: 1,
-          text: "Application layer",
-          isCorrect: false,
-          rationale: "Application handles end-user services, not routing.",
-        },
-        {
-          orderNo: 2,
-          text: "Network layer",
-          isCorrect: true,
-          rationale:
-            "The network layer performs logical addressing and routing.",
-        },
-        {
-          orderNo: 3,
-          text: "Data link layer",
-          isCorrect: false,
-          rationale: "Data link handles local framing and MAC addressing.",
-        },
-        {
-          orderNo: 4,
-          text: "Transport layer",
-          isCorrect: false,
-          rationale: "Transport provides end-to-end process communication.",
-        },
-      ],
-    },
-    {
-      orderNo: 2,
-      prompt: "What is the default port number for HTTPS?",
-      hint: "This is the secure variant of HTTP.",
-      options: [
-        { orderNo: 1, text: "21", isCorrect: false, rationale: "21 is FTP." },
-        {
-          orderNo: 2,
-          text: "80",
-          isCorrect: false,
-          rationale: "80 is default for HTTP.",
-        },
-        {
-          orderNo: 3,
-          text: "443",
-          isCorrect: true,
-          rationale: "443 is the default for HTTPS.",
-        },
-        {
-          orderNo: 4,
-          text: "8080",
-          isCorrect: false,
-          rationale: "8080 is an alternative HTTP port.",
-        },
-      ],
-    },
-    {
-      orderNo: 3,
-      prompt: "Which device forwards frames based on MAC addresses?",
-      options: [
-        {
-          orderNo: 1,
-          text: "Router",
-          isCorrect: false,
-          rationale: "Routers forward packets using IP.",
-        },
-        {
-          orderNo: 2,
-          text: "Switch",
-          isCorrect: true,
-          rationale: "Switches operate at L2 and use MAC address tables.",
-        },
-        {
-          orderNo: 3,
-          text: "Hub",
-          isCorrect: false,
-          rationale: "Hubs broadcast blindly to all ports.",
-        },
-        {
-          orderNo: 4,
-          text: "Gateway",
-          isCorrect: false,
-          rationale: "Gateway translates across protocols/networks.",
-        },
-      ],
-    },
-  ],
+  questions: AssetQuestion[];
 };
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .slice(0, 255);
+}
+
+function validateQuiz(quiz: AssetQuiz) {
+  if (!quiz.title?.trim() || !Array.isArray(quiz.questions)) {
+    throw new Error("Quiz asset must include a title and questions array.");
+  }
+
+  quiz.questions.forEach((question, questionIndex) => {
+    if (!question.question?.trim() || !Array.isArray(question.answerOptions)) {
+      throw new Error(
+        `Question ${questionIndex + 1} is missing its prompt or options.`,
+      );
+    }
+
+    const correctOptionCount = question.answerOptions.filter(
+      (option) => option.isCorrect,
+    ).length;
+    if (correctOptionCount !== 1) {
+      throw new Error(
+        `Question ${questionIndex + 1} must have exactly one correct option.`,
+      );
+    }
+
+    if (question.answerOptions.some((option) => !option.text?.trim())) {
+      throw new Error(`Question ${questionIndex + 1} has an empty option.`);
+    }
+  });
+}
 
 export async function seedQuizzes(createdById?: string) {
+  const assetPath = path.join(process.cwd(), "assets", "yolox-quiz.json");
+  const raw = await readFile(assetPath, "utf8");
+  const parsed = JSON.parse(raw) as AssetQuiz;
+  validateQuiz(parsed);
+
+  const slug = slugify(parsed.title || "yolox-quiz");
   const existing = await db
     .select({ id: quizzes.id })
     .from(quizzes)
-    .where(eq(quizzes.slug, sampleQuiz.slug))
+    .where(eq(quizzes.slug, slug))
     .limit(1);
 
   if (existing.length > 0) {
-    console.log("⏭️ Sample quiz already seeded.");
+    console.log(`⏭️ Quiz already seeded: ${slug}`);
     return;
   }
 
@@ -150,58 +87,67 @@ export async function seedQuizzes(createdById?: string) {
     return;
   }
 
-  const [quiz] = await db
-    .insert(quizzes)
-    .values({
-      slug: sampleQuiz.slug,
-      title: sampleQuiz.title,
-      description: sampleQuiz.description,
-      difficulty: sampleQuiz.difficulty,
-      estimatedMinutes: sampleQuiz.estimatedMinutes,
-      passPercentage: sampleQuiz.passPercentage,
-      status: "published",
-      createdById: fallbackUser,
-      updatedById: fallbackUser,
-      publishedAt: new Date(),
-      version: 1,
-    })
-    .returning({ id: quizzes.id });
-
-  for (const question of sampleQuiz.questions) {
-    const [insertedQuestion] = await db
-      .insert(quizQuestions)
+  await db.transaction(async (tx) => {
+    const [quiz] = await tx
+      .insert(quizzes)
       .values({
-        quizId: quiz.id,
-        orderNo: question.orderNo,
-        prompt: question.prompt,
-        hint: question.hint ?? null,
-        rationale: question.rationale ?? null,
-        questionType: "single_choice",
-        points: 1,
-        isActive: true,
+        slug,
+        title: parsed.title,
+        description: "Imported from assets/yolox-quiz.json",
+        difficulty: "medium",
+        estimatedMinutes: 20,
+        passPercentage: 60,
+        status: "published",
+        createdById: fallbackUser,
+        updatedById: fallbackUser,
+        publishedAt: new Date(),
+        version: 1,
       })
-      .returning({ id: quizQuestions.id });
+      .returning({ id: quizzes.id });
 
-    await db.insert(quizOptions).values(
-      question.options.map((option) => ({
-        questionId: insertedQuestion.id,
-        orderNo: option.orderNo,
-        text: option.text,
-        isCorrect: option.isCorrect,
-        rationale: option.rationale ?? null,
-      })),
-    );
-  }
+    for (const [questionIndex, question] of parsed.questions.entries()) {
+      const [insertedQuestion] = await tx
+        .insert(quizQuestions)
+        .values({
+          quizId: quiz.id,
+          orderNo: questionIndex + 1,
+          prompt: question.question,
+          hint: question.hint ?? null,
+          rationale: null,
+          questionType: "single_choice",
+          points: 1,
+          isActive: true,
+        })
+        .returning({ id: quizQuestions.id });
 
-  console.log("✅ Seeded sample quiz with questions and options.");
+      await tx.insert(quizOptions).values(
+        question.answerOptions.map((option, optionIndex) => ({
+          questionId: insertedQuestion.id,
+          orderNo: optionIndex + 1,
+          text: option.text,
+          isCorrect: option.isCorrect,
+          rationale: option.rationale ?? null,
+        })),
+      );
+    }
+  });
+
+  const optionCount = parsed.questions.reduce(
+    (total, question) => total + question.answerOptions.length,
+    0,
+  );
+  console.log(
+    `✅ Seeded ${parsed.title} with ${parsed.questions.length} questions and ${optionCount} options.`,
+  );
 }
 
-seedQuizzes()
-  .catch((error) => {
-    console.error("❌ Seeding failed:", error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await conn.end();
-    process.exit(0);
-  });
+if (import.meta.main) {
+  seedQuizzes()
+    .catch((error) => {
+      console.error("❌ Seeding failed:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await conn.end();
+    });
+}

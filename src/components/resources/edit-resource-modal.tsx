@@ -179,7 +179,7 @@ export function EditResourceModal({
     if (isOpen && resource) {
       form.setFieldValue("title", resource.title);
       form.setFieldValue("description", resource.description ?? "");
-      form.setFieldValue("contentTypeId", resource.contentType.id);
+      form.setFieldValue("contentTypeId", resource.contentType?.id ?? "");
       form.setFieldValue(
         "categoryIds",
         resource.categories.map((c) => c.id),

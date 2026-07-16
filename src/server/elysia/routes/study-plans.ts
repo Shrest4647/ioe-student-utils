@@ -1,19 +1,69 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { studyPlans, studyTasks, studyTemplates } from "@/server/db/schema";
 import { generateStudyPlan } from "@/server/utils/study-plan-generator";
+import type { StudyPlanPreviewInput } from "@/types/study-planner";
 import { authorizationPlugin } from "../plugins/authorization";
+import {
+  activateStudyPlan,
+  applyStudyPlanRebalance,
+  buildPlanPreview,
+  getStudyPlanWorkspace,
+  getTodayStudyTasks,
+  getUpcomingStudyTasks,
+  listStudyPlanSummaries,
+  previewStudyPlanRebalance,
+  updateStudyTaskBySlug,
+} from "../services/study-plan-service";
 
-interface GeneratedTask {
-  id: string;
-  title: string;
-  description: string;
-  taskType: string;
-  estimatedMinutes: number;
-}
+const availabilitySchema = t.Object({
+  monday: t.Number({ minimum: 0, maximum: 1440 }),
+  tuesday: t.Number({ minimum: 0, maximum: 1440 }),
+  wednesday: t.Number({ minimum: 0, maximum: 1440 }),
+  thursday: t.Number({ minimum: 0, maximum: 1440 }),
+  friday: t.Number({ minimum: 0, maximum: 1440 }),
+  saturday: t.Number({ minimum: 0, maximum: 1440 }),
+  sunday: t.Number({ minimum: 0, maximum: 1440 }),
+});
 
-type DailyTasks = Record<string, GeneratedTask[]>;
+const planningTopicSchema = t.Object({
+  id: t.Optional(t.String()),
+  slug: t.String(),
+  name: t.String(),
+  unitName: t.Optional(t.String()),
+  hours: t.Number({ minimum: 0 }),
+  weightage: t.Union([t.Number(), t.Null()]),
+  priority: t.Union([
+    t.Literal("core"),
+    t.Literal("important"),
+    t.Literal("optional"),
+  ]),
+  prerequisites: t.Array(
+    t.Object({
+      topicSlug: t.String(),
+      dependencyType: t.Union([t.Literal("strong"), t.Literal("weak")]),
+    }),
+  ),
+  resourceCount: t.Optional(t.Number({ minimum: 0 })),
+});
+
+const previewInputSchema = t.Object({
+  courseSlug: t.Optional(t.String()),
+  subjectName: t.Optional(t.String()),
+  topics: t.Optional(t.Array(planningTopicSchema)),
+  topicSlugs: t.Optional(t.Array(t.String())),
+  knownTopicSlugs: t.Optional(t.Array(t.String())),
+  goal: t.Union([
+    t.Literal("minimum"),
+    t.Literal("exam-prep"),
+    t.Literal("full-coverage"),
+  ]),
+  startDate: t.String(),
+  examDate: t.String(),
+  availability: availabilitySchema,
+  preferredSessionMinutes: t.Optional(t.Number({ minimum: 15, maximum: 240 })),
+});
 
 export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
   .use(authorizationPlugin)
@@ -43,12 +93,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
     "/",
     async ({ user, set }) => {
       try {
-        const plans = await db
-          .select()
-          .from(studyPlans)
-          .where(eq(studyPlans.userId, user.id))
-          .orderBy(desc(studyPlans.createdAt));
-
+        const plans = await listStudyPlanSummaries(user.id);
         return { success: true, data: plans };
       } catch (error) {
         set.status = 500;
@@ -71,78 +116,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
     "/today",
     async ({ user, set }) => {
       try {
-        // Get all active plans for the user
-        const plans = await db
-          .select()
-          .from(studyPlans)
-          .where(
-            and(
-              eq(studyPlans.userId, user.id),
-              eq(studyPlans.status, "active"),
-            ),
-          );
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const todayTasks: Array<{
-          planId: string;
-          subjectName: string;
-          examDate: Date | string;
-          dayNumber: number;
-          task: GeneratedTask & { completed: boolean; taskId: string };
-        }> = [];
-
-        // For each plan, calculate current day and get tasks
-        for (const plan of plans) {
-          const startDate = new Date(plan.startDate);
-          startDate.setHours(0, 0, 0, 0);
-
-          // Calculate day number (1-indexed)
-          const dayNumber =
-            Math.floor(
-              (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-            ) + 1;
-
-          // Get tasks for this day from dailyTasks
-          const dailyTasks = plan.dailyTasks as DailyTasks;
-          const tasksForDay = dailyTasks[dayNumber.toString()];
-
-          if (tasksForDay) {
-            // Get all completed task IDs for this plan from the database
-            const dbTasks = await db
-              .select({ id: studyTasks.id, completed: studyTasks.completed })
-              .from(studyTasks)
-              .where(eq(studyTasks.studyPlanId, plan.id));
-
-            const completedMap = new Map(
-              dbTasks.map((t) => [t.id, t.completed]),
-            );
-
-            for (const task of tasksForDay) {
-              // Check if task exists in DB and get its completion status
-              const dbTask = dbTasks.find(
-                (t) =>
-                  t.id === task.id ||
-                  (plan.id && dbTasks.some((db) => db.id === task.id)),
-              );
-
-              todayTasks.push({
-                planId: plan.id,
-                subjectName: plan.subjectName,
-                examDate: plan.examDate,
-                dayNumber,
-                task: {
-                  ...task,
-                  completed:
-                    completedMap.get(task.id) ?? dbTask?.completed ?? false,
-                  taskId: task.id,
-                },
-              });
-            }
-          }
-        }
-
+        const todayTasks = await getTodayStudyTasks(user.id);
         return { success: true, data: todayTasks };
       } catch (error) {
         set.status = 500;
@@ -158,6 +132,87 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       detail: {
         tags: ["Study Plans"],
         summary: "Get today's tasks across all active plans",
+      },
+    },
+  )
+  .get(
+    "/upcoming",
+    async ({ user, set }) => {
+      try {
+        const upcomingTasks = await getUpcomingStudyTasks(user.id);
+        return { success: true, data: upcomingTasks };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching upcoming study tasks:", error);
+        return {
+          success: false,
+          error: "Failed to fetch upcoming study tasks",
+        };
+      }
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Get unfinished tasks scheduled for the next seven days",
+      },
+    },
+  )
+  .post(
+    "/preview",
+    async ({ body, set }) => {
+      try {
+        const preview = await buildPlanPreview(body as StudyPlanPreviewInput);
+        return { success: true, data: preview };
+      } catch (error) {
+        set.status = 400;
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Could not preview plan",
+        };
+      }
+    },
+    {
+      auth: true,
+      body: previewInputSchema,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Preview a capacity-aware study plan",
+      },
+    },
+  )
+  .post(
+    "/",
+    async ({ body, user, set }) => {
+      try {
+        const preview = await buildPlanPreview(
+          body.input as StudyPlanPreviewInput,
+        );
+        const plan = await activateStudyPlan({
+          userId: user.id,
+          preview,
+          templateId: body.templateId,
+        });
+        return { success: true, data: plan };
+      } catch (error) {
+        set.status = 400;
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Could not create plan",
+        };
+      }
+    },
+    {
+      auth: true,
+      body: t.Object({
+        input: previewInputSchema,
+        templateId: t.Optional(t.String()),
+      }),
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Activate a capacity-aware study plan",
       },
     },
   )
@@ -200,19 +255,20 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
         }
 
         // Generate slug from subject name
-        const baseSlug = subjectName
-          .toLowerCase()
-          .trim()
-          .replace(/[^\w\s-]/g, "")
-          .replace(/[\s_-]+/g, "-")
-          .replace(/^-+|-+$/g, "");
+        const baseSlug =
+          subjectName
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, "")
+            .replace(/[\s_-]+/g, "-")
+            .replace(/^-+|-+$/g, "") || "study-plan";
 
         // Check if slug exists and generate unique one if needed
         let slug = baseSlug;
         let counter = 1;
         while (true) {
           const existing = await db.query.studyPlans.findFirst({
-            where: { slug: slug },
+            where: { AND: [{ userId: user.id }, { slug }] },
           });
           if (!existing) break;
           slug = `${baseSlug}-${counter}`;
@@ -249,8 +305,18 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
         const tasksToInsert = Object.entries(dailyTasks).flatMap(
           ([dayNumber, tasks]) =>
             tasks.map((task) => ({
+              id: task.id,
+              slug: task.slug,
               studyPlanId: plan.id,
               dayNumber: parseInt(dayNumber, 10),
+              scheduledDate: new Date(
+                startDateObj.getTime() +
+                  (parseInt(dayNumber, 10) - 1) * 86_400_000,
+              )
+                .toISOString()
+                .slice(0, 10),
+              position: tasks.indexOf(task),
+              origin: "generated",
               title: task.title,
               description: task.description,
               taskType: task.taskType,
@@ -337,7 +403,7 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       auth: true,
       detail: {
         tags: ["Study Plans"],
-        summary: "Get study plan by slug",
+        summary: "Get study plan by legacy ID",
       },
     },
   )
@@ -459,6 +525,105 @@ export const studyPlansRoutes = new Elysia({ prefix: "/study-plans" })
       detail: {
         tags: ["Study Plans"],
         summary: "Archive study plan",
+      },
+    },
+  )
+  .post(
+    "/slug/:slug/rebalance/preview",
+    async ({ params: { slug }, user, set }) => {
+      const preview = await previewStudyPlanRebalance(user.id, slug);
+      if (!preview) {
+        set.status = 404;
+        return { success: false, error: "Study plan not found" };
+      }
+      return { success: true, data: preview };
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Preview overdue task rebalancing",
+      },
+    },
+  )
+  .post(
+    "/slug/:slug/rebalance",
+    async ({ params: { slug }, user, set }) => {
+      const applied = await applyStudyPlanRebalance(user.id, slug);
+      if (!applied) {
+        set.status = 404;
+        return { success: false, error: "Study plan not found" };
+      }
+      return { success: true, data: applied };
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Apply overdue task rebalancing",
+      },
+    },
+  )
+  .get(
+    "/slug/:slug/workspace",
+    async ({ params: { slug }, user, set }) => {
+      try {
+        const workspace = await getStudyPlanWorkspace(user.id, slug);
+        if (!workspace) {
+          set.status = 404;
+          return { success: false, error: "Study plan not found" };
+        }
+        return { success: true, data: workspace };
+      } catch (error) {
+        set.status = 500;
+        console.error("Error fetching study workspace:", error);
+        return { success: false, error: "Failed to load study plan" };
+      }
+    },
+    {
+      auth: true,
+      detail: {
+        tags: ["Study Plans"],
+        summary: "Get a study plan workspace by slug",
+      },
+    },
+  )
+  .patch(
+    "/slug/:slug/tasks/:taskSlug",
+    async ({ params, body, user, set }) => {
+      try {
+        const task = await updateStudyTaskBySlug({
+          userId: user.id,
+          planSlug: params.slug,
+          taskSlug: params.taskSlug,
+          completed: body.completed,
+          scheduledDate: body.scheduledDate,
+          notes: body.notes,
+        });
+        if (!task) {
+          set.status = 404;
+          return { success: false, error: "Study task not found" };
+        }
+        return { success: true, data: task };
+      } catch (error) {
+        set.status = 400;
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Could not update task",
+        };
+      }
+    },
+    {
+      auth: true,
+      body: t.Object({
+        completed: t.Optional(t.Boolean()),
+        scheduledDate: t.Optional(t.String()),
+        notes: t.Optional(t.String({ maxLength: 4000 })),
+      }),
+      detail: {
+        tags: ["Study Tasks"],
+        summary: "Update a study task by plan and task slugs",
       },
     },
   )

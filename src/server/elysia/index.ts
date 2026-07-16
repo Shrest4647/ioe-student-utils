@@ -17,6 +17,7 @@ import {
 } from "./routes/course-explorer";
 import { departmentRoutes } from "./routes/departments";
 import { educationRoutes } from "./routes/education";
+import { flashcardLearningRoutes } from "./routes/flashcard-learning";
 import { flashcardRoutes } from "./routes/flashcards";
 import { gpaConverterRoutes } from "./routes/gpa-converter";
 import { languageSkillRoutes } from "./routes/language-skills";
@@ -79,6 +80,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(studyPlansRoutes)
   .use(quizRoutes)
   .use(flashcardRoutes)
+  .use(flashcardLearningRoutes)
   .use(studyTasksRoutes)
   .use(courseExplorerPublicRoutes)
   .use(courseExplorerUnitRoutes)

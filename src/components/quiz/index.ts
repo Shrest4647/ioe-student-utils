@@ -3,6 +3,7 @@ export * from "./quiz-player";
 export * from "./quiz-progress";
 export * from "./quiz-question";
 export * from "./quiz-result";
+export * from "./quiz-setup";
 export * from "./quiz-skeleton";
 export * from "./use-quiz";
 export * from "./use-quiz-data";

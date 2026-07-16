@@ -1,9 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,16 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ResourceLibraryFilters } from "./resource-hero";
 
 interface ResourceFiltersProps {
   categories: { id: string; name: string }[];
   contentTypes: { id: string; name: string }[];
-  filters: {
-    category: string;
-    contentType: string;
-    search: string;
-  };
-  setFilters: (filters: any) => void;
+  filters: ResourceLibraryFilters;
+  setFilters: (filters: ResourceLibraryFilters) => void;
 }
 
 export function ResourceFilters({
@@ -29,106 +24,115 @@ export function ResourceFilters({
   filters,
   setFilters,
 }: ResourceFiltersProps) {
-  const hasFilters = filters.category || filters.contentType || filters.search;
+  const activeCategory = categories.find(
+    (item) => item.id === filters.category,
+  );
+  const activeContentType = contentTypes.find(
+    (item) => item.id === filters.contentType,
+  );
+  const hasStructuredFilters = activeCategory || activeContentType;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-16 md:flex-row md:items-end">
-        <div className="w-full space-y-2 md:w-56">
-          <Label
-            htmlFor="topic-filter"
-            className="font-semibold text-muted-foreground text-sm uppercase tracking-wider"
-          >
-            Topic
-          </Label>
+    <div className="border-t px-1 pt-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <span className="px-2 font-medium text-muted-foreground text-xs">
+          Narrow results
+        </span>
+        <div className="grid flex-1 grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <Select
             value={filters.category || "all"}
-            onValueChange={(val) =>
-              setFilters({ ...filters, category: val === "all" ? "" : val })
+            onValueChange={(value) =>
+              setFilters({
+                ...filters,
+                category: value === "all" ? "" : value,
+              })
             }
           >
-            <SelectTrigger id="topic-filter" className="h-12 w-full rounded-lg">
-              <SelectValue placeholder="All Topics" />
+            <SelectTrigger
+              aria-label="Filter by topic"
+              className="h-8 w-full bg-muted/40 sm:w-44"
+            >
+              <SelectValue placeholder="All topics" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Topics</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+              <SelectItem value="all">All topics</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
 
-        <div className="w-full space-y-2 md:w-56">
-          <Label
-            htmlFor="type-filter"
-            className="font-semibold text-muted-foreground text-sm uppercase tracking-wider"
-          >
-            Content Type
-          </Label>
           <Select
             value={filters.contentType || "all"}
-            onValueChange={(val) =>
-              setFilters({ ...filters, contentType: val === "all" ? "" : val })
+            onValueChange={(value) =>
+              setFilters({
+                ...filters,
+                contentType: value === "all" ? "" : value,
+              })
             }
           >
-            <SelectTrigger id="type-filter" className="h-12 w-full rounded-lg">
-              <SelectValue placeholder="All Content Types" />
+            <SelectTrigger
+              aria-label="Filter by resource type"
+              className="h-8 w-full bg-muted/40 sm:w-44"
+            >
+              <SelectValue placeholder="All resource types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Content Types</SelectItem>
-              {contentTypes.map((ct) => (
-                <SelectItem key={ct.id} value={ct.id}>
-                  {ct.name}
+              <SelectItem value="all">All resource types</SelectItem>
+              {contentTypes.map((contentType) => (
+                <SelectItem key={contentType.id} value={contentType.id}>
+                  {contentType.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {hasFilters && (
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-sm">Active Filters:</span>
-          {filters.category && (
-            <Badge variant="secondary" className="gap-1 px-2 py-1">
-              {categories.find((c) => c.id === filters.category)?.name}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => setFilters({ ...filters, category: "" })}
-              />
-            </Badge>
-          )}
-          {filters.contentType && (
-            <Badge variant="secondary" className="gap-1 px-2 py-1">
-              {contentTypes.find((ct) => ct.id === filters.contentType)?.name}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => setFilters({ ...filters, contentType: "" })}
-              />
-            </Badge>
-          )}
-          {filters.search && (
-            <Badge variant="secondary" className="gap-1 px-2 py-1">
-              "{filters.search}"
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => setFilters({ ...filters, search: "" })}
-              />
-            </Badge>
-          )}
+        {hasStructuredFilters && (
           <Button
+            type="button"
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-muted-foreground text-xs"
+            className="self-start text-muted-foreground sm:self-auto"
             onClick={() =>
-              setFilters({ category: "", contentType: "", search: "" })
+              setFilters({ ...filters, category: "", contentType: "" })
             }
           >
-            Clear All
+            <RotateCcw />
+            Reset filters
           </Button>
+        )}
+      </div>
+
+      {hasStructuredFilters && (
+        <div
+          className="flex flex-wrap gap-1.5 px-2 pt-2 pb-1"
+          aria-label="Active filters"
+        >
+          {activeCategory && (
+            <button
+              type="button"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-primary/10 px-2 font-medium text-primary text-xs hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setFilters({ ...filters, category: "" })}
+              aria-label={`Remove topic filter ${activeCategory.name}`}
+            >
+              {activeCategory.name}
+              <X className="size-3" />
+            </button>
+          )}
+          {activeContentType && (
+            <button
+              type="button"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-primary/10 px-2 font-medium text-primary text-xs hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setFilters({ ...filters, contentType: "" })}
+              aria-label={`Remove resource type filter ${activeContentType.name}`}
+            >
+              {activeContentType.name}
+              <X className="size-3" />
+            </button>
+          )}
         </div>
       )}
     </div>

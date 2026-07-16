@@ -20,6 +20,7 @@ import { apiClient } from "@/lib/eden";
 
 export interface Course {
   id: string;
+  slug: string;
   name: string;
   code: string;
   description: string | null;
@@ -82,7 +83,7 @@ export function CourseCard({ course, entityType = "course" }: CourseCardProps) {
         <div className="space-y-1">
           <CardTitle className="line-clamp-1 text-lg">
             <Link
-              href={`/courses/${course.code}`}
+              href={`/courses/${course.slug}`}
               className="decoration-primary underline-offset-4 hover:underline"
             >
               {course.name}

@@ -19,6 +19,7 @@ import {
 } from "../schema";
 import { seedFlashcards } from "./seed-flashcards";
 import { seedQuizzes } from "./seed-quizzes";
+import { seedStudyTemplates } from "./seed-study-templates";
 
 const categories = [
   {
@@ -1064,6 +1065,7 @@ async function seed() {
       console.log("⏭️ GPA conversion standards already seeded.");
     }
 
+    await seedStudyTemplates();
     await seedQuizzes();
     await seedFlashcards();
 

@@ -1,21 +1,32 @@
-"use client";
+import { notFound, permanentRedirect } from "next/navigation";
+import { CourseWorkspace } from "@/components/course-explorer/course-workspace";
+import {
+  type CourseRouteSearchParams,
+  withCourseSearchParams,
+} from "@/lib/course-slug";
+import { getCourseLearningView } from "@/server/elysia/services/course-explorer-query-service";
 
-import { useParams } from "next/navigation";
-import { CourseExplorer } from "@/components/course-explorer/course-explorer";
+export const dynamic = "force-dynamic";
 
-export default function CourseExplorerPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params?.slug;
+export default async function CourseExplorerPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<CourseRouteSearchParams>;
+}) {
+  const { slug } = await params;
+  const result = await getCourseLearningView(slug);
+  if (!result) notFound();
 
-  if (!slug) {
-    return (
-      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
+  if (result.resolution.matchedBy !== "slug") {
+    permanentRedirect(
+      withCourseSearchParams(
+        `/course-explorer/${result.resolution.slug}`,
+        await searchParams,
+      ),
     );
   }
 
-  return <CourseExplorer courseSlug={slug} />;
+  return <CourseWorkspace learningView={result.view} />;
 }

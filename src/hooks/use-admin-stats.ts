@@ -8,7 +8,7 @@ export interface AdminStatsResponse {
   courses: number;
 }
 
-export function useAdminStats() {
+export function useAdminStats(enabled = true) {
   return useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -30,5 +30,6 @@ export function useAdminStats() {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled,
   });
 }

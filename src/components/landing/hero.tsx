@@ -91,7 +91,6 @@ export function Hero() {
             height={400}
             className="mx-auto h-auto max-w-full rounded-lg shadow-lg"
             priority
-            style={{ height: "auto" }}
             width={800}
           />
         </motion.div>

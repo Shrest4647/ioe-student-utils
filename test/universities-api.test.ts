@@ -60,6 +60,18 @@ describe("Universities API", () => {
 
     (db as any).select = mock((fields?: Record<string, unknown>) => {
       const isCountQuery = !!fields && "count" in fields;
+      const isRatingAggregate = !!fields && "universityId" in fields;
+      if (isRatingAggregate) {
+        return {
+          from: () => ({
+            innerJoin: () => ({
+              where: () => ({
+                groupBy: async () => [],
+              }),
+            }),
+          }),
+        };
+      }
       if (isCountQuery) {
         return {
           from: (table: unknown) => {

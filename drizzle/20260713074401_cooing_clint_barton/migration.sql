@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "quiz_attempts_active_unique" ON "quiz_attempts" ("quiz_id","user_id") WHERE status = 'in_progress';

@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -140,6 +141,24 @@ export const academicCourses = pgTable("academic_course", {
 export type AcademicCourse = typeof academicCourses.$inferSelect;
 export type NewAcademicCourse = typeof academicCourses.$inferInsert;
 
+export const academicCourseSlugAliases = pgTable(
+  "academic_course_slug_alias",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => academicCourses.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull().unique(),
+    createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => [index("idx_course_slug_alias_course_id").on(t.courseId)],
+);
+
+export type AcademicCourseSlugAlias =
+  typeof academicCourseSlugAliases.$inferSelect;
+export type NewAcademicCourseSlugAlias =
+  typeof academicCourseSlugAliases.$inferInsert;
+
 export const collegeDepartmentsToPrograms = pgTable(
   "collegedepartment_to_program",
   {
@@ -177,6 +196,9 @@ export const collegeDepartmentProgramToCourses = pgTable(
     code: text("code"), // Custom code for the course in the college program
     description: text("description"), // Custom description for the course in the college program
     credits: text("credits"), // Custom credits for the course in the college program
+    yearNumber: smallint("year_number"),
+    partNumber: smallint("part_number"),
+    courseType: text("course_type", { enum: ["core", "elective"] }),
     isActive: boolean("is_active").default(true).notNull(),
     programId: text("college_program_id")
       .notNull()

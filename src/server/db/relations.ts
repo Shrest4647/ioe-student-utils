@@ -71,6 +71,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.flashcardUserCardStates.userId,
     }),
+    flashcardUserDeckPreferences: r.many.flashcardUserDeckPreferences({
+      from: r.user.id,
+      to: r.flashcardUserDeckPreferences.userId,
+    }),
   },
   account: {
     user: r.one.user({
@@ -338,6 +342,10 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   academicCourses: {
+    slugAliases: r.many.academicCourseSlugAliases({
+      from: r.academicCourses.id,
+      to: r.academicCourseSlugAliases.courseId,
+    }),
     units: r.many.courseUnits({
       from: r.academicCourses.id,
       to: r.courseUnits.courseId,
@@ -353,6 +361,13 @@ export const relations = defineRelations(schema, (r) => ({
     ratings: r.many.ratings({
       from: r.academicCourses.id.through(r.courseToRatings.courseId),
       to: r.ratings.id.through(r.courseToRatings.ratingId),
+    }),
+  },
+
+  academicCourseSlugAliases: {
+    course: r.one.academicCourses({
+      from: r.academicCourseSlugAliases.courseId,
+      to: r.academicCourses.id,
     }),
   },
 
@@ -682,6 +697,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.flashcardDecks.id,
       to: r.flashcardUserCardStates.deckId,
     }),
+    userPreferences: r.many.flashcardUserDeckPreferences({
+      from: r.flashcardDecks.id,
+      to: r.flashcardUserDeckPreferences.deckId,
+    }),
   },
 
   flashcardCards: {
@@ -767,6 +786,17 @@ export const relations = defineRelations(schema, (r) => ({
     card: r.one.flashcardCards({
       from: r.flashcardUserCardStates.cardId,
       to: r.flashcardCards.id,
+    }),
+  },
+
+  flashcardUserDeckPreferences: {
+    user: r.one.user({
+      from: r.flashcardUserDeckPreferences.userId,
+      to: r.user.id,
+    }),
+    deck: r.one.flashcardDecks({
+      from: r.flashcardUserDeckPreferences.deckId,
+      to: r.flashcardDecks.id,
     }),
   },
 }));

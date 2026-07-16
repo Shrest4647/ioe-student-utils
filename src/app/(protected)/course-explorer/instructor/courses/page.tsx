@@ -5,14 +5,13 @@ import {
   Copy,
   Edit,
   Eye,
-  Filter,
   MoreHorizontal,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CourseStatusBadge } from "@/components/instructor/course-status-badge";
 import {
@@ -72,7 +71,21 @@ export default function InstructorCoursesPage() {
     },
   });
 
-  const _deleteMutation = useMutation({
+  useEffect(() => {
+    if (!courses) return;
+    const currentIds = new Set(courses.map((c) => c.id));
+    setSelectedCourses((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (currentIds.has(id)) {
+          next.add(id);
+        }
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [courses]);
+
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.api["course-explorer"].admin
         .courses({ id })
@@ -87,6 +100,26 @@ export default function InstructorCoursesPage() {
     onError: () => {
       toast.error("Failed to delete course");
     },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(
+        ids.map(async (id) => {
+          const response = await apiClient.api["course-explorer"].admin
+            .courses({ id })
+            .delete();
+          if (!response.data?.success) throw new Error("Archive failed");
+        }),
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      toast.success("Selected courses archived");
+      setSelectedCourses(new Set());
+      setCourseToDelete(null);
+    },
+    onError: () => toast.error("Failed to archive selected courses"),
   });
 
   const duplicateMutation = useMutation({
@@ -124,11 +157,43 @@ export default function InstructorCoursesPage() {
   };
 
   const getCourseStatus = (
-    course: AcademicCourse & { units?: { id: string; name: string }[] },
+    course: AcademicCourse & {
+      units?: Array<{
+        id: string;
+        name: string;
+        topics?: Array<{ id: string }>;
+      }>;
+    },
   ): "published" | "draft" | "archived" => {
     if (!course.isActive) return "archived";
-    if (course.units && course.units.length > 0) return "published";
+    if (course.units?.some((unit) => (unit.topics?.length ?? 0) > 0)) {
+      return "published";
+    }
     return "draft";
+  };
+
+  const getCourseWarnings = (
+    course: NonNullable<typeof courses>[number],
+  ): string[] => {
+    if (!course.units?.length) return ["No units"];
+
+    const topics = course.units.flatMap((unit) => unit.topics ?? []);
+    if (topics.length === 0) return ["No active topics"];
+
+    const warnings: string[] = [];
+    if (!topics.some((topic) => topic.resources.length > 0)) {
+      warnings.push("No linked resources");
+    }
+    if (
+      topics.some((topic) => {
+        if (topic.weightage === null) return false;
+        const value = Number(topic.weightage);
+        return !Number.isFinite(value) || value < 0 || value > 100;
+      })
+    ) {
+      warnings.push("Invalid topic weightage");
+    }
+    return warnings;
   };
 
   return (
@@ -140,7 +205,7 @@ export default function InstructorCoursesPage() {
             Manage your courses, units, and topics.
           </p>
         </div>
-        <Link href="/instructor/courses/new">
+        <Link href="/course-explorer/instructor/courses/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Create Course
@@ -159,10 +224,6 @@ export default function InstructorCoursesPage() {
             className="pl-9"
           />
         </div>
-        <Button variant="outline" size="sm">
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
         {selectedCourses.size > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground text-sm">
@@ -171,13 +232,10 @@ export default function InstructorCoursesPage() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                // Bulk delete would be implemented here
-                toast.info("Bulk delete not implemented yet");
-              }}
+              onClick={() => setCourseToDelete("__bulk__")}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Archive
             </Button>
           </div>
         )}
@@ -228,7 +286,7 @@ export default function InstructorCoursesPage() {
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center">
                   <p className="text-muted-foreground">No courses found.</p>
-                  <Link href="/instructor/courses/new">
+                  <Link href="/course-explorer/instructor/courses/new">
                     <Button variant="outline" className="mt-4">
                       <Plus className="mr-2 h-4 w-4" />
                       Create your first course
@@ -237,79 +295,99 @@ export default function InstructorCoursesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              courses?.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedCourses.has(course.id)}
-                      onCheckedChange={() => toggleSelection(course.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{course.name}</p>
-                      {course.description && (
-                        <p className="line-clamp-1 text-muted-foreground text-sm">
-                          {course.description}
-                        </p>
+              courses?.map((course) => {
+                const warnings = getCourseWarnings(course);
+                return (
+                  <TableRow key={course.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCourses.has(course.id)}
+                        onCheckedChange={() => toggleSelection(course.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{course.name}</p>
+                        {course.description && (
+                          <p className="line-clamp-1 text-muted-foreground text-sm">
+                            {course.description}
+                          </p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {course.code ? (
+                        <Badge variant="secondary">{course.code}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {course.code ? (
-                      <Badge variant="secondary">{course.code}</Badge>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <CourseStatusBadge status={getCourseStatus(course)} />
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {course?.units?.length || 0} units
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <Link href={`/instructor/courses/${course.id}/edit`}>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                    </TableCell>
+                    <TableCell>
+                      <CourseStatusBadge status={getCourseStatus(course)} />
+                      {warnings.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {warnings.map((warning) => (
+                            <p
+                              key={warning}
+                              className="text-muted-foreground text-xs"
+                            >
+                              {warning}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">
+                        {course?.units?.length || 0} units
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <Link
+                            href={`/course-explorer/instructor/courses/${course.slug}/edit`}
+                          >
+                            <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </Link>
+                          <Link
+                            href={`/course-explorer/${course.slug}`}
+                            target="_blank"
+                          >
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                          </Link>
+                          <DropdownMenuItem
+                            onClick={() => duplicateMutation.mutate(course.id)}
+                            disabled={duplicateMutation.isPending}
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicate
                           </DropdownMenuItem>
-                        </Link>
-                        <Link href={`/courses/${course.slug}`} target="_blank">
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => setCourseToDelete(course.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
                           </DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuItem
-                          onClick={() => duplicateMutation.mutate(course.id)}
-                          disabled={duplicateMutation.isPending}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setCourseToDelete(course.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -324,8 +402,9 @@ export default function InstructorCoursesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will soft delete the course. It can be restored later
-              from the archive.
+              {courseToDelete === "__bulk__"
+                ? `This will archive ${selectedCourses.size} selected courses.`
+                : "This will archive the course. It can be restored later."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex justify-end gap-2">
@@ -334,12 +413,20 @@ export default function InstructorCoursesPage() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() =>
-                courseToDelete && _deleteMutation.mutate(courseToDelete)
+              onClick={() => {
+                if (courseToDelete === "__bulk__") {
+                  bulkDeleteMutation.mutate(Array.from(selectedCourses));
+                } else if (courseToDelete) {
+                  deleteMutation.mutate(courseToDelete);
+                }
+              }}
+              disabled={
+                deleteMutation.isPending || bulkDeleteMutation.isPending
               }
-              disabled={_deleteMutation.isPending}
             >
-              {_deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending || bulkDeleteMutation.isPending
+                ? "Archiving..."
+                : "Archive"}
             </Button>
           </div>
         </AlertDialogContent>

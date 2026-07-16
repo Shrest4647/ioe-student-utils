@@ -1,7 +1,20 @@
 export type QuizStatus = "draft" | "published" | "archived";
 export type QuizDifficulty = "easy" | "medium" | "hard";
-export type QuizQuestionType = "single_choice";
+export type QuizQuestionType =
+  | "single_choice"
+  | "multiple_select"
+  | "true_false"
+  | "fill_blank"
+  | "matching"
+  | "ordering";
 export type QuizAttemptStatus = "in_progress" | "completed" | "abandoned";
+export type QuizMode =
+  | "practice"
+  | "timed"
+  | "review_incorrect"
+  | "review_bookmarked";
+export type QuizFeedbackMode = "instant" | "end";
+export type QuizConfidence = 1 | 2 | 3;
 
 export interface QuizOptionInput {
   id?: string;
@@ -79,4 +92,27 @@ export interface QuizView {
   version: number;
   publishedAt: Date | null;
   questions: QuizQuestionView[];
+}
+
+export interface QuizStudySession {
+  seed: string;
+  mode: QuizMode;
+  feedbackMode: QuizFeedbackMode;
+  questionOrder: string[];
+  optionOrderByQuestion: Record<string, string[]>;
+}
+
+export interface QuizQuestionHistory {
+  attempts: number;
+  correct: number;
+  averageResponseSeconds: number;
+  averageConfidence: number | null;
+  lastCorrect: boolean | null;
+}
+
+export interface QuizStudyProfile {
+  questions: Record<string, QuizQuestionHistory>;
+  bookmarkedQuestionIds: string[];
+  completedAttempts: number;
+  overallAccuracy: number;
 }

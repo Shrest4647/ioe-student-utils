@@ -32,7 +32,7 @@ import { verify2faSchema } from "@/lib/auth-schemas";
 
 type VerificationMethod = "totp" | "otp" | "backup";
 
-export function TwoFactorVerification() {
+function TwoFactorVerification() {
   const [method, setMethod] = useState<VerificationMethod>("totp");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);

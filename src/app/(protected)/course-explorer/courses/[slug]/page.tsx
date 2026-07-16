@@ -1,21 +1,18 @@
-"use client";
+import { permanentRedirect } from "next/navigation";
+import {
+  type CourseRouteSearchParams,
+  withCourseSearchParams,
+} from "@/lib/course-slug";
 
-import { useParams } from "next/navigation";
-import { CourseExplorer } from "@/components/course-explorer/course-explorer";
-
-export default function CourseExplorerPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params?.slug;
-
-  if (!slug) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <CourseExplorer courseSlug={slug} />;
+export default async function LegacyProtectedCoursePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<CourseRouteSearchParams>;
+}) {
+  const { slug } = await params;
+  permanentRedirect(
+    withCourseSearchParams(`/course-explorer/${slug}`, await searchParams),
+  );
 }

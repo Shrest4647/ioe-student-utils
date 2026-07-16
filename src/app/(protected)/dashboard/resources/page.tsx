@@ -174,7 +174,7 @@ export default function ResourceDashboardPage() {
                                 ).toLocaleDateString()}
                               </span>
                               <span className="md:hidden">
-                                • {resource.contentType.name}
+                                • {resource.contentType?.name ?? "Other"}
                               </span>
                             </div>
                           </div>
@@ -182,7 +182,7 @@ export default function ResourceDashboardPage() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <Badge variant="outline">
-                          {resource.contentType.name}
+                          {resource.contentType?.name ?? "Other"}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">

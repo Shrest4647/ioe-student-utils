@@ -35,6 +35,10 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
           set.status = 403;
           return { success: false, error: "Unauthorized" };
         }
+        if (plan.status !== "active") {
+          set.status = 409;
+          return { success: false, error: "Archived plans are read-only" };
+        }
 
         // Update task as complete
         const updated = await db
@@ -108,6 +112,10 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
         if (!plan || plan.userId !== user.id) {
           set.status = 403;
           return { success: false, error: "Unauthorized" };
+        }
+        if (plan.status !== "active") {
+          set.status = 409;
+          return { success: false, error: "Archived plans are read-only" };
         }
 
         // Update task as incomplete
@@ -183,6 +191,10 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
           set.status = 403;
           return { success: false, error: "Unauthorized" };
         }
+        if (plan.status !== "active") {
+          set.status = 409;
+          return { success: false, error: "Archived plans are read-only" };
+        }
 
         // Insert study log
         await db.insert(studyLogs).values({
@@ -225,13 +237,22 @@ export const studyTasksRoutes = new Elysia({ prefix: "/study-tasks" })
   )
   .get(
     "/:id",
-    async ({ params: { id }, set }) => {
+    async ({ params: { id }, user, set }) => {
       try {
         const task = await db.query.studyTasks.findFirst({
           where: { id: id },
         });
 
         if (!task) {
+          set.status = 404;
+          return { success: false, error: "Task not found" };
+        }
+
+        const plan = await db.query.studyPlans.findFirst({
+          where: { AND: [{ id: task.studyPlanId }, { userId: user.id }] },
+          columns: { id: true },
+        });
+        if (!plan) {
           set.status = 404;
           return { success: false, error: "Task not found" };
         }

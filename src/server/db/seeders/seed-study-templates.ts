@@ -1,11 +1,16 @@
-import { db } from "../index";
+import { eq } from "drizzle-orm";
+import { conn, db } from "../index";
 import { type NewStudyTemplate, studyTemplates } from "../schema";
 
 const templates: NewStudyTemplate[] = [
   {
+    slug: "one-day-sprint",
     name: "1-Day Sprint",
+    description: "A focused final review for one available study day.",
     durationDays: 1,
     difficultyLevel: "intensive",
+    planningMode: "exam-prep",
+    version: 1,
     dailyStructure: {
       morning: [
         {
@@ -40,9 +45,13 @@ const templates: NewStudyTemplate[] = [
     subjectArea: "general",
   },
   {
+    slug: "three-day-boost",
     name: "3-Day Boost",
+    description: "A short exam-preparation plan with practice and review.",
     durationDays: 3,
     difficultyLevel: "moderate",
+    planningMode: "exam-prep",
+    version: 1,
     dailyStructure: {
       morning: [
         {
@@ -83,9 +92,13 @@ const templates: NewStudyTemplate[] = [
     subjectArea: "general",
   },
   {
+    slug: "one-week-exam-prep",
     name: "1-Week Plan",
+    description: "A balanced week of learning, practice, and review.",
     durationDays: 7,
     difficultyLevel: "moderate",
+    planningMode: "exam-prep",
+    version: 1,
     dailyStructure: {
       morning: [
         {
@@ -127,9 +140,13 @@ const templates: NewStudyTemplate[] = [
     subjectArea: "general",
   },
   {
+    slug: "two-week-comprehensive",
     name: "2-Week Comprehensive Plan",
+    description: "A two-week course plan with room for foundations and review.",
     durationDays: 14,
     difficultyLevel: "moderate",
+    planningMode: "full-coverage",
+    version: 1,
     dailyStructure: {
       morning: [
         {
@@ -172,9 +189,13 @@ const templates: NewStudyTemplate[] = [
     subjectArea: "general",
   },
   {
+    slug: "one-month-comprehensive",
     name: "1-Month Plan",
+    description: "A steady month-long plan for broad syllabus coverage.",
     durationDays: 30,
     difficultyLevel: "comprehensive",
+    planningMode: "full-coverage",
+    version: 1,
     dailyStructure: {
       morning: [
         {
@@ -213,21 +234,27 @@ const templates: NewStudyTemplate[] = [
   },
 ];
 
-async function seedStudyTemplates() {
+export async function seedStudyTemplates() {
   console.log("🌱 Seeding study templates...");
 
   try {
-    // Check if templates already exist by selecting one
-    const existingTemplates = await db.select().from(studyTemplates).limit(1);
-
-    if (existingTemplates.length > 0) {
-      console.log(`⏭️ Study templates already seeded.`);
-      return;
-    }
-
-    // Insert all templates
     for (const template of templates) {
-      await db.insert(studyTemplates).values(template);
+      const existing = template.slug
+        ? await db.query.studyTemplates.findFirst({
+            where: {
+              OR: [{ slug: template.slug }, { name: template.name }],
+            },
+            columns: { id: true },
+          })
+        : null;
+      if (existing) {
+        await db
+          .update(studyTemplates)
+          .set(template)
+          .where(eq(studyTemplates.id, existing.id));
+      } else {
+        await db.insert(studyTemplates).values(template);
+      }
     }
 
     console.log(
@@ -239,11 +266,13 @@ async function seedStudyTemplates() {
   }
 }
 
-seedStudyTemplates()
-  .catch((error) => {
-    console.error("❌ Seeding failed:", error);
-    process.exit(1);
-  })
-  .finally(() => {
-    process.exit(0);
-  });
+if (import.meta.main) {
+  seedStudyTemplates()
+    .catch((error) => {
+      console.error("❌ Seeding failed:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await conn.end();
+    });
+}

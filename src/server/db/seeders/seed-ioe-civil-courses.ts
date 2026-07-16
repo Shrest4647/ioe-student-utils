@@ -487,6 +487,11 @@ async function seedIOECivilCourses() {
             courseId: courseId,
             code: course.code,
             credits: course.credits,
+            yearNumber: Number(course.level.split("-")[0]),
+            partNumber: Number(course.level.split("-")[1]),
+            courseType: course.name.toLowerCase().includes("elective")
+              ? ("elective" as const)
+              : ("core" as const),
             isActive: true,
           });
         }

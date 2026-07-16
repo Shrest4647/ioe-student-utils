@@ -5,18 +5,20 @@ import { ScholarshipCalendar } from "@/components/scholarships/scholarship-calen
 
 export const metadata: Metadata = {
   title: "Scholarship Calendar | IOE Student Utils",
-  description: "View scholarship deadlines and events on a calendar.",
+  description:
+    "Search and track scholarship deadlines, openings, interviews, webinars, and results.",
 };
 
 export default function ScholarshipCalendarPage() {
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 bg-linear-to-r from-primary to-primary/60 bg-clip-text font-bold text-4xl text-transparent tracking-tight">
+    <div className="mx-auto w-full max-w-400 px-3 py-6 sm:px-6 lg:px-8">
+      <div className="mb-5">
+        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
           Scholarship Calendar
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Track upcoming application deadlines, webinars, and interview dates.
+        <p className="mt-1 max-w-2xl text-muted-foreground text-sm sm:text-base">
+          Find every important date, then open the scholarship when you are
+          ready to act.
         </p>
       </div>
       <Suspense

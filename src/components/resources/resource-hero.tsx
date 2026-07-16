@@ -1,21 +1,24 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { BookOpen, Search, X } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResourceFilters } from "./resource-filters";
 
-interface ResourceFiltersProps {
+export interface ResourceLibraryFilters {
+  category: string;
+  contentType: string;
+  search: string;
+  limit: string;
+}
+
+interface ResourceHeroProps {
   categories: { id: string; name: string }[];
   contentTypes: { id: string; name: string }[];
-  filters: {
-    category: string;
-    contentType: string;
-    search: string;
-  };
-  setFilters: (filters: any) => void;
+  filters: ResourceLibraryFilters;
+  setFilters: (filters: ResourceLibraryFilters) => void;
 }
 
 export function ResourceHero({
@@ -23,95 +26,97 @@ export function ResourceHero({
   contentTypes,
   filters,
   setFilters,
-}: ResourceFiltersProps) {
+}: ResourceHeroProps) {
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if (event.key === "/" && !isTyping) {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, []);
+
   return (
-    <section className="relative overflow-hidden bg-[#002b2d] py-8 text-white lg:py-10">
-      {/* Background decoration */}
-      <div
-        className="absolute top-0 right-0 h-full w-1/3 bg-[#d1e8e2] opacity-10 lg:opacity-20"
-        style={{ clipPath: "polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%)" }}
-      />
-      <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl" />
-
-      <div className="container relative mx-auto px-4">
-        <div className="mx-auto max-w-3xl text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-3 font-bold text-3xl leading-tight md:text-3xl"
-          >
-            Resource Library<span className="text-orange-500">.</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-4 text-gray-300 text-sm md:text-base"
-          >
-            Browse academic resources, tools, guides, templates, and more — all
-            designed to help IOE students excel in their studies and global
-            applications.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col items-center justify-center gap-3 sm:flex-row"
-          >
-            <Button
-              asChild
-              size="default"
-              className="h-9 bg-orange-600 px-6 font-semibold text-white hover:bg-orange-700"
+    <section className="border-b bg-muted/25">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-2 flex items-center gap-2 text-primary">
+              <BookOpen className="size-4" aria-hidden="true" />
+              <span className="font-semibold text-xs uppercase tracking-[0.14em]">
+                Student resource library
+              </span>
+            </div>
+            <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
+              Find the right material, faster
+            </h1>
+            <p className="mt-2 max-w-xl text-muted-foreground text-sm leading-6">
+              Search notes, books, guides, tools, and templates shared for IOE
+              study and applications.
+            </p>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Have something useful?{" "}
+            <Link
+              href="/dashboard/resources"
+              className="font-medium text-foreground underline decoration-border underline-offset-4 hover:text-primary"
             >
-              <Link href="#resources-main">Explore All Resources</Link>
-            </Button>
-            <Button
-              asChild
-              size="default"
-              variant="outline"
-              className="h-9 border-white/30 px-6 font-semibold text-white hover:bg-white/10"
-            >
-              <a
-                href="https://discord.gg/ioe-student-community"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join Community
-              </a>
-            </Button>
-          </motion.div>
+              Contribute a resource
+            </Link>
+          </p>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="relative mx-auto mt-6 max-w-xl"
-          >
+        <div className="mt-5 rounded-xl border bg-background p-2 shadow-sm">
+          <div className="flex min-w-0 items-center">
+            <Search
+              className="ml-2 size-5 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
             <Input
-              type="text"
-              placeholder="Search all resources..."
-              className="h-10 w-full rounded-full border-white/20 bg-white/10 pr-6 pl-10 text-sm text-white placeholder:text-gray-400 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              value={filters.search || ""}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
+              ref={searchRef}
+              type="search"
+              value={filters.search}
+              onChange={(event) =>
+                setFilters({ ...filters, search: event.target.value })
               }
+              placeholder="Search by title, topic, or keyword"
+              aria-label="Search resources"
+              className="h-11 border-0 bg-transparent px-3 text-base shadow-none focus-visible:ring-0 md:text-sm"
             />
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mx-auto mt-4 max-w-xl"
-          >
-            <ResourceFilters
-              categories={categories}
-              contentTypes={contentTypes}
-              filters={filters}
-              setFilters={setFilters}
-            />
-          </motion.div>
+            {filters.search ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="mr-1 shrink-0"
+                onClick={() => setFilters({ ...filters, search: "" })}
+                aria-label="Clear search"
+              >
+                <X />
+              </Button>
+            ) : (
+              <kbd className="mr-2 hidden rounded border bg-muted px-2 py-0.5 font-mono text-muted-foreground text-xs sm:inline-block">
+                /
+              </kbd>
+            )}
+          </div>
+          <ResourceFilters
+            categories={categories}
+            contentTypes={contentTypes}
+            filters={filters}
+            setFilters={setFilters}
+          />
         </div>
       </div>
     </section>

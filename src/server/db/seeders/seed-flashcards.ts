@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
-import { db } from "../index";
+import { conn, db } from "../index";
 import {
   flashcardCards,
   flashcardDecks,
@@ -27,7 +27,42 @@ function slugify(value: string) {
     .slice(0, 255);
 }
 
+function validateDeck(deck: AssetDeck) {
+  if (
+    !deck.title?.trim() ||
+    !Array.isArray(deck.cards) ||
+    deck.cards.length === 0
+  ) {
+    throw new Error(
+      "Flashcard asset must include a title and at least one card.",
+    );
+  }
+
+  deck.cards.forEach((card, cardIndex) => {
+    if (!card.front?.trim() || !card.back?.trim()) {
+      throw new Error(`Flashcard ${cardIndex + 1} must have a front and back.`);
+    }
+  });
+}
+
 export async function seedFlashcards(createdById?: string) {
+  const assetPath = path.join(process.cwd(), "assets", "yolox-flashcards.json");
+  const raw = await readFile(assetPath, "utf8");
+  const parsed = JSON.parse(raw) as AssetDeck;
+  validateDeck(parsed);
+
+  const slug = slugify(parsed.title || "yolox-flashcards");
+  const existing = await db
+    .select({ id: flashcardDecks.id })
+    .from(flashcardDecks)
+    .where(eq(flashcardDecks.slug, slug))
+    .limit(1);
+
+  if (existing.length > 0) {
+    console.log(`⏭️ Flashcard deck already seeded: ${slug}`);
+    return;
+  }
+
   const fallbackUser = createdById
     ? createdById
     : (
@@ -41,85 +76,74 @@ export async function seedFlashcards(createdById?: string) {
     return;
   }
 
-  const assetPath = path.join(process.cwd(), "assets", "yolox-flashcards.json");
-  const raw = await readFile(assetPath, "utf8");
-  const parsed = JSON.parse(raw) as AssetDeck;
-
-  const slug = slugify(parsed.title || "yolox-flashcards");
-  const existing = await db
-    .select({ id: flashcardDecks.id })
-    .from(flashcardDecks)
-    .where(eq(flashcardDecks.slug, slug))
-    .limit(1);
-
-  if (existing.length > 0) {
-    console.log("⏭️ Sample flashcard deck already seeded.");
-    return;
-  }
-
-  const [deck] = await db
-    .insert(flashcardDecks)
-    .values({
-      slug,
-      title: parsed.title,
-      description: "Imported from assets/yolox-flashcards.json",
-      status: "published",
-      difficulty: "medium",
-      estimatedMinutes: 20,
-      srsAlgorithm: "sm2",
-      createdById: fallbackUser,
-      updatedById: fallbackUser,
-      publishedAt: new Date(),
-      version: 1,
-    })
-    .returning({ id: flashcardDecks.id });
-
-  await db.insert(flashcardCards).values(
-    parsed.cards.map((card, idx) => ({
-      deckId: deck.id,
-      orderNo: idx + 1,
-      front: card.front,
-      back: card.back,
-      isActive: true,
-    })),
-  );
-
   const tagNames = ["computer-vision", "object-detection", "yolox"];
-  const tagIds: string[] = [];
+  await db.transaction(async (tx) => {
+    const [deck] = await tx
+      .insert(flashcardDecks)
+      .values({
+        slug,
+        title: parsed.title,
+        description: "Imported from assets/yolox-flashcards.json",
+        status: "published",
+        difficulty: "medium",
+        estimatedMinutes: 20,
+        srsAlgorithm: "sm2",
+        createdById: fallbackUser,
+        updatedById: fallbackUser,
+        publishedAt: new Date(),
+        version: 1,
+      })
+      .returning({ id: flashcardDecks.id });
 
-  for (const name of tagNames) {
-    const slugName = slugify(name);
-    const existingTag = await db.query.flashcardTags.findFirst({
-      where: { slug: slugName },
-    });
+    await tx.insert(flashcardCards).values(
+      parsed.cards.map((card, index) => ({
+        deckId: deck.id,
+        orderNo: index + 1,
+        front: card.front,
+        back: card.back,
+        isActive: true,
+      })),
+    );
 
-    if (existingTag) {
-      tagIds.push(existingTag.id);
-      continue;
+    const tagIds: string[] = [];
+    for (const name of tagNames) {
+      const tagSlug = slugify(name);
+      const existingTag = await tx.query.flashcardTags.findFirst({
+        where: { slug: tagSlug },
+      });
+
+      if (existingTag) {
+        tagIds.push(existingTag.id);
+        continue;
+      }
+
+      const [tag] = await tx
+        .insert(flashcardTags)
+        .values({ name, slug: tagSlug })
+        .returning({ id: flashcardTags.id });
+      tagIds.push(tag.id);
     }
 
-    const [tag] = await db
-      .insert(flashcardTags)
-      .values({ name, slug: slugName })
-      .returning({ id: flashcardTags.id });
+    await tx.insert(flashcardDeckTags).values(
+      tagIds.map((tagId) => ({
+        deckId: deck.id,
+        tagId,
+      })),
+    );
+  });
 
-    tagIds.push(tag.id);
-  }
-
-  await db.insert(flashcardDeckTags).values(
-    tagIds.map((tagId) => ({
-      deckId: deck.id,
-      tagId,
-    })),
+  console.log(
+    `✅ Seeded ${parsed.title} with ${parsed.cards.length} cards and ${tagNames.length} tags.`,
   );
-
-  console.log("✅ Seeded flashcard deck from assets/yolox-flashcards.json");
 }
 
-seedFlashcards()
-  .catch((err) => {
-    console.error(err);
-  })
-  .finally(() => {
-    process.exit(1);
-  });
+if (import.meta.main) {
+  seedFlashcards()
+    .catch((error) => {
+      console.error("❌ Seeding failed:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await conn.end();
+    });
+}

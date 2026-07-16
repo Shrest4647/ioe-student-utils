@@ -1,123 +1,94 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { db } from "@/server/db";
-import {
-  gpaConversionRanges,
-  gpaConversionStandards,
-} from "@/server/db/schema";
+import { describe, expect, it } from "bun:test";
 import { elysiaApi } from "@/server/elysia";
 
+async function calculate(body: unknown) {
+  const response = await elysiaApi.handle(
+    new Request("http://localhost/api/gpa-converter/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
+
+  return { status: response.status, body: await response.json() };
+}
+
 describe("GPA Converter API", () => {
-  const originalSelect = (db as any).select;
-
-  beforeEach(() => {
-    (db as any).select = () => ({
-      from: (table: unknown) => {
-        if (table === gpaConversionStandards) {
-          return {
-            where: () => ({
-              limit: async (count: number) =>
-                [
-                  {
-                    id: "std-1",
-                    name: "US 4.0",
-                    description: "US scale",
-                    isActive: true,
-                  },
-                ].slice(0, count),
-            }),
-          };
-        }
-
-        if (table === gpaConversionRanges) {
-          return {
-            where: async () => [
-              {
-                standardId: "std-1",
-                minPercentage: "90",
-                maxPercentage: "100",
-                gpaValue: "4.0",
-                gradeLabel: "A",
-                sortOrder: "1",
-              },
-              {
-                standardId: "std-1",
-                minPercentage: "80",
-                maxPercentage: "89.99",
-                gpaValue: "3.7",
-                gradeLabel: "A-",
-                sortOrder: "2",
-              },
-            ],
-          };
-        }
-
-        return {
-          where: async () => [],
-          limit: async () => [],
-        };
-      },
-    });
-  });
-
-  afterEach(() => {
-    (db as any).select = originalSelect;
-  });
-
-  it("calculates cumulative GPA for valid courses", async () => {
-    const response = await elysiaApi
-      .handle(
-        new Request("http://localhost/api/gpa-converter/calculate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            standardId: "std-1",
-            courses: [
-              { name: "Math", percentage: "95", credits: "3" },
-              { name: "Physics", percentage: "85", credits: "4" },
-            ],
-          }),
-        }),
-      )
-      .then((res) => res.json());
-
-    expect(response.success).toBe(true);
-    expect(response.data.courses.length).toBe(2);
-    expect(response.data.cumulativeGPA).toBe(3.83);
-    expect(response.data.totalCredits).toBe(7);
-    expect(response.data.totalQualityPoints).toBe(26.8);
-  });
-
-  it("returns error when conversion standard does not exist", async () => {
-    (db as any).select = () => ({
-      from: (table: unknown) => {
-        if (table === gpaConversionStandards) {
-          return {
-            where: () => ({
-              limit: async () => [],
-            }),
-          };
-        }
-        return {
-          where: async () => [],
-          limit: async () => [],
-        };
-      },
+  it("uses TU bands and standard quality points for a US estimate", async () => {
+    const response = await calculate({
+      sourceFormat: "percentage",
+      destination: "us-canada",
+      score: 72,
+      passMark: 40,
     });
 
-    const response = await elysiaApi
-      .handle(
-        new Request("http://localhost/api/gpa-converter/calculate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            standardId: "missing-standard",
-            courses: [{ name: "Math", percentage: "95", credits: "3" }],
-          }),
-        }),
-      )
-      .then((res) => res.json());
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.result.value).toBe("3.33");
+    expect(response.body.data.result.confidence).toBe("Method-based estimate");
+  });
 
-    expect(response.success).toBe(false);
-    expect(response.error).toBe("Conversion standard not found");
+  it("credit-weights course-by-course US estimates", async () => {
+    const response = await calculate({
+      sourceFormat: "percentage",
+      destination: "us-canada",
+      passMark: 40,
+      courses: [
+        { name: "Math", score: 92, credits: 3 },
+        { name: "Physics", score: 72, credits: 4 },
+      ],
+    });
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.inputScore).toBe(80.57);
+    expect(response.body.data.result.value).toBe("3.62");
+  });
+
+  it("uses the selected pass mark in the modified Bavarian formula", async () => {
+    const response = await calculate({
+      sourceFormat: "percentage",
+      destination: "germany",
+      score: 70,
+      passMark: 40,
+    });
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.result.value).toBe("2.50");
+    expect(response.body.data.result.comparisonDirection).toBe("lower");
+  });
+
+  it("preserves a TU GPA instead of converting it again", async () => {
+    const response = await calculate({
+      sourceFormat: "gpa",
+      destination: "us-canada",
+      score: 3.42,
+    });
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.result.value).toBe("3.42");
+    expect(response.body.data.result.confidence).toBe("Direct result");
+  });
+
+  it("rejects a percentage above 100", async () => {
+    const response = await calculate({
+      sourceFormat: "percentage",
+      destination: "uk",
+      score: 101,
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+  });
+
+  it("accepts CGPA for an additional destination", async () => {
+    const response = await calculate({
+      sourceFormat: "cgpa",
+      destination: "south-korea",
+      score: 3.58,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.result.value).toBe("3.58");
+    expect(response.body.data.result.scale).toBe("TU CGPA / 4.0");
   });
 });

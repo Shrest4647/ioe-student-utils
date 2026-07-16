@@ -523,6 +523,34 @@ export const flashcardRoutes = new Elysia({ prefix: "/flashcards" })
 
       const now = new Date();
       let nextState: FlashcardSrsState | null = null;
+      const preferences = session.userId
+        ? await db.query.flashcardUserDeckPreferences.findFirst({
+            where: { userId: session.userId, deckId: session.deckId },
+          })
+        : null;
+      const desiredRetention =
+        preferences?.schedulingAggressiveness === "relaxed"
+          ? 0.85
+          : preferences?.schedulingAggressiveness === "intensive"
+            ? 0.94
+            : 0.9;
+
+      if (body.clientReviewId) {
+        const existingReview = await db.query.flashcardReviews.findFirst({
+          where: { clientReviewId: body.clientReviewId },
+        });
+        if (existingReview) {
+          const scheduledState = session.userId
+            ? await db.query.flashcardUserCardStates.findFirst({
+                where: { userId: session.userId, cardId: body.cardId },
+              })
+            : null;
+          return {
+            success: true,
+            data: { scheduledState, duplicate: true },
+          };
+        }
+      }
 
       await db.transaction(async (tx) => {
         if (session.userId) {
@@ -537,6 +565,7 @@ export const flashcardRoutes = new Elysia({ prefix: "/flashcards" })
               learningSteps: deck.learningSteps,
               graduatingIntervalDays: deck.graduatingIntervalDays,
               easyIntervalDays: deck.easyIntervalDays,
+              desiredRetention,
             },
             previous: existing
               ? {
@@ -593,7 +622,10 @@ export const flashcardRoutes = new Elysia({ prefix: "/flashcards" })
           deckId: session.deckId,
           cardId: body.cardId,
           userId: session.userId,
+          clientReviewId: body.clientReviewId ?? null,
           rating: body.rating,
+          confidence: body.confidence ?? null,
+          studyMode: body.studyMode ?? "adaptive",
           responseMs: body.responseMs ?? null,
           wasRecalled: isRatingRecalled(body.rating),
           reviewedAt: now,
@@ -618,10 +650,16 @@ export const flashcardRoutes = new Elysia({ prefix: "/flashcards" })
           .where(eq(flashcardStudySessions.id, sessionId));
       });
 
+      const scheduledState = session.userId
+        ? await db.query.flashcardUserCardStates.findFirst({
+            where: { userId: session.userId, cardId: body.cardId },
+          })
+        : nextState;
+
       return {
         success: true,
         data: {
-          scheduledState: nextState,
+          scheduledState,
         },
       };
     },
@@ -630,6 +668,11 @@ export const flashcardRoutes = new Elysia({ prefix: "/flashcards" })
         cardId: t.String(),
         rating: reviewRatingSchema,
         responseMs: t.Optional(t.Number()),
+        clientReviewId: t.Optional(t.String()),
+        confidence: t.Optional(t.Number({ minimum: 1, maximum: 4 })),
+        studyMode: t.Optional(
+          t.Enum({ adaptive: "adaptive", random: "random", cram: "cram" }),
+        ),
         guestSessionId: t.Optional(t.String()),
       }),
       detail: {
