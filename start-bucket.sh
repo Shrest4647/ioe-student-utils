@@ -148,7 +148,7 @@ else
     echo "Existing container started"
   else
     mkdir -p "$DATA_DIR" "$LOGS_DIR"
-    chown -R 10001:10001 "$DATA_DIR" "$LOGS_DIR"
+    # chown -R 10001:10001 "$DATA_DIR" "$LOGS_DIR"
 
     $DOCKER_CMD run -d \
       --name $BUCKET_CONTAINER_NAME \

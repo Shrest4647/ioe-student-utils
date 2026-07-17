@@ -38,6 +38,8 @@ import { apiClient } from "@/lib/eden";
 interface UploadResourceModalProps {
   categories: { id: string; name: string }[];
   contentTypes: { id: string; name: string }[];
+  onCategoryCreated?: (category: { id: string; name: string }) => void;
+  onContentTypeCreated?: (contentType: { id: string; name: string }) => void;
   onSuccess?: () => void;
 }
 
@@ -50,12 +52,140 @@ interface UrlAttachment {
 export function UploadResourceModal({
   categories,
   contentTypes,
+  onCategoryCreated,
+  onContentTypeCreated,
   onSuccess,
 }: UploadResourceModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [urlAttachments, setUrlAttachments] = useState<UrlAttachment[]>([]);
   const [newUrlName, setNewUrlName] = useState("");
   const [newUrlValue, setNewUrlValue] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState("");
+  const [isCreatingContentType, setIsCreatingContentType] = useState(false);
+  const [isContentTypeFormOpen, setIsContentTypeFormOpen] = useState(false);
+  const [newContentTypeName, setNewContentTypeName] = useState("");
+  const [contentTypeError, setContentTypeError] = useState("");
+
+  const resetContentTypeCreator = () => {
+    setIsContentTypeFormOpen(false);
+    setNewContentTypeName("");
+    setContentTypeError("");
+  };
+
+  const resetCategoryCreator = () => {
+    setIsCategoryFormOpen(false);
+    setNewCategoryName("");
+    setCategoryError("");
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      resetCategoryCreator();
+      resetContentTypeCreator();
+    }
+  };
+
+  const createCategory = async (onCreated: (id: string) => void) => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      setCategoryError("Enter a name for the category.");
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    setCategoryError("");
+
+    try {
+      const { data, error } = await apiClient.api.resources.categories.post({
+        name,
+      });
+
+      if (error) {
+        const message =
+          typeof error.value === "object" &&
+          error.value !== null &&
+          "error" in error.value
+            ? String(error.value.error)
+            : "Could not create the category. Please try again.";
+        setCategoryError(message);
+        return;
+      }
+
+      if (data?.success && data.data) {
+        const category = {
+          id: data.data.id,
+          name: data.data.name,
+        };
+        onCategoryCreated?.(category);
+        onCreated(category.id);
+        resetCategoryCreator();
+        toast.success(`Category "${category.name}" created and selected.`);
+        return;
+      }
+
+      setCategoryError("Could not create the category. Please try again.");
+    } catch {
+      setCategoryError(
+        "Could not create the category. Check your connection and try again.",
+      );
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
+  const createContentType = async (onCreated: (id: string) => void) => {
+    const name = newContentTypeName.trim();
+    if (!name) {
+      setContentTypeError("Enter a name for the content type.");
+      return;
+    }
+
+    setIsCreatingContentType(true);
+    setContentTypeError("");
+
+    try {
+      const { data, error } = await apiClient.api.resources[
+        "content-types"
+      ].post({ name });
+
+      if (error) {
+        const message =
+          typeof error.value === "object" &&
+          error.value !== null &&
+          "error" in error.value
+            ? String(error.value.error)
+            : "Could not create the content type. Please try again.";
+        setContentTypeError(message);
+        return;
+      }
+
+      if (data?.success && data.data) {
+        const contentType = {
+          id: data.data.id,
+          name: data.data.name,
+        };
+        onContentTypeCreated?.(contentType);
+        onCreated(contentType.id);
+        resetContentTypeCreator();
+        toast.success(`Content type "${contentType.name}" created.`);
+        return;
+      }
+
+      setContentTypeError(
+        "Could not create the content type. Please try again.",
+      );
+    } catch {
+      setContentTypeError(
+        "Could not create the content type. Check your connection and try again.",
+      );
+    } finally {
+      setIsCreatingContentType(false);
+    }
+  };
 
   const addUrlAttachment = () => {
     if (!newUrlName || !newUrlValue) {
@@ -172,6 +302,8 @@ export function UploadResourceModal({
           setIsOpen(false);
           form.reset();
           setUrlAttachments([]);
+          resetCategoryCreator();
+          resetContentTypeCreator();
           onSuccess?.();
         }
       } catch (err) {
@@ -182,7 +314,7 @@ export function UploadResourceModal({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="font-bold">
           <Upload className="mr-2 h-4 w-4" />
@@ -383,22 +515,113 @@ export function UploadResourceModal({
                 {(field) => (
                   <div className="space-y-2">
                     <Label htmlFor="contentType">Content Type *</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                      required
-                    >
-                      <SelectTrigger id="contentType" className="w-[240px]">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contentTypes.map((ct) => (
-                          <SelectItem key={ct.id} value={ct.id}>
-                            {ct.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Select
+                        value={field.state.value}
+                        onValueChange={field.handleChange}
+                        required
+                      >
+                        <SelectTrigger
+                          id="contentType"
+                          className="w-full sm:w-60"
+                        >
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {contentTypes.map((ct) => (
+                            <SelectItem key={ct.id} value={ct.id}>
+                              {ct.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!isContentTypeFormOpen && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            setIsContentTypeFormOpen(true);
+                            setContentTypeError("");
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add type
+                        </Button>
+                      )}
+                    </div>
+                    {isContentTypeFormOpen && (
+                      <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                        <Label htmlFor="newContentTypeName">
+                          New content type
+                        </Label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            id="newContentTypeName"
+                            value={newContentTypeName}
+                            onChange={(event) => {
+                              setNewContentTypeName(event.target.value);
+                              if (contentTypeError) setContentTypeError("");
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                createContentType(field.handleChange);
+                              }
+                            }}
+                            placeholder="e.g. Lecture notes"
+                            disabled={isCreatingContentType}
+                            aria-invalid={Boolean(contentTypeError)}
+                            aria-describedby={
+                              contentTypeError
+                                ? "contentTypeCreateError"
+                                : undefined
+                            }
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={() =>
+                                createContentType(field.handleChange)
+                              }
+                              disabled={
+                                isCreatingContentType ||
+                                !newContentTypeName.trim()
+                              }
+                              className="flex-1 sm:flex-none"
+                            >
+                              {isCreatingContentType ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Creating...
+                                </>
+                              ) : (
+                                "Create"
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={resetContentTypeCreator}
+                              disabled={isCreatingContentType}
+                              className="flex-1 sm:flex-none"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                        {contentTypeError && (
+                          <p
+                            id="contentTypeCreateError"
+                            className="text-destructive text-sm"
+                            role="alert"
+                          >
+                            {contentTypeError}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </form.Field>
@@ -424,33 +647,155 @@ export function UploadResourceModal({
               <form.Field name="categoryIds">
                 {(field) => (
                   <div className="space-y-3">
-                    <Label>Categories (Select all that apply)</Label>
-                    <div className="grid h-40 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3">
-                      {categories.map((cat) => (
-                        <div
-                          key={cat.id}
-                          className="flex items-center space-x-2"
+                    <div className="flex items-center justify-between gap-3">
+                      <Label>Categories (Select all that apply)</Label>
+                      {categories.length > 0 && !isCategoryFormOpen && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setIsCategoryFormOpen(true);
+                            setCategoryError("");
+                          }}
                         >
-                          <Checkbox
-                            id={`cat-${cat.id}`}
-                            checked={field.state.value.includes(cat.id)}
-                            onCheckedChange={() => {
-                              const current = field.state.value;
-                              const updated = current.includes(cat.id)
-                                ? current.filter((id) => id !== cat.id)
-                                : [...current, cat.id];
-                              field.handleChange(updated);
-                            }}
-                          />
-                          <Label
-                            htmlFor={`cat-${cat.id}`}
-                            className="cursor-pointer font-normal text-sm leading-none"
-                          >
-                            {cat.name}
-                          </Label>
-                        </div>
-                      ))}
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add category
+                        </Button>
+                      )}
                     </div>
+                    <div className="h-40 overflow-y-auto rounded-md border p-3">
+                      {categories.length === 0 ? (
+                        <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                          <p className="max-w-xs text-muted-foreground text-sm">
+                            No categories exist yet. Create one to tag this
+                            resource.
+                          </p>
+                          {!isCategoryFormOpen && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setIsCategoryFormOpen(true);
+                                setCategoryError("");
+                              }}
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Create first category
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {categories.map((cat) => (
+                            <div
+                              key={cat.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`cat-${cat.id}`}
+                                checked={field.state.value.includes(cat.id)}
+                                onCheckedChange={() => {
+                                  const current = field.state.value;
+                                  const updated = current.includes(cat.id)
+                                    ? current.filter((id) => id !== cat.id)
+                                    : [...current, cat.id];
+                                  field.handleChange(updated);
+                                }}
+                              />
+                              <Label
+                                htmlFor={`cat-${cat.id}`}
+                                className="cursor-pointer font-normal text-sm leading-none"
+                              >
+                                {cat.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {isCategoryFormOpen && (
+                      <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                        <Label htmlFor="newCategoryName">New category</Label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            id="newCategoryName"
+                            value={newCategoryName}
+                            onChange={(event) => {
+                              setNewCategoryName(event.target.value);
+                              if (categoryError) setCategoryError("");
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                createCategory((id) => {
+                                  if (!field.state.value.includes(id)) {
+                                    field.handleChange([
+                                      ...field.state.value,
+                                      id,
+                                    ]);
+                                  }
+                                });
+                              }
+                            }}
+                            placeholder="e.g. First year"
+                            disabled={isCreatingCategory}
+                            aria-invalid={Boolean(categoryError)}
+                            aria-describedby={
+                              categoryError ? "categoryCreateError" : undefined
+                            }
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={() =>
+                                createCategory((id) => {
+                                  if (!field.state.value.includes(id)) {
+                                    field.handleChange([
+                                      ...field.state.value,
+                                      id,
+                                    ]);
+                                  }
+                                })
+                              }
+                              disabled={
+                                isCreatingCategory || !newCategoryName.trim()
+                              }
+                              className="flex-1 sm:flex-none"
+                            >
+                              {isCreatingCategory ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Creating...
+                                </>
+                              ) : (
+                                "Create"
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={resetCategoryCreator}
+                              disabled={isCreatingCategory}
+                              className="flex-1 sm:flex-none"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                        {categoryError && (
+                          <p
+                            id="categoryCreateError"
+                            className="text-destructive text-sm"
+                            role="alert"
+                          >
+                            {categoryError}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </form.Field>
@@ -468,6 +813,8 @@ export function UploadResourceModal({
                       setIsOpen(false);
                       form.reset();
                       setUrlAttachments([]);
+                      resetCategoryCreator();
+                      resetContentTypeCreator();
                     }}
                     disabled={isSubmitting}
                   >
