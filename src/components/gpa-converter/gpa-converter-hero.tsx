@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Calculator, ShieldCheck } from "lucide-react";
 
 export function GPAConverterHero() {
   const reduceMotion = useReducedMotion();

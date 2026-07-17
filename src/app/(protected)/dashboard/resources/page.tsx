@@ -97,6 +97,20 @@ export default function ResourceDashboardPage() {
         <UploadResourceModal
           categories={categories}
           contentTypes={contentTypes}
+          onCategoryCreated={(category) => {
+            setCategories((current) =>
+              current.some((item) => item.id === category.id)
+                ? current
+                : [...current, category],
+            );
+          }}
+          onContentTypeCreated={(contentType) => {
+            setContentTypes((current) =>
+              current.some((item) => item.id === contentType.id)
+                ? current
+                : [...current, contentType],
+            );
+          }}
           onSuccess={fetchMyResources}
         />
       </div>

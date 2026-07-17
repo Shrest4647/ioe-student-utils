@@ -1,5 +1,10 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
+import {
+  isUniqueConstraintViolation,
+  normalizeContentTypeName,
+  normalizeResourceCategoryName,
+} from "@/lib/resource-content-types";
 import {
   extractKeyFromUrl,
   generatePresignedPreviewUrl,
@@ -73,31 +78,84 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
   )
   .post(
     "/categories",
-    async ({ body }) => {
-      const { name, description } = body;
+    async ({ body, set }) => {
+      const name = normalizeResourceCategoryName(body.name);
+      const { description } = body;
+
+      if (!name) {
+        set.status = 400;
+        return {
+          success: false,
+          error: "Category name is required.",
+        };
+      }
+
       const id = crypto.randomUUID();
 
-      await db.insert(resourceCategories).values({
-        id,
-        name,
-        description: description ?? null,
-      });
+      try {
+        const result = await db.transaction(async (tx) => {
+          await tx.execute(
+            sql`select pg_advisory_xact_lock(hashtextextended(lower(${name}), 1))`,
+          );
 
-      return {
-        success: true,
-        data: { id, name, description },
-      };
+          const [existingCategory] = await tx
+            .select({ id: resourceCategories.id })
+            .from(resourceCategories)
+            .where(sql`lower(${resourceCategories.name}) = lower(${name})`)
+            .limit(1);
+
+          if (existingCategory) {
+            return { created: false } as const;
+          }
+
+          const [category] = await tx
+            .insert(resourceCategories)
+            .values({
+              id,
+              name,
+              description: description ?? null,
+            })
+            .returning({
+              id: resourceCategories.id,
+              name: resourceCategories.name,
+              description: resourceCategories.description,
+            });
+
+          return { created: true, category } as const;
+        });
+
+        if (!result.created) {
+          set.status = 409;
+          return {
+            success: false,
+            error: "A category with this name already exists.",
+          };
+        }
+
+        return {
+          success: true,
+          data: result.category,
+        };
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          set.status = 409;
+          return {
+            success: false,
+            error: "A category with this name already exists.",
+          };
+        }
+        throw error;
+      }
     },
     {
       auth: true,
-      role: "admin",
       body: t.Object({
         name: t.String({ minLength: 1 }),
         description: t.Optional(t.String()),
       }),
       detail: {
         tags: ["Resources"],
-        summary: "Create a new resource category (Admin Only)",
+        summary: "Create a new resource category",
       },
     },
   )
@@ -120,31 +178,77 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
   )
   .post(
     "/content-types",
-    async ({ body }) => {
-      const { name, description } = body;
+    async ({ body, set }) => {
+      const name = normalizeContentTypeName(body.name);
+      const { description } = body;
+
+      if (!name) {
+        set.status = 400;
+        return {
+          success: false,
+          error: "Content type name is required.",
+        };
+      }
+
       const id = crypto.randomUUID();
 
-      await db.insert(resourceContentTypes).values({
-        id,
-        name,
-        description: description ?? null,
-      });
+      try {
+        const result = await db.transaction(async (tx) => {
+          await tx.execute(
+            sql`select pg_advisory_xact_lock(hashtextextended(lower(${name}), 0))`,
+          );
+
+          const [existingContentType] = await tx
+            .select({ id: resourceContentTypes.id })
+            .from(resourceContentTypes)
+            .where(sql`lower(${resourceContentTypes.name}) = lower(${name})`)
+            .limit(1);
+
+          if (existingContentType) {
+            return { created: false } as const;
+          }
+
+          await tx.insert(resourceContentTypes).values({
+            id,
+            name,
+            description: description ?? null,
+          });
+
+          return { created: true } as const;
+        });
+
+        if (!result.created) {
+          set.status = 409;
+          return {
+            success: false,
+            error: "A content type with this name already exists.",
+          };
+        }
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          set.status = 409;
+          return {
+            success: false,
+            error: "A content type with this name already exists.",
+          };
+        }
+        throw error;
+      }
 
       return {
         success: true,
-        data: { id, name, description },
+        data: { id, name, description: description ?? null },
       };
     },
     {
       auth: true,
-      role: "admin",
       body: t.Object({
         name: t.String({ minLength: 1 }),
         description: t.Optional(t.String()),
       }),
       detail: {
         tags: ["Resources"],
-        summary: "Create a new resource content type (Admin Only)",
+        summary: "Create a new resource content type",
       },
     },
   )
