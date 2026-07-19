@@ -177,7 +177,7 @@ export function registerScholarshipTools(server: McpServer): void {
     slug: z.string().describe("URL-friendly identifier"),
     description: z.string().optional().describe("Markdown description"),
     providerName: z.string().optional().describe("Provider/organization name"),
-    websiteUrl: z.url().optional().describe("Official website URL"),
+    websiteUrl: z.string().url().optional().describe("Official website URL"),
     fundingType: z
       .enum(["fully_funded", "partial", "tuition_only"])
       .optional()
