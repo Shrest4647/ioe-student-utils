@@ -84,7 +84,7 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
   )
   .get(
     "/:id",
-    async ({ params: { id }, set }) => {
+    async ({ params: { id }, user, set }) => {
       const resume = await db.query.resumes.findFirst({
         where: { id },
       });
@@ -98,9 +98,9 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
         where: { id: resume.profileId },
       });
 
-      if (!profile) {
+      if (!profile || (profile.userId !== user.id && user.role !== "admin")) {
         set.status = 404;
-        return { success: false, error: "Profile not found" };
+        return { success: false, error: "Resume not found" };
       }
 
       // Fetch all related data manually
@@ -159,6 +159,10 @@ export const resumeRoutes = new Elysia({ prefix: "/resumes" })
       };
     },
     {
+      auth: true,
+      params: t.Object({
+        id: t.String(),
+      }),
       detail: {
         tags: ["Resumes"],
         summary: "Get resume details including all sections",

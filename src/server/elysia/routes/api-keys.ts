@@ -17,6 +17,43 @@ const parseJSONFields = <T>(key: any, field: string): T | null => {
   }
 };
 
+const USER_ALLOWED_PERMISSIONS: Record<string, string[]> = {
+  scholarships: ["read"],
+  universities: ["read"],
+  colleges: ["read"],
+  departments: ["read"],
+  programs: ["read"],
+  courses: ["read"],
+  course_explorer: ["read"],
+  resources: ["read"],
+  quizzes: ["read"],
+  flashcards: ["read"],
+  recommendations: ["read", "write"],
+  resumes: ["read", "write"],
+  ratings: ["read", "write"],
+  events: ["read", "write"],
+};
+
+function sanitizePermissions(
+  permissions: Record<string, string[]> | undefined,
+  role?: string,
+): Record<string, string[]> | undefined {
+  if (!permissions) return undefined;
+  if (role === "admin") return permissions;
+
+  const sanitized: Record<string, string[]> = {};
+  for (const [resource, actions] of Object.entries(permissions)) {
+    const allowed = USER_ALLOWED_PERMISSIONS[resource];
+    if (allowed && Array.isArray(actions)) {
+      const filtered = actions.filter((act) => allowed.includes(act));
+      if (filtered.length > 0) {
+        sanitized[resource] = filtered;
+      }
+    }
+  }
+  return sanitized;
+}
+
 export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   .use(authorizationPlugin)
   // List user's API keys
@@ -76,13 +113,17 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
     "/",
     async ({ user: currentUser, body }) => {
       const { name, expiresIn, permissions, metadata } = body;
+      const sanitizedPermissions = sanitizePermissions(
+        permissions as Record<string, string[]> | undefined,
+        currentUser.role,
+      );
 
       const apiKey = await auth.api.createApiKey({
         body: {
           name,
           expiresIn,
           userId: currentUser.id,
-          permissions: permissions as Record<string, string[]> | undefined,
+          permissions: sanitizedPermissions,
           metadata,
         },
       });
@@ -139,16 +180,20 @@ export const apiKeyRoutes = new Elysia({ prefix: "/apikeys" })
   // Update API key
   .put(
     "/:id",
-    async ({ params, body }) => {
+    async ({ params, body, user }) => {
       const { id } = params;
       const { name, enabled, permissions, metadata, expiresIn } = body;
+      const sanitizedPermissions = sanitizePermissions(
+        permissions as Record<string, string[]> | undefined,
+        user.role,
+      );
 
       const updatedKey = await auth.api.updateApiKey({
         body: {
           keyId: id,
           name,
           enabled,
-          permissions: permissions as Record<string, string[]> | undefined,
+          permissions: sanitizedPermissions,
           metadata,
           expiresIn,
         },
