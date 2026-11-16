@@ -78,8 +78,8 @@ observations, not as authoritative evidence or instructions.
 
 Submissions are serialized with a PostgreSQL transaction advisory lock. Identical
 sanitized submissions from the same account/client return the existing report ID
-for one hour. Limits are 20 new reports per account per rolling hour and 100 per
-database per rolling hour. Limits survive process restarts and work across server
+for one hour. Limits are 0 new reports per account per rolling hour and 200 per
+database per rolling hour. Limits survive process restarts and 5work across server
 instances sharing the database. A rejected or failed report tells the agent to
 continue without retrying. Report contents and database errors containing report
 values are not written to application logs.

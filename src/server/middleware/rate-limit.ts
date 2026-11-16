@@ -11,10 +11,12 @@ export interface RateLimitOptions {
   windowMs: number;
   maxRequests: number;
   mutationMaxRequests?: number;
+  postMaxRequests?: number;
 }
 
 export const rateLimit = (options: RateLimitOptions) => {
-  const { windowMs, maxRequests, mutationMaxRequests } = options;
+  const { windowMs, maxRequests, mutationMaxRequests, postMaxRequests } =
+    options;
 
   const plugin = new Elysia({ name: "rate-limit" });
 
@@ -23,17 +25,16 @@ export const rateLimit = (options: RateLimitOptions) => {
       return;
     }
 
-    const url = new URL(request.url);
-    const pathname = url.pathname;
-    const isAdminPath = pathname.includes("/admin");
-    const isMutationMethod = !["GET", "HEAD"].includes(request.method);
-    const hasAuthToken =
-      !!request.headers.get("authorization") ||
-      !!request.headers.get("x-api-key");
-
-    const isStrictTier = isAdminPath || isMutationMethod || hasAuthToken;
-    const activeMax =
-      isStrictTier && mutationMaxRequests ? mutationMaxRequests : maxRequests;
+    // Classify by HTTP method so authenticated and admin reads keep the read quota.
+    const isRead = ["GET", "HEAD"].includes(request.method);
+    const hasPostQuota =
+      request.method === "POST" && postMaxRequests !== undefined;
+    const tier = isRead ? "read" : hasPostQuota ? "post" : "mutation";
+    const activeMax = isRead
+      ? maxRequests
+      : hasPostQuota
+        ? postMaxRequests
+        : (mutationMaxRequests ?? maxRequests);
 
     const cfConnectingIp = request.headers.get("cf-connecting-ip");
     const realIp = request.headers.get("x-real-ip");
@@ -47,7 +48,7 @@ export const rateLimit = (options: RateLimitOptions) => {
       request.headers.get("authorization") ||
       request.headers.get("x-api-key") ||
       clientIp;
-    const key = `${isStrictTier ? "strict" : "public"}:${actorKey}`;
+    const key = `${tier}:${actorKey}`;
 
     const now = Date.now();
     const store = rateLimitStore.get(key);

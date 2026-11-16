@@ -46,8 +46,9 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(
     rateLimit({
       windowMs: 60_000,
-      maxRequests: 120,
-      mutationMaxRequests: 30,
+      maxRequests: 1000,
+      postMaxRequests: 500,
+      mutationMaxRequests: 300,
     }),
   )
   .use(corsPlugin)

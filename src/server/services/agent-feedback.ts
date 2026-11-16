@@ -86,7 +86,7 @@ export async function submitAgentFeedback(
           gte(agentFeedback.createdAt, since),
         ),
       );
-    if (total.value >= 100 || own.value >= 20)
+    if (total.value >= 200 || own.value >= 50)
       return {
         accepted: false,
         message:

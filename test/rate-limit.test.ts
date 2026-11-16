@@ -7,7 +7,7 @@ describe("Rate Limit Middleware", () => {
     resetRateLimitStore();
   });
 
-  it("enforces public read limits and returns standard headers", async () => {
+  it("enforces read limits and returns standard headers", async () => {
     const app = new Elysia()
       .use(
         rateLimit({
@@ -38,7 +38,7 @@ describe("Rate Limit Middleware", () => {
     expect(third.headers.get("X-RateLimit-Limit")).toBe("2");
   });
 
-  it("applies stricter tier to mutation/admin requests", async () => {
+  it("enforces mutation limits", async () => {
     const app = new Elysia()
       .use(
         rateLimit({
@@ -64,5 +64,58 @@ describe("Rate Limit Middleware", () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
     expect(second.headers.get("X-RateLimit-Limit")).toBe("1");
+  });
+  it("uses the read quota for authenticated admin GET and HEAD requests", async () => {
+    const app = new Elysia()
+      .use(
+        rateLimit({
+          windowMs: 60_000,
+          maxRequests: 2,
+          mutationMaxRequests: 1,
+          postMaxRequests: 1,
+        }),
+      )
+      .get("/admin/items", () => "ok")
+      .head("/admin/items", () => new Response(null));
+    const request = (method: string) =>
+      new Request("http://localhost/admin/items", {
+        method,
+        headers: { Authorization: "Bearer read-token" },
+      });
+    const first = await app.handle(request("GET"));
+    const second = await app.handle(request("HEAD"));
+    const third = await app.handle(request("GET"));
+    expect(first.headers.get("X-RateLimit-Limit")).toBe("2");
+    expect(second.status).toBe(200);
+    expect(third.status).toBe(429);
+  });
+
+  it("keeps POST, read, and other mutation quotas independent for the same credential", async () => {
+    const app = new Elysia()
+      .use(
+        rateLimit({
+          windowMs: 60_000,
+          maxRequests: 1,
+          mutationMaxRequests: 1,
+          postMaxRequests: 2,
+        }),
+      )
+      .get("/items", () => "read")
+      .post("/items", () => "created")
+      .patch("/items", () => "updated");
+    const request = (method: string) =>
+      new Request("http://localhost/items", {
+        method,
+        headers: { Authorization: "Bearer shared-token" },
+      });
+    expect((await app.handle(request("GET"))).status).toBe(200);
+    expect((await app.handle(request("GET"))).status).toBe(429);
+    const firstPost = await app.handle(request("POST"));
+    expect(firstPost.status).toBe(200);
+    expect(firstPost.headers.get("X-RateLimit-Limit")).toBe("2");
+    expect((await app.handle(request("POST"))).status).toBe(200);
+    expect((await app.handle(request("POST"))).status).toBe(429);
+    expect((await app.handle(request("PATCH"))).status).toBe(200);
+    expect((await app.handle(request("PATCH"))).status).toBe(429);
   });
 });
