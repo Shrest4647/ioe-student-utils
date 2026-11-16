@@ -1,8 +1,7 @@
-import { eq } from "drizzle-orm";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { appEnv } from "@/env";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
-import { oauthAccessToken, user as userTable } from "@/server/db/schema";
 import { registerCourseExplorerResources } from "./resources/course-explorer";
 import { registerAcademicTools } from "./tools/academic";
 import { registerCollegeTools } from "./tools/colleges";
@@ -107,43 +106,49 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
 
     // 2. Try OAuth 2.0 Access Token verification
     const tokenRecord = await db.query.oauthAccessToken.findFirst({
-      where: eq(oauthAccessToken.accessToken, bearerToken),
+      where: { accessToken: bearerToken },
     });
 
     if (
       tokenRecord &&
       new Date(tokenRecord.accessTokenExpiresAt) > new Date()
     ) {
+      const client = await db.query.oauthApplication.findFirst({
+        where: { clientId: tokenRecord.clientId },
+      });
+      if (!client || client.disabled) return undefined;
+
       const user = await db.query.user.findFirst({
-        where: eq(userTable.id, tokenRecord.userId ?? ""),
+        where: { id: tokenRecord.userId ?? "" },
       });
 
       if (user) {
         return {
           token: bearerToken,
-          clientId: user.id,
+          clientId: tokenRecord.clientId,
           scopes: tokenRecord.scopes ? tokenRecord.scopes.split(" ") : [],
           extra: {
             oauth: true,
             apiKey: {
               userId: user.id,
-              permissions:
-                user.role === "admin"
-                  ? { "*": ["*"] }
-                  : {
-                      scholarships: ["read"],
-                      universities: ["read"],
-                      colleges: ["read"],
-                      departments: ["read"],
-                      programs: ["read"],
-                      courses: ["read"],
-                      course_explorer: ["read"],
-                      taxonomy: ["read"],
-                      ratings: ["read"],
-                      quizzes: ["read"],
-                      flashcards: ["read"],
-                      resources: ["read"],
-                    },
+              permissions: {
+                scholarships: ["read"],
+                universities: ["read"],
+                colleges: ["read"],
+                departments: ["read"],
+                programs: ["read"],
+                courses: ["read"],
+                course_explorer: ["read"],
+                taxonomy: ["read"],
+                degrees: ["read"],
+                countries: ["read"],
+                fields_of_study: ["read"],
+                events: ["read"],
+                ratings: ["read"],
+                quizzes: ["read"],
+                flashcards: ["read"],
+                resources: ["read"],
+              },
             },
           },
         };
@@ -156,8 +161,32 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
   return undefined;
 };
 
-export const handler = withMcpAuth(mcpHandler, verifyToken, {
+const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
   required: true,
+  resourceUrl: new URL(appEnv.NEXT_PUBLIC_BASE_URL).origin,
 });
+
+const mcpCorsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID",
+  "Access-Control-Expose-Headers":
+    "WWW-Authenticate, MCP-Protocol-Version, Mcp-Session-Id",
+};
+
+export async function handler(request: Request) {
+  if (request.method === "OPTIONS")
+    return new Response(null, { status: 204, headers: mcpCorsHeaders });
+  const response = await authenticatedHandler(request);
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(mcpCorsHeaders))
+    headers.set(key, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 export { handler as GET, handler as POST };

@@ -20,7 +20,11 @@ import {
   sendResetPassword,
 } from "@/server/emails/email";
 
+import { mcpAfter, mcpBefore } from "./mcp-hooks";
+
 export const auth = betterAuth({
+  hooks: { before: mcpBefore, after: mcpAfter },
+  baseURL: appEnv.NEXT_PUBLIC_BASE_URL,
   database: drizzleAdapter(db, {
     provider: "pg", // or "pg" or "mysql"
   }),
@@ -112,7 +116,13 @@ export const auth = betterAuth({
     }),
     mcp({
       loginPage: "/auth/signin",
-      resource: `${appEnv.NEXT_PUBLIC_BASE_URL}/api/mcp/mcp`,
+      resource: `${appEnv.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "")}/api/mcp/mcp`,
+      oidcConfig: {
+        loginPage: "/auth/signin",
+        requirePKCE: true,
+        allowPlainCodeChallengeMethod: false,
+        consentPage: "/auth/mcp/consent",
+      },
     }),
   ],
   user: {

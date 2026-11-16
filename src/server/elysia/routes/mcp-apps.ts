@@ -2,17 +2,30 @@ import crypto from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { appEnv } from "@/env";
+import { validateRedirectUri } from "@/lib/mcp/redirect-uri";
 import { db } from "@/server/db";
 import { oauthApplication } from "@/server/db/schema";
 import { authorizationPlugin } from "../plugins/authorization";
 
 export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
   .use(authorizationPlugin)
+  .onError(({ code, set }) => {
+    if (code === "VALIDATION") {
+      set.status = 400;
+      return {
+        success: false as const,
+        error: "Check the application name and callback URL.",
+      };
+    }
+  })
+  .onAfterHandle(({ set }) => {
+    set.headers["cache-control"] = "no-store";
+  })
   // Get MCP Server endpoints & connection metadata
   .get("/info", () => {
-    const baseUrl = appEnv.NEXT_PUBLIC_BASE_URL;
+    const baseUrl = appEnv.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "");
     return {
-      success: true,
+      success: true as const,
       data: {
         serverUrl: `${baseUrl}/api/mcp/mcp`,
         protectedResourceUrl: `${baseUrl}/.well-known/oauth-protected-resource`,
@@ -47,20 +60,20 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
           .orderBy(desc(oauthApplication.createdAt));
 
         return {
-          success: true,
+          success: true as const,
           data: apps,
         };
       } catch (error) {
         set.status = 500;
         console.error("Error fetching MCP apps:", error);
         return {
-          success: false,
+          success: false as const,
           error: "Failed to fetch MCP applications",
         };
       }
     },
     {
-      auth: true,
+      sessionAuth: true,
       detail: {
         tags: ["MCP Apps"],
         summary: "List user's registered MCP applications",
@@ -72,6 +85,17 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
     "/",
     async ({ body, user, set }) => {
       try {
+        const redirectUri = body.redirectUrls.trim();
+        const validationError = validateRedirectUri(redirectUri);
+        if (body.name.trim().length < 2 || validationError) {
+          set.status = 400;
+          return {
+            success: false as const,
+            error:
+              validationError ||
+              "Enter an application name with at least two characters.",
+          };
+        }
         const id = crypto.randomUUID();
         const clientId = `mcp_${crypto.randomBytes(16).toString("hex")}`;
         const clientSecret = crypto.randomBytes(32).toString("hex");
@@ -83,7 +107,7 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
             name: body.name.trim(),
             clientId,
             clientSecret,
-            redirectUrls: body.redirectUrls.trim(),
+            redirectUrls: redirectUri,
             type: "web",
             disabled: false,
             userId: user.id,
@@ -92,8 +116,9 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
           })
           .returning();
 
+        set.status = 201;
         return {
-          success: true,
+          success: true as const,
           data: {
             id: createdApp.id,
             name: createdApp.name,
@@ -109,16 +134,16 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
         set.status = 500;
         console.error("Error creating MCP application:", error);
         return {
-          success: false,
+          success: false as const,
           error: "Failed to create MCP application",
         };
       }
     },
     {
-      auth: true,
+      sessionAuth: true,
       body: t.Object({
         name: t.String({ minLength: 2, maxLength: 100 }),
-        redirectUrls: t.String({ minLength: 5 }),
+        redirectUrls: t.String({ minLength: 5, maxLength: 2048 }),
       }),
       detail: {
         tags: ["MCP Apps"],
@@ -132,19 +157,26 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
     async ({ params: { id }, user, set }) => {
       try {
         const app = await db.query.oauthApplication.findFirst({
-          where: eq(oauthApplication.id, id),
+          where: { id },
         });
 
         if (!app) {
           set.status = 404;
-          return { success: false, error: "Application not found" };
+          return { success: false as const, error: "Application not found" };
         }
 
         if (app.userId !== user.id && user.role !== "admin") {
           set.status = 403;
-          return { success: false, error: "Unauthorized" };
+          return { success: false as const, error: "Unauthorized" };
         }
 
+        if (app.type === "public") {
+          set.status = 400;
+          return {
+            success: false as const,
+            error: "Public clients use PKCE and do not have a client secret.",
+          };
+        }
         const newSecret = crypto.randomBytes(32).toString("hex");
 
         await db
@@ -156,7 +188,7 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
           .where(eq(oauthApplication.id, id));
 
         return {
-          success: true,
+          success: true as const,
           data: {
             clientId: app.clientId,
             clientSecret: newSecret,
@@ -168,13 +200,13 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
         set.status = 500;
         console.error("Error regenerating secret:", error);
         return {
-          success: false,
+          success: false as const,
           error: "Failed to regenerate secret",
         };
       }
     },
     {
-      auth: true,
+      sessionAuth: true,
       detail: {
         tags: ["MCP Apps"],
         summary: "Regenerate client secret for an MCP application",
@@ -187,36 +219,36 @@ export const mcpAppRoutes = new Elysia({ prefix: "/mcp-apps" })
     async ({ params: { id }, user, set }) => {
       try {
         const app = await db.query.oauthApplication.findFirst({
-          where: eq(oauthApplication.id, id),
+          where: { id },
         });
 
         if (!app) {
           set.status = 404;
-          return { success: false, error: "Application not found" };
+          return { success: false as const, error: "Application not found" };
         }
 
         if (app.userId !== user.id && user.role !== "admin") {
           set.status = 403;
-          return { success: false, error: "Unauthorized" };
+          return { success: false as const, error: "Unauthorized" };
         }
 
         await db.delete(oauthApplication).where(eq(oauthApplication.id, id));
 
         return {
-          success: true,
+          success: true as const,
           message: "Application deleted and all associated tokens revoked",
         };
       } catch (error) {
         set.status = 500;
         console.error("Error deleting MCP application:", error);
         return {
-          success: false,
+          success: false as const,
           error: "Failed to delete application",
         };
       }
     },
     {
-      auth: true,
+      sessionAuth: true,
       detail: {
         tags: ["MCP Apps"],
         summary: "Delete an MCP OAuth application",

@@ -11,4 +11,9 @@
  * @see https://nextjs.org/docs/app/building-your-application/routing/route-handlers
  */
 
-export { handler as GET, handler as POST } from "@/server/mcp/server";
+export {
+  handler as GET,
+  handler as POST,
+  handler as DELETE,
+  handler as OPTIONS,
+} from "@/server/mcp/server";

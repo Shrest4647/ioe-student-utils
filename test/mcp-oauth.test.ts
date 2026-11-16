@@ -37,6 +37,8 @@ describe("MCP OAuth 2.0 Production Integration Tests", () => {
       expect(body.token_endpoint).toBe(
         `${appEnv.NEXT_PUBLIC_BASE_URL}/api/auth/mcp/token`,
       );
+      expect(body.userinfo_endpoint).toBeUndefined();
+      expect(body.jwks_uri).toBeUndefined();
       expect(body.response_types_supported).toContain("code");
       expect(body.code_challenge_methods_supported).toContain("S256");
       expect(body.grant_types_supported).toContain("authorization_code");
@@ -63,8 +65,54 @@ describe("MCP OAuth 2.0 Production Integration Tests", () => {
       const authHeader = res.headers.get("www-authenticate");
       expect(authHeader).toBeDefined();
       expect(authHeader).toContain("Bearer");
-      expect(authHeader).toContain("resource_metadata");
+      expect(authHeader).toContain(
+        `resource_metadata="${new URL(appEnv.NEXT_PUBLIC_BASE_URL).origin}/.well-known/oauth-protected-resource"`,
+      );
+      expect(res.headers.get("access-control-expose-headers")).toContain(
+        "WWW-Authenticate",
+      );
     });
+  });
+
+  it("accepts unauthenticated browser preflight", async () => {
+    const response = await handler(
+      new Request("http://localhost/api/mcp/mcp", { method: "OPTIONS" }),
+    );
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+  });
+
+  it("allows external OAuth preflight and runs registration guards through the REST mount", async () => {
+    const { elysiaApi } = await import("@/server/elysia");
+    const preflight = await elysiaApi.fetch(
+      new Request("http://localhost/api/auth/mcp/token", {
+        method: "OPTIONS",
+        headers: {
+          Origin: "https://agent.example",
+          "Access-Control-Request-Method": "POST",
+          "Access-Control-Request-Headers": "content-type,authorization",
+        },
+      }),
+    );
+    expect([200, 204]).toContain(preflight.status);
+    expect(preflight.headers.get("access-control-allow-origin")).toBe(
+      "https://agent.example",
+    );
+    const registration = await elysiaApi.fetch(
+      new Request("http://localhost/api/auth/mcp/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://agent.example",
+        },
+        body: JSON.stringify({
+          client_name: "Unsafe callback",
+          redirect_uris: ["http://agent.example/callback"],
+        }),
+      }),
+    );
+    expect(registration.status).toBe(400);
+    expect((await registration.json()).error).toBe("invalid_redirect_uri");
   });
 
   describe("MCP Apps API Endpoints", () => {

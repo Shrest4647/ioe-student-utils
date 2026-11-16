@@ -7,11 +7,12 @@ import {
   Bot,
   Check,
   Copy,
+  Eye,
+  EyeOff,
   Key,
   Plus,
   RefreshCw,
   ShieldCheck,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -61,6 +63,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { apiClient } from "@/lib/eden";
+import { validateRedirectUri } from "@/lib/mcp/redirect-uri";
 
 interface McpApp {
   id: string;
@@ -93,13 +96,19 @@ export default function McpAppsDashboardPage() {
   // Confirmation dialogs
   const [deleteTarget, setDeleteTarget] = useState<McpApp | null>(null);
   const [regenerateTarget, setRegenerateTarget] = useState<McpApp | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
+  const redirectError = redirectUrls.trim()
+    ? validateRedirectUri(redirectUrls.trim())
+    : null;
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Queries
   const { data: serverInfo } = useQuery({
     queryKey: ["mcp-server-info"],
     queryFn: async () => {
-      const { data } = await apiClient.api["mcp-apps"].info.get();
+      const { data, error } = await apiClient.api["mcp-apps"].info.get();
+      if (error || !data?.success)
+        throw new Error("Unable to load server information");
       return (
         data?.data || {
           serverUrl: `${window.location.origin}/api/mcp/mcp`,
@@ -108,12 +117,17 @@ export default function McpAppsDashboardPage() {
     },
   });
 
-  const { data: apps = [], isLoading } = useQuery({
+  const {
+    data: apps = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["mcp-apps"],
     queryFn: async () => {
       const { data, error } = await apiClient.api["mcp-apps"].get();
-      if (error) {
-        throw error;
+      if (error || !data?.success) {
+        throw new Error("Unable to load registered applications");
       }
       return (data?.data || []) as McpApp[];
     },
@@ -124,6 +138,7 @@ export default function McpAppsDashboardPage() {
     mutationFn: async () => {
       if (!appName.trim()) throw new Error("Application name is required");
       if (!redirectUrls.trim()) throw new Error("Redirect URI is required");
+      if (redirectError) throw new Error(redirectError);
 
       const res = await apiClient.api["mcp-apps"].post({
         name: appName.trim(),
@@ -131,22 +146,21 @@ export default function McpAppsDashboardPage() {
       });
 
       if (res.error || !res.data?.success) {
-        throw new Error(
-          (res.error as any)?.value?.message || "Failed to create MCP app",
-        );
+        throw new Error(res.data?.error || "Failed to create MCP app");
       }
 
       return res.data.data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       setIsCreateOpen(false);
       setAppName("Google Gemini");
       setRedirectUrls("");
+      setShowSecret(false);
       setCreatedCredentials(data);
       queryClient.invalidateQueries({ queryKey: ["mcp-apps"] });
       toast.success("OAuth credentials generated successfully!");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Failed to register application");
     },
   });
@@ -154,7 +168,8 @@ export default function McpAppsDashboardPage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.api["mcp-apps"]({ id }).delete();
-      if (res.error) throw new Error("Failed to delete application");
+      if (res.error || !res.data?.success)
+        throw new Error("Failed to revoke application");
       return res.data;
     },
     onSuccess: () => {
@@ -162,22 +177,24 @@ export default function McpAppsDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["mcp-apps"] });
       toast.success("Application and access tokens deleted successfully");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Failed to delete application");
     },
   });
 
   const regenerateMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await (apiClient.api["mcp-apps"]({ id }) as any)[
+      const res = await apiClient.api["mcp-apps"]({ id })[
         "regenerate-secret"
       ].post();
-      if (res.error) throw new Error("Failed to regenerate secret");
+      if (res.error || !res.data?.success)
+        throw new Error("Failed to regenerate secret");
       return res.data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       const targetApp = regenerateTarget;
       setRegenerateTarget(null);
+      setShowSecret(false);
       if (targetApp && data?.data) {
         setCreatedCredentials({
           name: targetApp.name,
@@ -189,16 +206,22 @@ export default function McpAppsDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["mcp-apps"] });
       toast.success("New client secret generated!");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Failed to regenerate secret");
     },
   });
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(label);
-    toast.success(`${label} copied to clipboard`);
-    setTimeout(() => setCopiedKey(null), 2000);
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(label);
+      toast.success(`${label} copied to clipboard`);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch {
+      toast.error(
+        "Clipboard access is unavailable. Select and copy the value manually.",
+      );
+    }
   };
 
   const serverUrl =
@@ -214,16 +237,16 @@ export default function McpAppsDashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-bold text-3xl tracking-tight">
-              Connected AI Apps (MCP)
+              AI app connections
             </h1>
             <Badge variant="secondary" className="gap-1 font-mono text-xs">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
               OAuth 2.0
             </Badge>
           </div>
           <p className="mt-1 text-muted-foreground text-sm">
-            Manage authorized OAuth 2.0 applications (Google Gemini, Claude,
-            Cursor) connecting to your Model Context Protocol server.
+            Connect an AI assistant to read academic information. Register
+            client credentials here, then approve access in your assistant.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -238,7 +261,7 @@ export default function McpAppsDashboardPage() {
             className="gap-2 text-xs sm:text-sm"
           >
             <Plus className="h-4 w-4" />
-            Connect New App
+            Register app
           </Button>
         </div>
       </div>
@@ -248,14 +271,11 @@ export default function McpAppsDashboardPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Bot className="h-5 w-5 text-primary" />
               <CardTitle className="font-semibold text-base">
-                Your Public MCP Server URL
+                MCP server URL
               </CardTitle>
             </div>
-            <Badge variant="outline" className="text-xs">
-              RFC 9728 & RFC 8414
-            </Badge>
           </div>
           <CardDescription className="text-xs">
             Provide this URL to external AI assistants (Gemini, Claude, Cursor)
@@ -264,7 +284,9 @@ export default function McpAppsDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 rounded-md border bg-background p-2 font-mono text-sm">
-            <span className="flex-1 select-all truncate">{serverUrl}</span>
+            <span className="min-w-0 flex-1 select-all break-all">
+              {serverUrl}
+            </span>
             <Button
               variant="ghost"
               size="sm"
@@ -273,7 +295,7 @@ export default function McpAppsDashboardPage() {
             >
               {copiedKey === "Server URL" ? (
                 <>
-                  <Check className="h-4 w-4 text-emerald-500" />
+                  <Check className="h-4 w-4 text-primary" />
                   <span className="text-xs">Copied</span>
                 </>
               ) : (
@@ -288,14 +310,19 @@ export default function McpAppsDashboardPage() {
       </Card>
 
       {/* How to Connect Gemini Guide Accordion */}
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion
+        type="single"
+        defaultValue="gemini-guide"
+        collapsible
+        className="w-full"
+      >
         <AccordionItem
           value="gemini-guide"
           className="rounded-lg border bg-card"
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-center gap-2 font-medium text-sm">
-              <Bot className="h-4 w-4 text-blue-500" />
+              <Bot className="h-4 w-4 text-primary" />
               <span>Step-by-step: How to connect Google Gemini with OAuth</span>
             </div>
           </AccordionTrigger>
@@ -319,7 +346,7 @@ export default function McpAppsDashboardPage() {
                 <strong>Copy redirect URI</strong> button.
               </li>
               <li>
-                Click the <strong>Connect New App</strong> button above, enter a
+                Click the <strong>Register app</strong> button above, enter a
                 name (e.g., <em>Google Gemini</em>), and paste Gemini's copied
                 redirect URI.
               </li>
@@ -329,10 +356,20 @@ export default function McpAppsDashboardPage() {
                 <strong>Next</strong>.
               </li>
               <li>
-                A secure login popup will prompt you to approve access. Once
-                approved, Gemini connects automatically!
+                Sign in and review the access request. Approve it to return to
+                your assistant. OAuth connections have read-only access.
               </li>
             </ol>
+            <p className="mt-4">
+              For clients with automatic OAuth registration, start with the
+              server URL and follow their sign-in flow. Manual credentials are
+              only needed if your client asks for them.
+            </p>
+            <p className="mt-3">
+              If your assistant reports unsupported authentication, remove the
+              failed connection and retry after the server update is deployed.
+              Use the exact callback URL supplied by that assistant.
+            </p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -342,13 +379,28 @@ export default function McpAppsDashboardPage() {
         <CardHeader>
           <CardTitle className="text-lg">Registered Applications</CardTitle>
           <CardDescription>
-            Applications authorized to request MCP tool tokens on your behalf.
+            Registered OAuth clients. Registration alone does not mean an
+            assistant is connected.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex h-32 items-center justify-center">
-              <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            <output
+              className="block space-y-3 p-6"
+              aria-label="Loading applications"
+            >
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </output>
+          ) : isError ? (
+            <div className="space-y-3 p-6" role="alert">
+              <p className="text-sm">
+                We couldn’t load your applications. Your existing connections
+                are unaffected.
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>
+                Try again
+              </Button>
             </div>
           ) : apps.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -356,7 +408,7 @@ export default function McpAppsDashboardPage() {
                 <Bot className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="mt-4 font-semibold text-base">
-                No Connected Apps Yet
+                Register your first app
               </h3>
               <p className="mt-1 max-w-sm text-muted-foreground text-sm">
                 Register an app to connect Google Gemini or other AI assistants
@@ -367,7 +419,7 @@ export default function McpAppsDashboardPage() {
                 className="mt-4 gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Connect Gemini or AI App
+                Register an AI app
               </Button>
             </div>
           ) : (
@@ -394,6 +446,9 @@ export default function McpAppsDashboardPage() {
                         <Bot className="h-4 w-4 text-primary" />
                         <span>{app.name}</span>
                       </div>
+                      <p className="mt-1 max-w-64 break-all text-muted-foreground text-xs md:hidden">
+                        {app.redirectUrls}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 font-mono text-xs">
@@ -404,6 +459,7 @@ export default function McpAppsDashboardPage() {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
+                          aria-label={`Copy client ID for ${app.name}`}
                           onClick={() =>
                             copyToClipboard(
                               app.clientId,
@@ -428,7 +484,7 @@ export default function McpAppsDashboardPage() {
                         variant={app.disabled ? "destructive" : "outline"}
                         className="text-xs"
                       >
-                        {app.disabled ? "Disabled" : "Active"}
+                        {app.disabled ? "Disabled" : "Registered"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -437,7 +493,17 @@ export default function McpAppsDashboardPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setRegenerateTarget(app)}
-                          title="Regenerate Secret"
+                          disabled={app.type === "public"}
+                          aria-label={
+                            app.type === "public"
+                              ? "Public clients use PKCE without a secret"
+                              : `Regenerate secret for ${app.name}`
+                          }
+                          title={
+                            app.type === "public"
+                              ? "Public clients do not use a client secret"
+                              : "Regenerate secret"
+                          }
                           className="h-8 px-2 text-xs"
                         >
                           <RefreshCw className="h-3.5 w-3.5" />
@@ -449,7 +515,8 @@ export default function McpAppsDashboardPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteTarget(app)}
-                          title="Revoke Application"
+                          aria-label={`Revoke ${app.name}`}
+                          title="Revoke application"
                           className="h-8 px-2 text-destructive text-xs hover:text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -465,13 +532,13 @@ export default function McpAppsDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Connect New App Dialog */}
+      {/* Register app Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
-              Connect AI Assistant (MCP OAuth)
+              Register an AI app
             </DialogTitle>
             <DialogDescription>
               Register an OAuth 2.0 client for Google Gemini, Claude, or Cursor
@@ -479,7 +546,14 @@ export default function McpAppsDashboardPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <form
+            id="register-mcp-app"
+            onSubmit={(event) => {
+              event.preventDefault();
+              createMutation.mutate();
+            }}
+            className="space-y-4 py-2"
+          >
             {/* Quick preset buttons */}
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">
@@ -519,6 +593,10 @@ export default function McpAppsDashboardPage() {
             <div className="space-y-1.5">
               <Label htmlFor="app-name">Application Name</Label>
               <Input
+                required
+                minLength={2}
+                maxLength={100}
+                autoComplete="off"
                 id="app-name"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
@@ -532,17 +610,33 @@ export default function McpAppsDashboardPage() {
                 <span className="text-destructive">*</span>
               </Label>
               <Input
+                type="url"
+                required
+                maxLength={2048}
+                autoComplete="off"
+                spellCheck={false}
+                aria-describedby="redirect-help redirect-error"
+                aria-invalid={!!redirectError}
                 id="redirect-uri"
                 value={redirectUrls}
                 onChange={(e) => setRedirectUrls(e.target.value)}
                 placeholder="https://oauth-redirect.googleusercontent.com/r/..."
               />
-              <p className="text-muted-foreground text-xs">
+              <p id="redirect-help" className="text-muted-foreground text-xs">
                 In Gemini's dialog, click <strong>Copy redirect URI</strong> and
                 paste it here.
               </p>
+              {redirectError && (
+                <p
+                  id="redirect-error"
+                  role="alert"
+                  className="text-destructive text-xs"
+                >
+                  {redirectError}
+                </p>
+              )}
             </div>
-          </div>
+          </form>
 
           <DialogFooter>
             <Button
@@ -553,8 +647,14 @@ export default function McpAppsDashboardPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || !appName || !redirectUrls}
+              type="submit"
+              form="register-mcp-app"
+              disabled={
+                createMutation.isPending ||
+                appName.trim().length < 2 ||
+                !redirectUrls.trim() ||
+                !!redirectError
+              }
             >
               {createMutation.isPending
                 ? "Generating..."
@@ -573,7 +673,7 @@ export default function McpAppsDashboardPage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <div className="mx-auto rounded-full bg-emerald-500/10 p-3 text-emerald-500">
+            <div className="mx-auto rounded-full bg-primary/10 p-3 text-primary">
               <ShieldCheck className="h-6 w-6" />
             </div>
             <DialogTitle className="text-center text-lg">
@@ -588,7 +688,7 @@ export default function McpAppsDashboardPage() {
 
           {createdCredentials && (
             <div className="space-y-4 py-2">
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
+              <div className="rounded-lg border border-border bg-muted p-3 text-foreground">
                 <div className="flex gap-2">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="text-xs">
@@ -602,13 +702,14 @@ export default function McpAppsDashboardPage() {
               <div className="space-y-1">
                 <Label className="text-xs">1. MCP Server URL</Label>
                 <div className="flex items-center gap-2 rounded border bg-muted/40 p-2 font-mono text-xs">
-                  <span className="flex-1 select-all truncate">
+                  <span className="min-w-0 flex-1 select-all break-all">
                     {serverUrl}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2"
+                    aria-label="Copy MCP server URL"
                     onClick={() => copyToClipboard(serverUrl, "Server URL")}
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -620,13 +721,14 @@ export default function McpAppsDashboardPage() {
               <div className="space-y-1">
                 <Label className="text-xs">2. Client ID</Label>
                 <div className="flex items-center gap-2 rounded border bg-muted/40 p-2 font-mono text-xs">
-                  <span className="flex-1 select-all truncate">
+                  <span className="min-w-0 flex-1 select-all break-all">
                     {createdCredentials.clientId}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2"
+                    aria-label="Copy client ID"
                     onClick={() =>
                       copyToClipboard(createdCredentials.clientId, "Client ID")
                     }
@@ -640,10 +742,27 @@ export default function McpAppsDashboardPage() {
               <div className="space-y-1">
                 <Label className="text-xs">3. Client Secret</Label>
                 <div className="flex items-center gap-2 rounded border bg-muted/40 p-2 font-mono text-xs">
-                  <span className="flex-1 select-all truncate font-semibold text-emerald-600 dark:text-emerald-400">
-                    {createdCredentials.clientSecret}
+                  <span className="flex-1 select-all truncate font-semibold text-primary">
+                    {showSecret
+                      ? createdCredentials.clientSecret
+                      : "••••••••••••••••••••••••"}
                   </span>
                   <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={
+                      showSecret ? "Hide client secret" : "Show client secret"
+                    }
+                    onClick={() => setShowSecret(!showSecret)}
+                  >
+                    {showSecret ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </Button>
+                  <Button
+                    aria-label="Copy client secret"
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2"
@@ -689,12 +808,20 @@ export default function McpAppsDashboardPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={
+                deleteMutation.isPending || regenerateMutation.isPending
+              }
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() =>
-                deleteTarget && deleteMutation.mutate(deleteTarget.id)
-              }
+              disabled={deleteMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                deleteTarget && deleteMutation.mutate(deleteTarget.id);
+              }}
             >
               {deleteMutation.isPending ? "Revoking..." : "Yes, Revoke App"}
             </AlertDialogAction>
@@ -720,12 +847,20 @@ export default function McpAppsDashboardPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                regenerateTarget &&
-                regenerateMutation.mutate(regenerateTarget.id)
+            <AlertDialogCancel
+              disabled={
+                deleteMutation.isPending || regenerateMutation.isPending
               }
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={regenerateMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                regenerateTarget &&
+                  regenerateMutation.mutate(regenerateTarget.id);
+              }}
             >
               {regenerateMutation.isPending
                 ? "Generating..."
