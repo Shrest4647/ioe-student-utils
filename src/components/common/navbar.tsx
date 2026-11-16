@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
  */
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const isMobile = useIsMobile();
 
   return (
@@ -255,6 +255,14 @@ export function Navbar() {
                           Connect Gemini, Claude, and AI assistants via OAuth
                           2.0.
                         </ListItem>
+                        {user?.role === "admin" && (
+                          <ListItem
+                            href="/dashboard/agent-feedback"
+                            title="Agent feedback"
+                          >
+                            Review problems reported by AI assistants.
+                          </ListItem>
+                        )}
                         <ListItem href="/dashboard/settings" title="Settings">
                           Configure your account settings.
                         </ListItem>
@@ -444,6 +452,14 @@ export function Navbar() {
                   >
                     Resume Builder
                   </MobileLink>
+                  {user?.role === "admin" && (
+                    <MobileLink
+                      href="/dashboard/agent-feedback"
+                      icon={<FileText className="h-4 w-4" />}
+                    >
+                      Agent feedback
+                    </MobileLink>
+                  )}
                   <MobileLink
                     href="/dashboard/settings"
                     icon={<LayoutDashboard className="h-4 w-4" />}

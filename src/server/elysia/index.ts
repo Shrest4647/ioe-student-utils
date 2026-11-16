@@ -5,6 +5,7 @@ import { betterAuthPlugin } from "./plugins/better-auth";
 import { corsPlugin } from "./plugins/cors";
 import { openApiPlugin } from "./plugins/openapi";
 import { academicEventsRoutes } from "./routes/academic-events";
+import { agentFeedbackRoutes } from "./routes/agent-feedback";
 import { apiKeyRoutes } from "./routes/api-keys";
 import { betterUploadRoutes } from "./routes/better-upload";
 import { certificationRoutes } from "./routes/certifications";
@@ -55,6 +56,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(openApiPlugin)
   .use(apiKeyRoutes)
   .use(mcpAppRoutes)
+  .use(agentFeedbackRoutes)
   .use(userRoutes)
   .use(resourceRoutes)
   .use(profileRoutes)

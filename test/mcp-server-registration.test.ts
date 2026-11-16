@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerCourseExplorerResources } from "@/server/mcp/resources/course-explorer";
 import { registerAcademicTools } from "@/server/mcp/tools/academic";
+import { registerAgentFeedbackTools } from "@/server/mcp/tools/agent-feedback";
 import { registerCollegeTools } from "@/server/mcp/tools/colleges";
 import { registerCountryTools } from "@/server/mcp/tools/countries";
 import { registerCourseExplorerTools } from "@/server/mcp/tools/course-explorer";
@@ -26,6 +27,7 @@ describe("MCP server registration", () => {
     });
 
     expect(() => {
+      registerAgentFeedbackTools(server);
       registerScholarshipTools(server);
       registerRoundEventTools(server);
       registerCountryTools(server);

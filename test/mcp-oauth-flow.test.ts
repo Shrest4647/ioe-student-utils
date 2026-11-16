@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { betterAuth } from "better-auth";
 import { mcp } from "better-auth/plugins";
+import { mcpWriteScope } from "@/lib/mcp/oauth-permissions";
 import { validateRedirectUri } from "@/lib/mcp/redirect-uri";
 import { getSignInContinuation } from "@/lib/mcp/sign-in-continuation";
 import { mcpAfter, mcpBefore } from "@/server/better-auth/mcp-hooks";
@@ -11,6 +12,11 @@ const auth = betterAuth({
   baseURL: origin,
   secret: "isolated-mcp-test-secret-at-least-32-characters",
   emailAndPassword: { enabled: true },
+  user: {
+    additionalFields: {
+      role: { type: "string", defaultValue: "user", input: false },
+    },
+  },
   hooks: { before: mcpBefore, after: mcpAfter },
   plugins: [
     mcp({
@@ -21,6 +27,7 @@ const auth = betterAuth({
         requirePKCE: true,
         allowPlainCodeChallengeMethod: false,
         consentPage: "/auth/mcp/consent",
+        scopes: [mcpWriteScope],
       },
     }),
   ],
@@ -62,7 +69,12 @@ async function register(method = "client_secret_post") {
   expect(response.status).toBe(201);
   return response.json();
 }
-async function grant(clientId: string, codeVerifier: string) {
+async function grant(
+  clientId: string,
+  codeVerifier: string,
+  allowWrites = false,
+  requestedScope = "openid offline_access",
+) {
   const challenge = Buffer.from(
     await crypto.subtle.digest(
       "SHA-256",
@@ -73,7 +85,7 @@ async function grant(clientId: string, codeVerifier: string) {
     client_id: clientId,
     redirect_uri: callback,
     response_type: "code",
-    scope: "openid offline_access",
+    scope: requestedScope,
     code_challenge: challenge,
     code_challenge_method: "S256",
     state: "test-state",
@@ -90,7 +102,7 @@ async function grant(clientId: string, codeVerifier: string) {
   );
   expect(foreignConsent.status).toBe(401);
   const consent = await request(
-    "/oauth2/consent",
+    `/oauth2/consent?write_access=${allowWrites ? "1" : "0"}`,
     { consent_code: code, accept: true },
     cookie,
   );
@@ -119,6 +131,17 @@ beforeAll(async () => {
     if (index === 0) cookie = sessionCookie;
     else otherCookie = sessionCookie;
   }
+  const adapter = (await auth.$context).adapter;
+  const owner = await adapter.findOne<{ id: string }>({
+    model: "user",
+    where: [{ field: "email", value: "owner@example.com" }],
+  });
+  if (!owner) throw new Error("Test owner missing");
+  await adapter.update({
+    model: "user",
+    where: [{ field: "id", value: owner.id }],
+    update: { role: "admin" },
+  });
 });
 
 describe("MCP OAuth provider flow", () => {
@@ -172,6 +195,98 @@ describe("MCP OAuth provider flow", () => {
     expect((await renewed.json()).access_token).not.toBe(token.access_token);
     const reused = await request("/mcp/token", refresh);
     expect(reused.status).toBe(401);
+  });
+
+  it("stores editing scope only after an administrator explicitly approves it", async () => {
+    for (const allowWrites of [false, true]) {
+      const client = await register();
+      const verifier = "b".repeat(64);
+      const code = await grant(
+        client.client_id,
+        verifier,
+        allowWrites,
+        allowWrites
+          ? "openid offline_access"
+          : `openid offline_access ${mcpWriteScope}`,
+      );
+      const response = await request("/mcp/token", {
+        grant_type: "authorization_code",
+        code,
+        client_id: client.client_id,
+        client_secret: client.client_secret,
+        redirect_uri: callback,
+        code_verifier: verifier,
+      });
+      expect(response.status).toBe(200);
+      const tokens = await response.json();
+      expect(tokens.scope.split(" ").includes(mcpWriteScope)).toBe(allowWrites);
+    }
+  });
+
+  it("does not exchange a pending consent code, even if the client requests editing", async () => {
+    const client = await register();
+    const verifier = "c".repeat(64);
+    const challenge = Buffer.from(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)),
+    ).toString("base64url");
+    const query = new URLSearchParams({
+      client_id: client.client_id,
+      redirect_uri: callback,
+      response_type: "code",
+      scope: `openid ${mcpWriteScope}`,
+      code_challenge: challenge,
+      code_challenge_method: "S256",
+    });
+    const response = await request(
+      `/mcp/authorize?${query}`,
+      undefined,
+      cookie,
+    );
+    const location = new URL(response.headers.get("location") || "", origin);
+    const token = await request("/mcp/token", {
+      grant_type: "authorization_code",
+      client_id: client.client_id,
+      client_secret: client.client_secret,
+      redirect_uri: callback,
+      code_verifier: verifier,
+      code: location.searchParams.get("consent_code"),
+    });
+    expect(token.status).toBe(400);
+    expect((await token.json()).error).toBe("invalid_grant");
+  });
+
+  it("does not accept administrator roles from sign-up input", async () => {
+    const response = await request("/sign-up/email", {
+      name: "Normal user",
+      email: "scope-test@example.com",
+      password: "a-long-test-password",
+      role: "admin",
+    });
+    expect(response.status).toBe(200);
+    expect((await response.json()).user.role).toBe("user");
+  });
+
+  it("rejects an ordinary account forging the editing approval parameter", async () => {
+    const client = await register();
+    const query = new URLSearchParams({
+      client_id: client.client_id,
+      redirect_uri: callback,
+      response_type: "code",
+      code_challenge: "a".repeat(43),
+      code_challenge_method: "S256",
+    });
+    const response = await request(
+      `/mcp/authorize?${query}`,
+      undefined,
+      otherCookie,
+    );
+    const location = new URL(response.headers.get("location") || "", origin);
+    const consent = await request(
+      "/oauth2/consent?write_access=1",
+      { accept: true, consent_code: location.searchParams.get("consent_code") },
+      otherCookie,
+    );
+    expect(consent.status).toBe(403);
   });
 
   it("rejects plain PKCE challenges", async () => {

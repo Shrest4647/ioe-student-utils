@@ -3,6 +3,7 @@ import {
   createAuthMiddleware,
   getSessionFromCtx,
 } from "better-auth/api";
+import { canGrantMcpWrite, mcpWriteScope } from "@/lib/mcp/oauth-permissions";
 import { validateRedirectUri } from "@/lib/mcp/redirect-uri";
 
 /** Compatibility and security guards for the installed Better Auth MCP provider. */
@@ -59,6 +60,29 @@ export const mcpBefore = createAuthMiddleware(async (ctx) => {
       );
       return ctx.json({ redirectURI: redirect.toString() });
     }
+    if (ctx.body?.accept === true) {
+      const value = JSON.parse(verification.value);
+      const allowWrites = ctx.query?.write_access === "1";
+      const account = await ctx.context.adapter.findOne<{ role: string }>({
+        model: "user",
+        where: [{ field: "id", value: session.user.id }],
+      });
+      if (allowWrites && !canGrantMcpWrite(account?.role)) {
+        throw new APIError("FORBIDDEN", {
+          error: "access_denied",
+          error_description:
+            "An administrator account is required to approve editing.",
+        });
+      }
+      const scopes = (value.scope as string[]).filter(
+        (scope) => scope !== mcpWriteScope,
+      );
+      if (allowWrites) scopes.push(mcpWriteScope);
+      await ctx.context.internalAdapter.updateVerificationValue(
+        verification.id,
+        { value: JSON.stringify({ ...value, scope: scopes }) },
+      );
+    }
   }
   if (ctx.path !== "/mcp/token") return;
   let clientId = ctx.body?.client_id;
@@ -88,6 +112,18 @@ export const mcpBefore = createAuthMiddleware(async (ctx) => {
       };
     } catch {
       throw new APIError("UNAUTHORIZED", { error: "invalid_client" });
+    }
+  }
+  if (ctx.body?.grant_type === "authorization_code" && ctx.body.code) {
+    const pending = await ctx.context.internalAdapter.findVerificationValue(
+      String(ctx.body.code),
+    );
+    if (pending && JSON.parse(pending.value).requireConsent) {
+      throw new APIError("BAD_REQUEST", {
+        error: "invalid_grant",
+        error_description:
+          "Complete the connection approval before exchanging this code.",
+      });
     }
   }
   if (ctx.body?.grant_type !== "refresh_token") {

@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/eden";
 
 const _PERMISSION_OPTIONS = [
@@ -50,6 +51,7 @@ const EXPIRATION_OPTIONS = [
  */
 export default function NewApiKeyPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [expiresIn, setExpiresIn] = useState(30);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -83,7 +85,8 @@ export default function NewApiKeyPage() {
           expiresIn: expiresIn * 24 * 60 * 60, // Convert days to seconds
           permissions: selectedPermissions.reduce(
             (acc, permission) => {
-              acc[permission] = ["read", "write"];
+              acc[permission] =
+                permission === "mcp_feedback" ? ["read"] : ["read", "write"];
               return acc;
             },
             {} as Record<string, string[]>,
@@ -220,6 +223,14 @@ export default function NewApiKeyPage() {
                     { resource: "recommendations", label: "Recommendations" },
                     { resource: "resumes", label: "Resumes" },
                     { resource: "ratings", label: "Ratings" },
+                    ...(user?.role === "admin"
+                      ? [
+                          {
+                            resource: "mcp_feedback",
+                            label: "Agent feedback (admin read-only)",
+                          },
+                        ]
+                      : []),
                   ].map(({ resource, label }) => {
                     return (
                       <div

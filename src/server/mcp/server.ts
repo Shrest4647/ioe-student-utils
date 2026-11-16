@@ -1,9 +1,13 @@
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { appEnv } from "@/env";
+import { resolveOAuthAccess } from "@/server/authentication/oauth-access";
 import { auth } from "@/server/better-auth";
-import { db } from "@/server/db";
+import { authorizeOAuthToolCall } from "./authorize-tool-call";
+import { mcpServerInfo } from "./metadata";
 import { registerCourseExplorerResources } from "./resources/course-explorer";
 import { registerAcademicTools } from "./tools/academic";
+import { registerAgentFeedbackTools } from "./tools/agent-feedback";
 import { registerCollegeTools } from "./tools/colleges";
 import { registerCountryTools } from "./tools/countries";
 import { registerCourseExplorerTools } from "./tools/course-explorer";
@@ -26,6 +30,8 @@ import { registerUniversityTools } from "./tools/universities";
 
 const mcpHandler = createMcpHandler(
   async (server) => {
+    registerAgentFeedbackTools(server);
+
     // Core scholarship tools
     registerScholarshipTools(server);
     registerRoundEventTools(server);
@@ -64,10 +70,9 @@ const mcpHandler = createMcpHandler(
     registerFlashcardTools(server);
   },
   {
-    serverInfo: {
-      name: "IOESU MCP",
-      version: "1.0.0",
-    },
+    serverInfo: mcpServerInfo,
+    instructions:
+      "If a task exposes a missing tool, failure, or confusing behavior, use submit_feedback once after finishing or giving up. Do not include secrets, personal data, or transcripts. If feedback fails, continue without retrying.",
   },
   {
     basePath: "/api/mcp",
@@ -104,55 +109,18 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
       }
     }
 
-    // 2. Try OAuth 2.0 Access Token verification
-    const tokenRecord = await db.query.oauthAccessToken.findFirst({
-      where: { accessToken: bearerToken },
-    });
-
-    if (
-      tokenRecord &&
-      new Date(tokenRecord.accessTokenExpiresAt) > new Date()
-    ) {
-      const client = await db.query.oauthApplication.findFirst({
-        where: { clientId: tokenRecord.clientId },
-      });
-      if (!client || client.disabled) return undefined;
-
-      const user = await db.query.user.findFirst({
-        where: { id: tokenRecord.userId ?? "" },
-      });
-
-      if (user) {
-        return {
-          token: bearerToken,
-          clientId: tokenRecord.clientId,
-          scopes: tokenRecord.scopes ? tokenRecord.scopes.split(" ") : [],
-          extra: {
-            oauth: true,
-            apiKey: {
-              userId: user.id,
-              permissions: {
-                scholarships: ["read"],
-                universities: ["read"],
-                colleges: ["read"],
-                departments: ["read"],
-                programs: ["read"],
-                courses: ["read"],
-                course_explorer: ["read"],
-                taxonomy: ["read"],
-                degrees: ["read"],
-                countries: ["read"],
-                fields_of_study: ["read"],
-                events: ["read"],
-                ratings: ["read"],
-                quizzes: ["read"],
-                flashcards: ["read"],
-                resources: ["read"],
-              },
-            },
-          },
-        };
-      }
+    // The same verifier and permission policy are used by downstream REST calls.
+    const access = await resolveOAuthAccess(bearerToken);
+    if (access) {
+      return {
+        token: bearerToken,
+        clientId: access.clientId,
+        scopes: access.scopes,
+        extra: {
+          oauth: true,
+          apiKey: { userId: access.user.id, permissions: access.permissions },
+        },
+      };
     }
   } catch (error) {
     console.error("MCP Auth Error:", error);
@@ -161,10 +129,18 @@ const verifyToken = async (_req: Request, bearerToken?: string) => {
   return undefined;
 };
 
-const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, {
-  required: true,
-  resourceUrl: new URL(appEnv.NEXT_PUBLIC_BASE_URL).origin,
-});
+const authenticatedHandler = withMcpAuth(
+  async (request) => {
+    const authInfo = (request as Request & { auth?: AuthInfo }).auth;
+    const denied = await authorizeOAuthToolCall(request, authInfo);
+    return denied || mcpHandler(request);
+  },
+  verifyToken,
+  {
+    required: true,
+    resourceUrl: new URL(appEnv.NEXT_PUBLIC_BASE_URL).origin,
+  },
+);
 
 const mcpCorsHeaders = {
   "Access-Control-Allow-Origin": "*",

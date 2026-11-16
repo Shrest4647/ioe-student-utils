@@ -266,6 +266,13 @@ export default function McpAppsDashboardPage() {
         </div>
       </div>
 
+      <p className="max-w-prose text-muted-foreground text-sm">
+        Agents can send diagnostic feedback about missing or failing tools.
+        These reports may contain task summaries, errors, and account/client
+        identifiers, and are visible only to application administrators. Agents
+        are instructed to omit secrets and personal data.
+      </p>
+
       {/* Server Endpoint Card */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-3">
@@ -357,7 +364,9 @@ export default function McpAppsDashboardPage() {
               </li>
               <li>
                 Sign in and review the access request. Approve it to return to
-                your assistant. OAuth connections have read-only access.
+                your assistant. Administrators can select “Allow creating and
+                editing academic entries” to grant write access. Older read-only
+                connections must reconnect to receive that grant.
               </li>
             </ol>
             <p className="mt-4">
