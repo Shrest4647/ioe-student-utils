@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@/server/db";
 import { academicEvents } from "@/server/db/schema";
@@ -16,11 +16,11 @@ export const academicEventsRoutes = new Elysia({ prefix: "/academic-events" })
         const conditions = [eq(academicEvents.userId, user.id)];
 
         if (startDate) {
-          conditions.push(eq(academicEvents.eventDate, startDate));
+          conditions.push(gte(academicEvents.eventDate, startDate));
         }
 
         if (endDate) {
-          conditions.push(eq(academicEvents.eventDate, endDate));
+          conditions.push(lte(academicEvents.eventDate, endDate));
         }
 
         if (eventType) {

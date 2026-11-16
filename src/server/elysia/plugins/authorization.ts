@@ -290,30 +290,60 @@ export const authorizationPlugin = new Elysia({ name: "authorization" }).macro({
       request: { headers: Headers };
       params: Record<string, string>;
     }) {
-      const session = await auth.api.getSession({ headers });
-      if (!session) return status(401);
-
-      // Admin users can access any resource
-      if (session.user.role === "admin") {
-        return {
-          user: session.user,
-          session: session.session,
-        };
-      }
-
-      // Check if the resource belongs to the user
       const resourceId = params.id || params.userId;
       if (!resourceId) {
         return status(400);
       }
-      if (resourceId !== session.user.id) {
+
+      // First try session authentication
+      const session = await auth.api.getSession({ headers });
+      if (session) {
+        if (session.user.role === "admin" || resourceId === session.user.id) {
+          return {
+            user: session.user,
+            session: session.session,
+            authType: "session",
+          };
+        }
         return status(403);
       }
 
-      return {
-        user: session.user,
-        session: session.session,
-      };
+      // Then try API key authentication
+      const apiKey =
+        headers.get("x-api-key") ||
+        headers.get("authorization")?.replace("Bearer ", "");
+      if (apiKey) {
+        try {
+          const keyValidation = await auth.api.verifyApiKey({
+            body: {
+              key: apiKey,
+            },
+          });
+
+          if (keyValidation?.valid && keyValidation.key) {
+            const user = await db.query.user.findFirst({
+              where: {
+                id: keyValidation.key.userId,
+              },
+            });
+
+            if (user) {
+              if (user.role === "admin" || resourceId === user.id) {
+                return {
+                  user,
+                  apiKey: keyValidation.key,
+                  authType: "apiKey",
+                };
+              }
+              return status(403);
+            }
+          }
+        } catch (_error) {
+          return status(401);
+        }
+      }
+
+      return status(401);
     },
   },
   apiKeyOwnerOnly: {

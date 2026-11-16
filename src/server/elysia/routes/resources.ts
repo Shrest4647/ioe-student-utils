@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import {
   isUniqueConstraintViolation,
@@ -309,15 +309,30 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
         }),
       };
 
-      // Get total count for pagination metadata
-      const allResources = await db.query.resources.findMany({
-        columns: {
-          id: true,
-        },
-        where,
-      });
+      // Get total count using SQL aggregate rather than loading all records into memory
+      const totalResult = await db
+        .select({ count: sql<number>`count(distinct ${resources.id})` })
+        .from(resources)
+        .leftJoin(
+          resourcesToCategories,
+          eq(resources.id, resourcesToCategories.resourceId),
+        )
+        .where(
+          and(
+            contentType ? eq(resources.contentTypeId, contentType) : undefined,
+            category
+              ? eq(resourcesToCategories.categoryId, category)
+              : undefined,
+            search
+              ? or(
+                  ilike(resources.title, `%${search}%`),
+                  ilike(resources.description, `%${search}%`),
+                )
+              : undefined,
+          ),
+        );
 
-      const totalCount = allResources.length;
+      const totalCount = Number(totalResult[0]?.count || 0);
       const totalPages = Math.ceil(totalCount / limitNum);
 
       // Get paginated results
@@ -623,7 +638,8 @@ export const resourceRoutes = new Elysia({ prefix: "/resources" })
             ...(title && { title }),
             ...(description !== undefined && { description }),
             ...(contentTypeId && { contentTypeId }),
-            ...(isFeatured !== undefined && { isFeatured }),
+            ...(isFeatured !== undefined &&
+              user.role === "admin" && { isFeatured }),
             updatedAt: new Date(),
           })
           .where(eq(resources.id, id));
