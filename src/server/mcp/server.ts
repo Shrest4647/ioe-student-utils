@@ -1,5 +1,8 @@
+import { eq } from "drizzle-orm";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { auth } from "@/server/better-auth";
+import { db } from "@/server/db";
+import { oauthAccessToken, user as userTable } from "@/server/db/schema";
 import { registerCourseExplorerResources } from "./resources/course-explorer";
 import { registerAcademicTools } from "./tools/academic";
 import { registerCollegeTools } from "./tools/colleges";
@@ -76,27 +79,75 @@ const mcpHandler = createMcpHandler(
 );
 
 /**
- * Token verification for MCP auth
+ * Token verification for MCP auth (supports both API keys and OAuth 2.0 access tokens)
  */
 const verifyToken = async (_req: Request, bearerToken?: string) => {
   if (!bearerToken) return undefined;
 
   try {
-    const keyValidation = await auth.api.verifyApiKey({
-      body: {
-        key: bearerToken,
-      },
+    // 1. Try API Key verification
+    if (bearerToken.startsWith("ik_")) {
+      const keyValidation = await auth.api.verifyApiKey({
+        body: {
+          key: bearerToken,
+        },
+      });
+
+      if (keyValidation?.valid && keyValidation.key) {
+        return {
+          token: bearerToken,
+          clientId: keyValidation.key.userId,
+          scopes: [],
+          extra: {
+            apiKey: keyValidation.key,
+          },
+        };
+      }
+    }
+
+    // 2. Try OAuth 2.0 Access Token verification
+    const tokenRecord = await db.query.oauthAccessToken.findFirst({
+      where: eq(oauthAccessToken.accessToken, bearerToken),
     });
 
-    if (keyValidation?.valid && keyValidation.key) {
-      return {
-        token: bearerToken,
-        clientId: keyValidation.key.userId,
-        scopes: [], // We can add refined scopes later
-        extra: {
-          apiKey: keyValidation.key,
-        },
-      };
+    if (
+      tokenRecord &&
+      new Date(tokenRecord.accessTokenExpiresAt) > new Date()
+    ) {
+      const user = await db.query.user.findFirst({
+        where: eq(userTable.id, tokenRecord.userId ?? ""),
+      });
+
+      if (user) {
+        return {
+          token: bearerToken,
+          clientId: user.id,
+          scopes: tokenRecord.scopes ? tokenRecord.scopes.split(" ") : [],
+          extra: {
+            oauth: true,
+            apiKey: {
+              userId: user.id,
+              permissions:
+                user.role === "admin"
+                  ? { "*": ["*"] }
+                  : {
+                      scholarships: ["read"],
+                      universities: ["read"],
+                      colleges: ["read"],
+                      departments: ["read"],
+                      programs: ["read"],
+                      courses: ["read"],
+                      course_explorer: ["read"],
+                      taxonomy: ["read"],
+                      ratings: ["read"],
+                      quizzes: ["read"],
+                      flashcards: ["read"],
+                      resources: ["read"],
+                    },
+            },
+          },
+        };
+      }
     }
   } catch (error) {
     console.error("MCP Auth Error:", error);

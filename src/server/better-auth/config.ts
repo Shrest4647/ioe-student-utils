@@ -6,6 +6,7 @@ import {
   emailOTP,
   genericOAuth,
   magicLink,
+  mcp,
   openAPI,
   twoFactor,
   username,
@@ -108,6 +109,10 @@ export const auth = betterAuth({
           scopes: ["openid", "email", "profile"],
         },
       ],
+    }),
+    mcp({
+      loginPage: "/auth/signin",
+      resource: `${appEnv.NEXT_PUBLIC_BASE_URL}/api/mcp/mcp`,
     }),
   ],
   user: {
