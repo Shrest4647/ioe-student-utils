@@ -66,4 +66,32 @@ describe("MCP OAuth 2.0 Production Integration Tests", () => {
       expect(authHeader).toContain("resource_metadata");
     });
   });
+
+  describe("MCP Apps API Endpoints", () => {
+    it("returns MCP server connection information from /api/mcp-apps/info", async () => {
+      const { elysiaApi } = await import("@/server/elysia");
+      const res = await elysiaApi.handle(
+        new Request("http://localhost/api/mcp-apps/info"),
+      );
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(json.data.serverUrl).toContain("/api/mcp/mcp");
+      expect(json.data.protectedResourceUrl).toContain(
+        "/.well-known/oauth-protected-resource",
+      );
+      expect(json.data.authServerUrl).toContain(
+        "/.well-known/oauth-authorization-server",
+      );
+    });
+
+    it("rejects unauthenticated requests to /api/mcp-apps with 401", async () => {
+      const { elysiaApi } = await import("@/server/elysia");
+      const res = await elysiaApi.handle(
+        new Request("http://localhost/api/mcp-apps"),
+      );
+      expect(res.status).toBe(401);
+    });
+  });
 });

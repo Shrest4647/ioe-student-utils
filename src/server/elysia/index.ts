@@ -21,6 +21,7 @@ import { flashcardLearningRoutes } from "./routes/flashcard-learning";
 import { flashcardRoutes } from "./routes/flashcards";
 import { gpaConverterRoutes } from "./routes/gpa-converter";
 import { languageSkillRoutes } from "./routes/language-skills";
+import { mcpAppRoutes } from "./routes/mcp-apps";
 import { positionRoutes } from "./routes/positions";
 import { profileRoutes } from "./routes/profiles";
 import { courseRoutes, programRoutes } from "./routes/programs";
@@ -53,6 +54,7 @@ export const elysiaApi = new Elysia({ prefix: "/api" })
   .use(authorizationPlugin)
   .use(openApiPlugin)
   .use(apiKeyRoutes)
+  .use(mcpAppRoutes)
   .use(userRoutes)
   .use(resourceRoutes)
   .use(profileRoutes)
