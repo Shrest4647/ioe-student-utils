@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { signIn } from "@/lib/auth-client";
 import { signInSchema } from "@/lib/auth-schemas";
+import { getSignInContinuation } from "@/lib/mcp/sign-in-continuation";
 import { cn } from "@/lib/utils";
 
 export default function SignIn() {
@@ -46,14 +47,28 @@ export default function SignIn() {
           {
             email: value.email,
             password: value.password,
+            callbackURL: getSignInContinuation(window.location.search),
           },
           {
             onRequest: () => {
               setLoading(true);
             },
-            onSuccess: () => {
+            onResponse: ({ response }) => {
+              // The installed MCP plugin resumes OAuth with an HTTP redirect.
+              // Fetch follows it, so transfer the final approval URL to navigation.
+              if (
+                response.redirected &&
+                new URL(response.url).origin === window.location.origin &&
+                new URL(response.url).pathname === "/auth/mcp/consent"
+              ) {
+                window.location.assign(response.url);
+              }
+            },
+            onSuccess: (ctx) => {
               setLoading(false);
-              router.push("/");
+              if (ctx.data.redirect && ctx.data.url)
+                window.location.assign(ctx.data.url);
+              else router.push(getSignInContinuation(window.location.search));
             },
             onError: (ctx) => {
               setLoading(false);
@@ -196,7 +211,7 @@ export default function SignIn() {
                 await signIn.social(
                   {
                     provider: "github",
-                    callbackURL: "/",
+                    callbackURL: getSignInContinuation(window.location.search),
                   },
                   {
                     onRequest: (_ctx) => {
@@ -225,7 +240,7 @@ export default function SignIn() {
                 await signIn.social(
                   {
                     provider: "slack",
-                    callbackURL: "/",
+                    callbackURL: getSignInContinuation(window.location.search),
                   },
                   {
                     onRequest: (_ctx) => {

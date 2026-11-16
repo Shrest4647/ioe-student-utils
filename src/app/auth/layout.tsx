@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { getSignInContinuation } from "@/lib/mcp/sign-in-continuation";
 
 export default function AuthLayout({
   children,
@@ -11,14 +12,16 @@ export default function AuthLayout({
 }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isOAuthPage = pathname.startsWith("/auth/mcp/");
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push("/");
+    if (!isLoading && isAuthenticated && !isOAuthPage) {
+      router.replace(getSignInContinuation(window.location.search));
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, isOAuthPage]);
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !isOAuthPage) {
     return null;
   }
 

@@ -8,15 +8,13 @@ const corsHeaders = {
 };
 
 export async function GET() {
-  const issuer = appEnv.NEXT_PUBLIC_BASE_URL;
+  const issuer = appEnv.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "");
   const authBase = `${issuer}/api/auth`;
 
   const metadata = {
     issuer,
     authorization_endpoint: `${authBase}/mcp/authorize`,
     token_endpoint: `${authBase}/mcp/token`,
-    userinfo_endpoint: `${authBase}/mcp/userinfo`,
-    jwks_uri: `${authBase}/mcp/jwks`,
     registration_endpoint: `${authBase}/mcp/register`,
     scopes_supported: ["openid", "profile", "email", "offline_access"],
     response_types_supported: ["code"],
