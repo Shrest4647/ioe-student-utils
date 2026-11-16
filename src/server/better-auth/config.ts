@@ -12,6 +12,7 @@ import {
   username,
 } from "better-auth/plugins";
 import { appEnv } from "@/env";
+import { mcpWriteScope } from "@/lib/mcp/oauth-permissions";
 import { db } from "@/server/db";
 import {
   sendEmailVerification,
@@ -122,6 +123,7 @@ export const auth = betterAuth({
         requirePKCE: true,
         allowPlainCodeChallengeMethod: false,
         consentPage: "/auth/mcp/consent",
+        scopes: [mcpWriteScope],
       },
     }),
   ],
@@ -129,7 +131,8 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
-        default: "user",
+        defaultValue: "user",
+        input: false,
       },
     },
   },

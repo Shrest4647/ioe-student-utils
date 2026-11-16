@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { canGrantMcpWrite } from "@/lib/mcp/oauth-permissions";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import { McpConsent } from "./mcp-consent";
@@ -41,8 +42,13 @@ export default async function ConsentPage({ searchParams }: ConsentPageProps) {
   });
   if (!app || app.disabled)
     return <McpConsent error="This application is no longer available." />;
+  const account = await db.query.user.findFirst({
+    where: { id: session.user.id },
+    columns: { role: true },
+  });
   return (
     <McpConsent
+      canEdit={canGrantMcpWrite(account?.role)}
       code={code}
       name={app.name}
       account={session.user.email}

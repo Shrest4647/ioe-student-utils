@@ -1,7 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "@/server/elysia/eden";
-import { bulkOperation, formatDate, truncateText } from "../utils";
+import {
+  bulkOperation,
+  extractErrorMessage,
+  formatDate,
+  truncateText,
+} from "../utils";
 
 /**
  * Register all academic tools (programs and courses) with MCP server
@@ -288,8 +293,10 @@ export function registerAcademicTools(server: McpServer): void {
 
         if (response.error || !response.data?.success) {
           throw new Error(
-            response.error?.value?.message ||
+            extractErrorMessage(
+              response.error?.value,
               "Failed to create program via API",
+            ),
           );
         }
 
@@ -369,7 +376,10 @@ export function registerAcademicTools(server: McpServer): void {
 
             if (response.error || !response.data?.success) {
               throw new Error(
-                response.error?.value?.message || "Failed to create program",
+                extractErrorMessage(
+                  response.error?.value,
+                  "Failed to create program",
+                ),
               );
             }
 

@@ -10,10 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
 interface McpConsentProps {
   code?: string;
+  canEdit?: boolean;
   name?: string;
   account?: string;
   callbackHost?: string;
@@ -23,12 +26,14 @@ interface McpConsentProps {
 
 export function McpConsent({
   code,
+  canEdit = false,
   name,
   account,
   callbackHost,
   scopes = [],
   error: initialError,
 }: McpConsentProps) {
+  const [allowWrites, setAllowWrites] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(initialError);
   async function respond(accept: boolean) {
@@ -36,7 +41,7 @@ export function McpConsent({
     setError(undefined);
     try {
       const { data, error } = await authClient.$fetch<{ redirectURI: string }>(
-        "/oauth2/consent",
+        `/oauth2/consent?write_access=${canEdit && allowWrites ? "1" : "0"}`,
         { method: "POST", body: { accept, consent_code: code } },
       );
       if (error || !data?.redirectURI)
@@ -72,8 +77,42 @@ export function McpConsent({
               <div className="space-y-3 text-sm">
                 <p>
                   This app will be able to read academic information through IOE
-                  Student Utils. OAuth connections cannot edit or delete
-                  content.
+                  Student Utils. Choose whether this connection can also create
+                  and update academic entries.
+                </p>
+                {canEdit ? (
+                  <div className="flex items-start gap-3 rounded-md border p-3">
+                    <Checkbox
+                      id="allow-mcp-writes"
+                      checked={allowWrites}
+                      disabled={pending}
+                      onCheckedChange={(checked) =>
+                        setAllowWrites(checked === true)
+                      }
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="allow-mcp-writes">
+                        Allow creating and editing academic entries
+                      </Label>
+                      <p className="text-muted-foreground text-xs">
+                        Use your administrator permissions to add universities,
+                        departments, programs, courses, and other academic
+                        content. Delete tools and account/security settings are
+                        excluded.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    This account can approve read-only access. Sign in with an
+                    administrator account to enable editing.
+                  </p>
+                )}
+                <p>
+                  Your agent may also submit feedback about tool problems.
+                  Reports can include a short task summary, errors, and your
+                  account/client identifiers, and are visible to application
+                  administrators. Do not include secrets or personal data.
                 </p>
                 {(scopes.includes("profile") ||
                   scopes.includes("email") ||
@@ -81,7 +120,9 @@ export function McpConsent({
                   <p>
                     Requested identity scopes:{" "}
                     {scopes
-                      .filter((scope) => scope !== "offline_access")
+                      .filter((scope) =>
+                        ["openid", "profile", "email"].includes(scope),
+                      )
                       .join(", ")}
                     .
                   </p>
@@ -106,7 +147,11 @@ export function McpConsent({
                   Cancel connection
                 </Button>
                 <Button disabled={pending} onClick={() => respond(true)}>
-                  {pending ? "Continuing…" : "Allow connection"}
+                  {pending
+                    ? "Continuing…"
+                    : allowWrites && canEdit
+                      ? "Allow read and write access"
+                      : "Allow read-only access"}
                 </Button>
               </div>
             </>

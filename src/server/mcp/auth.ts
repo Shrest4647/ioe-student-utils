@@ -148,6 +148,8 @@ export function hasPermission(
  * If a tool is not listed, it's considered public (read-only).
  */
 export const TOOL_PERMISSIONS = {
+  submit_feedback: { resource: "mcp_feedback", action: "submit" },
+  list_agent_feedback: { resource: "mcp_feedback", action: "read" },
   // Scholarship tools
   fetch_scholarships: { resource: "scholarships", action: "read" },
   get_scholarship_by_id: { resource: "scholarships", action: "read" },
@@ -340,6 +342,9 @@ export function canUseTool(
   toolName: string,
   userPermissions: Record<string, string[]>,
 ): boolean {
+  // Feedback submission is available to every authenticated MCP identity,
+  // including existing read-only keys. Authentication is enforced by the tool.
+  if (toolName === "submit_feedback") return true;
   const requirement =
     TOOL_PERMISSIONS[toolName as keyof typeof TOOL_PERMISSIONS];
 

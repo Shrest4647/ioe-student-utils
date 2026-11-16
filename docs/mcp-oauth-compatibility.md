@@ -44,8 +44,21 @@ Clients supporting dynamic registration can register public or confidential
 clients themselves. Public clients use PKCE with no client secret. Confidential
 clients can authenticate with HTTP Basic or a form-encoded client secret.
 
-A registered client is not proof of a successful connection. All OAuth MCP
-connections receive read-only academic tool permissions, including admin users.
+A registered client is not proof of a successful connection. OAuth connections start with read-only academic access. During approval,
+administrators can select **Allow creating and editing academic entries**. The
+server then adds `mcp:write` to that grant, even if the client only requested
+identity scopes. Requesting `mcp:write` alone does not grant editing: the signed-in
+administrator must select the checkbox. Delete tools and account/security APIs
+remain excluded. Old tokens stay read-only, including after refresh; reconnect
+the assistant to approve editing. Current account roles are checked on every
+request, so losing the admin role also removes delegated writing.
+
+Both MCP and downstream academic REST endpoints verify the same OAuth token,
+expiry, active client, current user, and consented permissions. The REST API also
+keeps its existing route-level role checks. A 401 means the credential could not
+be verified. A 403 with `insufficient_scope` means the connection lacks permission.
+
+Agents may also submit diagnostic feedback; see [agent feedback](mcp-agent-feedback.md) for storage, privacy, and review access.
 Use separately scoped API keys for content management. A secret rotation changes
 future confidential token requests, but existing access tokens remain valid until
 expiry. Revoke a manually registered app to delete its associated tokens and

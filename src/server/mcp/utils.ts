@@ -176,6 +176,13 @@ export function extractErrorMessage(
   ) {
     return errorValue.message;
   }
+  if (
+    errorValue &&
+    typeof errorValue === "object" &&
+    "error" in errorValue &&
+    typeof errorValue.error === "string"
+  )
+    return errorValue.error;
   return fallback;
 }
 

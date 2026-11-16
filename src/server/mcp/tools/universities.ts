@@ -281,8 +281,10 @@ export function registerUniversityTools(server: McpServer): void {
 
         if (response.error || !response.data?.success) {
           throw new Error(
-            response.error?.value?.message ||
+            extractErrorMessage(
+              response.error?.value,
               "Failed to create university via API",
+            ),
           );
         }
 
@@ -364,7 +366,10 @@ export function registerUniversityTools(server: McpServer): void {
 
             if (response.error || !response.data?.success) {
               throw new Error(
-                response.error?.value?.message || "Failed to create university",
+                extractErrorMessage(
+                  response.error?.value,
+                  "Failed to create university",
+                ),
               );
             }
 

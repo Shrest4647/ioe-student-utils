@@ -1,4 +1,5 @@
 import { appEnv } from "@/env";
+import { oauthScopes } from "@/lib/mcp/oauth-permissions";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +17,7 @@ export async function GET() {
     authorization_endpoint: `${authBase}/mcp/authorize`,
     token_endpoint: `${authBase}/mcp/token`,
     registration_endpoint: `${authBase}/mcp/register`,
-    scopes_supported: ["openid", "profile", "email", "offline_access"],
+    scopes_supported: [...oauthScopes],
     response_types_supported: ["code"],
     response_modes_supported: ["query"],
     grant_types_supported: ["authorization_code", "refresh_token"],
