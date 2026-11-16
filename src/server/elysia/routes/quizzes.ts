@@ -313,11 +313,7 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         set.status = 404;
         return { success: false, error: "Attempt not found" };
       }
-      if (
-        attempt.userId &&
-        attempt.userId !== user.id &&
-        user.role !== "admin"
-      ) {
+      if (attempt.userId !== user.id && user.role !== "admin") {
         set.status = 403;
         return { success: false, error: "Unauthorized" };
       }
@@ -419,11 +415,7 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         set.status = 404;
         return { success: false, error: "Attempt not found" };
       }
-      if (
-        attempt.userId &&
-        attempt.userId !== user.id &&
-        user.role !== "admin"
-      ) {
+      if (attempt.userId !== user.id && user.role !== "admin") {
         set.status = 403;
         return { success: false, error: "Unauthorized" };
       }
@@ -473,11 +465,7 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         return { success: false, error: "Attempt not found" };
       }
 
-      if (
-        user.role !== "admin" &&
-        attempt.userId &&
-        attempt.userId !== user.id
-      ) {
+      if (attempt.userId !== user.id && user.role !== "admin") {
         set.status = 403;
         return { success: false, error: "Unauthorized" };
       }
@@ -512,11 +500,7 @@ export const quizRoutes = new Elysia({ prefix: "/quizzes" })
         return { success: false, error: "Attempt not found" };
       }
 
-      if (
-        user.role !== "admin" &&
-        attempt.userId &&
-        attempt.userId !== user.id
-      ) {
+      if (attempt.userId !== user.id && user.role !== "admin") {
         set.status = 403;
         return { success: false, error: "Unauthorized" };
       }

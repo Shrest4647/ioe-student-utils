@@ -35,13 +35,18 @@ export const rateLimit = (options: RateLimitOptions) => {
     const activeMax =
       isStrictTier && mutationMaxRequests ? mutationMaxRequests : maxRequests;
 
-    const forwardedFor = request.headers.get("x-forwarded-for");
+    const cfConnectingIp = request.headers.get("cf-connecting-ip");
     const realIp = request.headers.get("x-real-ip");
-    const ip = forwardedFor || realIp || "unknown-ip";
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const clientIp =
+      cfConnectingIp?.trim() ||
+      realIp?.trim() ||
+      (forwardedFor ? forwardedFor.split(",")[0]?.trim() : null) ||
+      "unknown-ip";
     const actorKey =
       request.headers.get("authorization") ||
       request.headers.get("x-api-key") ||
-      ip;
+      clientIp;
     const key = `${isStrictTier ? "strict" : "public"}:${actorKey}`;
 
     const now = Date.now();
@@ -90,14 +95,18 @@ export const rateLimit = (options: RateLimitOptions) => {
   return plugin;
 };
 
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
-  for (const [ip, store] of rateLimitStore.entries()) {
+  for (const [key, store] of rateLimitStore.entries()) {
     if (now > store.resetTime) {
-      rateLimitStore.delete(ip);
+      rateLimitStore.delete(key);
     }
   }
 }, 60000); // Cleanup every minute
+
+if (typeof cleanupTimer.unref === "function") {
+  cleanupTimer.unref();
+}
 
 // Helper function to reset the store (useful for testing)
 export const resetRateLimitStore = () => {
