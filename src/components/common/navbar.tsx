@@ -248,6 +248,13 @@ export function Navbar() {
                         <ListItem href="/dashboard/api-keys" title="API Keys">
                           Manage API keys for programmatic access.
                         </ListItem>
+                        <ListItem
+                          href="/dashboard/mcp-apps"
+                          title="Connected AI Apps (MCP)"
+                        >
+                          Connect Gemini, Claude, and AI assistants via OAuth
+                          2.0.
+                        </ListItem>
                         <ListItem href="/dashboard/settings" title="Settings">
                           Configure your account settings.
                         </ListItem>

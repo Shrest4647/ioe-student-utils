@@ -150,27 +150,129 @@ export function hasPermission(
 export const TOOL_PERMISSIONS = {
   // Scholarship tools
   fetch_scholarships: { resource: "scholarships", action: "read" },
+  get_scholarship_by_id: { resource: "scholarships", action: "read" },
   create_scholarship: { resource: "scholarships", action: "write" },
+  bulk_create_scholarships: { resource: "scholarships", action: "write" },
   update_scholarship: { resource: "scholarships", action: "write" },
+  bulk_update_scholarships: { resource: "scholarships", action: "write" },
   delete_scholarship: { resource: "scholarships", action: "delete" },
+  bulk_delete_scholarships: { resource: "scholarships", action: "delete" },
+  create_scholarship_round: { resource: "scholarships", action: "write" },
+  bulk_create_scholarship_rounds: { resource: "scholarships", action: "write" },
+  update_scholarship_round: { resource: "scholarships", action: "write" },
+  delete_scholarship_round: { resource: "scholarships", action: "delete" },
+  bulk_delete_scholarship_rounds: {
+    resource: "scholarships",
+    action: "delete",
+  },
+  create_round_event: { resource: "scholarships", action: "write" },
+  bulk_create_round_events: { resource: "scholarships", action: "write" },
+  update_round_event: { resource: "scholarships", action: "write" },
+  delete_round_event: { resource: "scholarships", action: "delete" },
+  check_duplicate_scholarship: { resource: "scholarships", action: "read" },
+  validate_scholarship_data: { resource: "scholarships", action: "read" },
 
   // University tools
   fetch_universities: { resource: "universities", action: "read" },
+  get_university_by_slug: { resource: "universities", action: "read" },
   create_university: { resource: "universities", action: "write" },
+  bulk_create_universities: { resource: "universities", action: "write" },
   update_university: { resource: "universities", action: "write" },
+  bulk_update_universities: { resource: "universities", action: "write" },
   delete_university: { resource: "universities", action: "delete" },
+  bulk_delete_universities: { resource: "universities", action: "delete" },
+
+  // College tools
+  fetch_colleges: { resource: "colleges", action: "read" },
+  get_college_by_slug: { resource: "colleges", action: "read" },
+  fetch_college_departments: { resource: "colleges", action: "read" },
+  fetch_college_department_programs: { resource: "colleges", action: "read" },
+  fetch_college_program_courses: { resource: "colleges", action: "read" },
+  create_college: { resource: "colleges", action: "write" },
+  bulk_create_colleges: { resource: "colleges", action: "write" },
+  update_college: { resource: "colleges", action: "write" },
+  bulk_update_colleges: { resource: "colleges", action: "write" },
+  delete_college: { resource: "colleges", action: "delete" },
+  bulk_delete_colleges: { resource: "colleges", action: "delete" },
+  sync_college_departments: { resource: "colleges", action: "write" },
+  sync_college_department_programs: { resource: "colleges", action: "write" },
+  sync_college_program_courses: { resource: "colleges", action: "write" },
+
+  // Department tools
+  fetch_departments: { resource: "departments", action: "read" },
+  get_department_by_slug: { resource: "departments", action: "read" },
+  create_department: { resource: "departments", action: "write" },
+  bulk_create_departments: { resource: "departments", action: "write" },
+  update_department: { resource: "departments", action: "write" },
+  bulk_update_departments: { resource: "departments", action: "write" },
+
+  // Academic (programs and courses) tools
+  fetch_programs: { resource: "programs", action: "read" },
+  get_program_by_code: { resource: "programs", action: "read" },
+  create_program: { resource: "programs", action: "write" },
+  bulk_create_programs: { resource: "programs", action: "write" },
+  update_program: { resource: "programs", action: "write" },
+  bulk_update_programs: { resource: "programs", action: "write" },
+  delete_program: { resource: "programs", action: "delete" },
+  bulk_delete_programs: { resource: "programs", action: "delete" },
+  fetch_program_courses: { resource: "courses", action: "read" },
+  create_course: { resource: "courses", action: "write" },
+  bulk_create_courses: { resource: "courses", action: "write" },
+  update_course: { resource: "courses", action: "write" },
+  bulk_update_courses: { resource: "courses", action: "write" },
+  delete_course: { resource: "courses", action: "delete" },
+  bulk_delete_courses: { resource: "courses", action: "delete" },
+
+  // Taxonomy & Metadata tools
+  fetch_degrees: { resource: "degrees", action: "read" },
+  create_degree: { resource: "degrees", action: "write" },
+  update_degree: { resource: "degrees", action: "write" },
+  delete_degree: { resource: "degrees", action: "delete" },
+  fetch_fields_of_study: { resource: "fields_of_study", action: "read" },
+  create_field_of_study: { resource: "fields_of_study", action: "write" },
+  update_field_of_study: { resource: "fields_of_study", action: "write" },
+  delete_field_of_study: { resource: "fields_of_study", action: "delete" },
+  fetch_countries: { resource: "countries", action: "read" },
+  create_country: { resource: "countries", action: "write" },
+  update_country: { resource: "countries", action: "write" },
+  delete_country: { resource: "countries", action: "delete" },
+  lookup_taxonomy: { resource: "taxonomy", action: "read" },
+
+  // Ratings tools
+  fetch_rating_categories: { resource: "ratings", action: "read" },
+  get_rating_category_by_id: { resource: "ratings", action: "read" },
+  create_rating_category: { resource: "ratings", action: "write" },
+  bulk_create_rating_categories: { resource: "ratings", action: "write" },
+  update_rating_category: { resource: "ratings", action: "write" },
+  delete_rating_category: { resource: "ratings", action: "delete" },
+  submit_rating: { resource: "ratings", action: "write" },
+  bulk_submit_ratings: { resource: "ratings", action: "write" },
+  fetch_entity_ratings: { resource: "ratings", action: "read" },
 
   // Event tools
   fetch_events: { resource: "events", action: "read" },
+  fetch_events_by_round: { resource: "events", action: "read" },
+  fetch_upcoming_events: { resource: "events", action: "read" },
   create_event: { resource: "events", action: "write" },
   update_event: { resource: "events", action: "write" },
   delete_event: { resource: "events", action: "delete" },
+  bulk_delete_round_events: { resource: "events", action: "delete" },
 
   // Resource tools
   fetch_resources: { resource: "resources", action: "read" },
+  get_resource_by_id: { resource: "resources", action: "read" },
+  fetch_resource_categories: { resource: "resources", action: "read" },
+  fetch_content_types: { resource: "resources", action: "read" },
   create_resource: { resource: "resources", action: "write" },
+  bulk_create_resources: { resource: "resources", action: "write" },
   update_resource: { resource: "resources", action: "write" },
+  bulk_update_resources: { resource: "resources", action: "write" },
   delete_resource: { resource: "resources", action: "delete" },
+  bulk_delete_resources: { resource: "resources", action: "delete" },
+  create_resource_category: { resource: "resources", action: "write" },
+  bulk_create_resource_categories: { resource: "resources", action: "write" },
+  create_content_type: { resource: "resources", action: "write" },
+  bulk_create_content_types: { resource: "resources", action: "write" },
 
   // Quiz tools
   fetch_quizzes: { resource: "quizzes", action: "read" },
@@ -241,9 +343,9 @@ export function canUseTool(
   const requirement =
     TOOL_PERMISSIONS[toolName as keyof typeof TOOL_PERMISSIONS];
 
-  // If no permission requirement defined, tool is public
+  // Default DENY: If no permission requirement defined, tool is denied
   if (!requirement) {
-    return true;
+    return false;
   }
 
   return hasPermission(

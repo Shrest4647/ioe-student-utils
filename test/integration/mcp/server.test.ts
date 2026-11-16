@@ -13,7 +13,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
  */
 
 const MCP_URL = process.env.MCP_URL || "http://localhost:3000/api/mcp/mcp";
-const API_KEY = process.env.MCP_API_KEY || "YOUR_API_KEY_HERE";
+const API_KEY = process.env.MCP_API_KEY;
 
 describe("MCP Server Integration", () => {
   let transport: StreamableHTTPClientTransport;
@@ -26,10 +26,8 @@ describe("MCP Server Integration", () => {
     console.log("=".repeat(50));
     console.log(`📡 URL: ${MCP_URL}`);
 
-    if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
-      console.warn(
-        "⚠️  Warning: Using placeholder API key. Set MCP_API_KEY env var if required.",
-      );
+    if (!API_KEY) {
+      console.log("🔓 No MCP_API_KEY set; testing anonymous access.");
     }
 
     const httpUrl = new URL(MCP_URL);
@@ -37,11 +35,13 @@ describe("MCP Server Integration", () => {
     try {
       // Setup Streamable HTTP transport with authentication
       transport = new StreamableHTTPClientTransport(httpUrl, {
-        requestInit: {
-          headers: {
-            Authorization: `Bearer ${API_KEY}`,
-          },
-        },
+        requestInit: API_KEY
+          ? {
+              headers: {
+                Authorization: `Bearer ${API_KEY}`,
+              },
+            }
+          : undefined,
       });
 
       console.log("📦 Creating MCP client...");

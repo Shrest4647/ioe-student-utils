@@ -6,6 +6,7 @@ import {
   emailOTP,
   genericOAuth,
   magicLink,
+  mcp,
   openAPI,
   twoFactor,
   username,
@@ -45,7 +46,7 @@ export const auth = betterAuth({
     github: {
       clientId: appEnv.BETTER_AUTH_GITHUB_CLIENT_ID,
       clientSecret: appEnv.BETTER_AUTH_GITHUB_CLIENT_SECRET,
-      redirectURI: "http://localhost:3000/api/auth/callback/github",
+      redirectURI: `${appEnv.NEXT_PUBLIC_BASE_URL}/api/auth/callback/github`,
     },
   },
   plugins: [
@@ -66,17 +67,17 @@ export const auth = betterAuth({
       },
       permissions: {
         defaultPermissions: {
-          scholarships: ["read", "write"],
+          scholarships: ["read"],
           universities: ["read"],
           colleges: ["read"],
           departments: ["read"],
           programs: ["read"],
           courses: ["read"],
           course_explorer: ["read"],
-          resources: ["read", "write"],
+          resources: ["read"],
           recommendations: ["read", "write"],
           resumes: ["read", "write"],
-          ratings: ["read"],
+          ratings: ["read", "write"],
         },
       },
       enableMetadata: true,
@@ -108,6 +109,10 @@ export const auth = betterAuth({
           scopes: ["openid", "email", "profile"],
         },
       ],
+    }),
+    mcp({
+      loginPage: "/auth/signin",
+      resource: `${appEnv.NEXT_PUBLIC_BASE_URL}/api/mcp/mcp`,
     }),
   ],
   user: {

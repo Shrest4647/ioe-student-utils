@@ -181,4 +181,6 @@ export * from "./schema/topics";
 
 // --- Course Explorer Tables ---
 
+// --- OAuth 2.0 / MCP Provider Tables ---
+export * from "./schema/oauth";
 export * from "./schema/units";

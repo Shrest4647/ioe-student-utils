@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Edit, Eye, Plus, Search } from "lucide-react";
+import { Bot, Edit, Eye, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -132,6 +132,24 @@ export default function ApiKeysDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Bot className="h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <span className="font-semibold text-foreground">
+              Connecting Google Gemini, Claude, or Cursor?
+            </span>
+            <p className="text-muted-foreground text-xs">
+              Use our dedicated Connected Apps workflow to securely generate
+              OAuth 2.0 credentials without exposing keys.
+            </p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" asChild className="shrink-0">
+          <Link href="/dashboard/mcp-apps">Connected Apps (OAuth) →</Link>
+        </Button>
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
